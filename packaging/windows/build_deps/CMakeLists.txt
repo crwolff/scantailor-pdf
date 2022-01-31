@@ -1,5 +1,12 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1.0)
 
+
+# Needed, otherwise cmake error occurs:
+# CMake Error: Error required internal CMake variable not set, cmake may not be built correctly.
+# Missing variable is:
+# CMAKE_ASM_COMPILE_OBJECT
+ENABLE_LANGUAGE( C CXX ASM )
+
 SET(
 	CMAKE_USER_MAKE_RULES_OVERRIDE
 	"${CMAKE_SOURCE_DIR}/../../../cmake/default_cflags.cmake"
@@ -9,7 +16,7 @@ SET(
 	"${CMAKE_SOURCE_DIR}/../../../cmake/default_cxxflags.cmake"
 )
 
-PROJECT("Scan Tailor Dependencies")
+PROJECT("Scan Tailor PDF Dependencies")
 
 INCLUDE(../../../cmake/SetDefaultBuildType.cmake)
 INCLUDE(../../../cmake/SetDefaultGccFlags.cmake)
@@ -23,28 +30,55 @@ ST_SET_DEFAULT_GCC_FLAGS()
 GET_FILENAME_COMPONENT(source_outer_dir "${PROJECT_SOURCE_DIR}/../../../.." ABSOLUTE)
 GET_FILENAME_COMPONENT(build_outer_dir "${PROJECT_BINARY_DIR}/.." ABSOLUTE)
 
+# we are compiling for x64
+SET(WANT_LIB64 ON)
 
 SET(suggest_jom FALSE)
 
+
 IF(MSVC)
+
+	# JOM works only with msvc
 	FIND_PROGRAM(JOM_EXECUTABLE jom HINTS "${source_outer_dir}" "${build_outer_dir}")
 	IF(JOM_EXECUTABLE)
-		TO_NATIVE_PATH("${JOM_EXECUTABLE}" make_command)
-	ELSE()
-		SET(make_command nmake)
+		SET(MAKE_COMMAND "\"${JOM_EXECUTABLE}\"")
+	ENDIF()
+	IF(NOT JOM_EXECUTABLE)
+		SET(MAKE_COMMAND nmake)
 		SET(suggest_jom TRUE)
 	ENDIF()
 
 	IF(MSVC_VERSION LESS 1900)
-		MESSAGE(FATAL_ERROR "This Visual Studio version is too old and is not supported. Only Visual Studio 2015 and newer are currently supported.")
+		MESSAGE(FATAL_ERROR "This Visual Studio version is too old and is not supported. Only Visual Studio 2015 and newer or MinGW are currently supported.")
+	ELSE()
+		SET(qt_platform win32-msvc)
+		SET(boost_toolset msvc)
 	ENDIF()
+	
+ELSEIF(MINGW)
+	
+	SET(qt_platform win32-g++)
+	SET(boost_toolset gcc)
+	
+	# Set number of cores to speed up Qt compilation
+	INCLUDE(ProcessorCount)
+	ProcessorCount(N)
+	MATH(EXPR THREADS "${N} - 1")
+	IF(NOT N EQUAL 0)
+		SET(MAKE_COMMAND "mingw32-make -j${THREADS}")
+	ELSE()
+		SET(MAKE_COMMAND "mingw32-make")
+	ENDIF()
+	
 ELSE()
-	MESSAGE(FATAL_ERROR "Unsupported compiler. Only Visual Studio 2015 and newer are currently supported.")
+	MESSAGE(FATAL_ERROR "Unsupported compiler. Only Visual Studio 2015 and newer and MinGW are currently supported.")
 ENDIF()
 
 
-FILE(GLOB jpeg_dirs1 "${build_outer_dir}/jpeg-[0-9][a-z]")
-FILE(GLOB jpeg_dirs2 "${source_outer_dir}/jpeg-[0-9][a-z]")
+## Set up dependency search
+
+FILE(GLOB jpeg_dirs1 "${build_outer_dir}/libjpeg-turbo-[0-9]*.[0-9]*.[0-9]*")
+FILE(GLOB jpeg_dirs2 "${source_outer_dir}/libjpeg-turbo-[0-9]*.[0-9]*.[0-9]*")
 FILE(GLOB zlib_dirs1 "${build_outer_dir}/zlib-[0-9]*.[0-9]*.[0-9]*")
 FILE(GLOB zlib_dirs2 "${source_outer_dir}/zlib-[0-9]*.[0-9]*.[0-9]*")
 FILE(GLOB png_dirs1 "${build_outer_dir}/libpng-[0-9]*.[0-9]*.[0-9]*")
@@ -136,13 +170,16 @@ FIND_PATH(
 	DOC "[optional] Installation path of a pre-built version of Qt5 including qttools. If you installed a binary version, it will be something like C:\\Qt\\Qt5.0.2\\5.0.2\\msvc2012"
 )
 
-SET(ZLIB_LIBRARY_NAME zdll)
-SET(PNG_LIBRARY_NAME libpng)
-SET(JPEG_LIBRARY_NAME libjpeg)
-SET(TIFF_LIBRARY_NAME libtiff)
-SET(OPENJPEG_LIBRARY_NAME openjp2)
-SET(FREETYPE_LIBRARY_NAME freetype)
-SET(PODOFO_LIBRARY_NAME podofo)
+SET(ZLIB_LIB_NAME zlib)
+SET(ZLIB_FILE_NAME z)
+SET(PNG_LIB_NAME png)
+SET(JPEG_LIB_NAME jpeg)
+SET(TIFF_LIB_NAME tiff)
+SET(TIFFXX_LIB_NAME tiffxx)
+SET(OPENJPEG_LIB_NAME openjp2)
+SET(PODOFO_LIB_NAME podofo)
+SET(FREETYPE_LIB_NAME freetype)
+SET(PODOFO_SHARED_LIB_NAME podofo-shared)
 
 MACRO(LIST_ITEMS_PREPEND LIST PREFIX)
 	SET(tmp_list_)
@@ -153,73 +190,42 @@ MACRO(LIST_ITEMS_PREPEND LIST PREFIX)
 ENDMACRO(LIST_ITEMS_PREPEND)
 
 
-#=================================== JPEG ===================================#
+# set archive extension according to OS and linkers
+IF(WIN32)
+	IF(MSVC)
+		SET(LIB_EXT ".lib")
+	ELSE(MSVC)
+		# MINGW/GCC
+		SET(LIB_EXT ".dll.a")
+	ENDIF(MSVC)
+ELSE(WIN32)
+	# *nix flavours incl. apple
+	SET(LIB_EXT ".so")
+ENDIF(WIN32)
 
-# Patch jmorecfg.h to:
-# 1. Prevent double definition of INT32.
-# 2. Build a DLL rather than a static library.
-IF(NOT EXISTS "${JPEG_DIR}/jmorecfg.h.orig")
-	FILE(READ "${JPEG_DIR}/jmorecfg.h" jmorecfg_h_orig)
-	STRING(REPLACE "XMD_H" "_BASETSD_H" jmorecfg_h "${jmorecfg_h_orig}")
-	STRING(
-		REGEX REPLACE "#define[ \t]+GLOBAL\\(type\\)[^\n]*"
-		"#ifdef JPEG_BUILD\n#define GLOBAL(type) __declspec(dllexport) type\n#else\n#define GLOBAL(type) __declspec(dllimport) type\n#endif"
-		jmorecfg_h "${jmorecfg_h}"
-	)
-	STRING(
-		REGEX REPLACE "#define[ \t]+EXTERN\\(type\\)[^\n]*"
-		"#ifdef JPEG_BUILD\n#define EXTERN(type) extern __declspec(dllexport) type\n#else\n#define EXTERN(type) extern __declspec(dllimport) type\n#endif"
-		jmorecfg_h "${jmorecfg_h}"
-	)
-	FILE(WRITE "${JPEG_DIR}/jmorecfg.h" "${jmorecfg_h}")
-	FILE(WRITE "${JPEG_DIR}/jmorecfg.h.orig" "${jmorecfg_h_orig}")
-	SET(jmorecfg_h "")
-	SET(jmorecfg_h_orig "")
-ENDIF(NOT EXISTS "${JPEG_DIR}/jmorecfg.h.orig")
-
-SET(
-	libjpeg_sources
-	jaricom.c jcapimin.c jcapistd.c jcarith.c jccoefct.c jccolor.c
-	jcdctmgr.c jchuff.c jcinit.c jcmainct.c jcmarker.c jcmaster.c
-	jcomapi.c jcparam.c jcprepct.c jcsample.c jctrans.c jdapimin.c
-	jdapistd.c jdarith.c jdatadst.c jdatasrc.c jdcoefct.c jdcolor.c
-	jddctmgr.c jdhuff.c jdinput.c jdmainct.c jdmarker.c jdmaster.c
-	jdmerge.c jdpostct.c jdsample.c jdtrans.c jerror.c jfdctflt.c
-	jfdctfst.c jfdctint.c jidctflt.c jidctfst.c jidctint.c jquant1.c
-	jquant2.c jutils.c jmemmgr.c jmemnobs.c
-)
-LIST_ITEMS_PREPEND(libjpeg_sources "${JPEG_DIR}/")
-
-CONFIGURE_FILE("${JPEG_DIR}/jconfig.vc" "${JPEG_DIR}/jconfig.h" COPYONLY)
-
-ADD_LIBRARY(${JPEG_LIBRARY_NAME} SHARED ${libjpeg_sources})
-SET_TARGET_PROPERTIES(
-	${JPEG_LIBRARY_NAME} PROPERTIES
-	DEFINE_SYMBOL JPEG_BUILD
-	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/staging/libs"
-	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs"
-	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/staging/libs"
-	ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_BINARY_DIR}/staging/libs"
-	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${QTBUILD_DIR}/bin"
-	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${QTBUILD_DIR}/bin"
-	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${QTBUILD_DIR}/bin"
-	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${QTBUILD_DIR}/bin"
-)
+# set archive prefix according to OS and linkers
+SET(LIB_PREFIX "")
+IF(WIN32)
+	IF(MINGW)
+		SET(LIB_PREFIX "lib")
+	ENDIF()
+ELSE(WIN32)
+	# *nix flavours incl. apple
+	SET(LIB_PREFIX "lib")
+ENDIF(WIN32)
 
 
 #=================================== ZLIB ===================================#
 
-SET(
-	zlib_sources
-	adler32.c compress.c crc32.c deflate.c inffast.c inflate.c
-	inftrees.c trees.c uncompr.c zutil.c
-)
-LIST_ITEMS_PREPEND(zlib_sources "${ZLIB_DIR}/")
 
-ADD_LIBRARY(${ZLIB_LIBRARY_NAME} SHARED ${zlib_sources})
+# Note: Don't set AMD64 option. It breaks Qt build.
+
+ADD_SUBDIRECTORY("${ZLIB_DIR}" "${PROJECT_BINARY_DIR}/zlib-build")
+
 SET_TARGET_PROPERTIES(
-	${ZLIB_LIBRARY_NAME} PROPERTIES
-	DEFINE_SYMBOL ZLIB_DLL
+	${ZLIB_LIB_NAME} PROPERTIES
+	PREFIX ""
+	OUTPUT_NAME ${ZLIB_FILE_NAME}
 	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/staging/libs"
@@ -229,35 +235,73 @@ SET_TARGET_PROPERTIES(
 	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${QTBUILD_DIR}/bin"
 	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${QTBUILD_DIR}/bin"
 )
+
+# Don't build executables
+SET_TARGET_PROPERTIES(
+	example example64 minigzip minigzip64 PROPERTIES
+	EXCLUDE_FROM_ALL 1
+	EXCLUDE_FROM_DEFAULT_BUILD 1	# for VS generators
+)
+
+
+#=================================== JPEG ===================================#
+
+
+# Options
+SET(WITH_TURBOJPEG OFF CACHE BOOL "Include the TurboJPEG API library and associated test programs")
+SET(WITH_JPEG8 ON CACHE BOOL "Emulate libjpeg v8 API/ABI")
+SET(ENABLE_STATIC OFF CACHE BOOL "Build static libraries")
+
+ADD_SUBDIRECTORY("${JPEG_DIR}" "${PROJECT_BINARY_DIR}/jpeg-build")
+
+SET_TARGET_PROPERTIES(
+	${JPEG_LIB_NAME} PROPERTIES
+	PREFIX ""
+	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/staging/libs"
+	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs"
+	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/staging/libs"
+	ARCHIVE_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_BINARY_DIR}/staging/libs"
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${QTBUILD_DIR}/bin"
+	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${QTBUILD_DIR}/bin"
+	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${QTBUILD_DIR}/bin"
+	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${QTBUILD_DIR}/bin"
+)
+
+# Don't build executables
+SET_TARGET_PROPERTIES(
+	rdjpgcom  wrjpgcom cjpeg djpeg jcstest jpegtran PROPERTIES
+	EXCLUDE_FROM_ALL 1
+	EXCLUDE_FROM_DEFAULT_BUILD 1	# for VS generators
+)
+
 
 
 #================================== LIBPNG ==================================#
 
-IF(NOT EXISTS "${PNG_DIR}/pnglibconf.h")
-	IF(EXISTS "${PNG_DIR}/scripts/pnglibconf.h.prebuilt")
-		CONFIGURE_FILE(
-			"${PNG_DIR}/scripts/pnglibconf.h.prebuilt"
-			"${PNG_DIR}/pnglibconf.h" COPYONLY
-		)
-	ENDIF()
-ENDIF()
 
-INCLUDE_DIRECTORIES(${ZLIB_DIR})
+# Options and dependency locations
+SET(PNG_STATIC OFF CACHE BOOL "Build static lib")
+SET(PNG_TESTS OFF CACHE BOOL "Build libpng tests")
+SET(ZLIB_INCLUDE_DIR "${ZLIB_DIR}")
+SET(ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${ZLIB_FILE_NAME}${LIB_EXT}")
+SET(SKIP_INSTALL_LIBRARIES 1)
 
-SET(
-	libpng_sources
-	png.c pngset.c pngget.c pngrutil.c pngtrans.c pngwutil.c pngread.c
-	pngrio.c pngwio.c pngwrite.c pngrtran.c pngwtran.c pngmem.c
-	pngerror.c pngpread.c
-)
-LIST_ITEMS_PREPEND(libpng_sources "${PNG_DIR}/")
+# Include png project
+ADD_SUBDIRECTORY("${PNG_DIR}" "${PROJECT_BINARY_DIR}/png-build")
 
-ADD_DEFINITIONS(-DPNG_NO_MODULEDEF)
-ADD_LIBRARY(${PNG_LIBRARY_NAME} SHARED ${libpng_sources})
-TARGET_LINK_LIBRARIES(${PNG_LIBRARY_NAME} ${ZLIB_LIBRARY_NAME})
+# Since we skip install above, we need to define it ourselves
+install(TARGETS png
+          EXPORT libpng
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# Modify target to make sure libs are copied to the correct place
 SET_TARGET_PROPERTIES(
-	${PNG_LIBRARY_NAME} PROPERTIES
-	DEFINE_SYMBOL PNG_BUILD_DLL
+	${PNG_LIB_NAME} PROPERTIES
+	PREFIX ""
+	OUTPUT_NAME "${PNG_LIB_NAME}"
 	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/staging/libs"
@@ -266,48 +310,59 @@ SET_TARGET_PROPERTIES(
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${QTBUILD_DIR}/bin"
 	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${QTBUILD_DIR}/bin"
 	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${QTBUILD_DIR}/bin"
+)
+
+# Add zlib build time include
+target_include_directories(
+	${PNG_LIB_NAME} PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/zlib-build>
+)
+
+# Don't build executables
+SET_TARGET_PROPERTIES(
+	pngfix png-fix-itxt PROPERTIES
+	EXCLUDE_FROM_ALL 1
+	EXCLUDE_FROM_DEFAULT_BUILD 1	# for VS generators
+)
+
+ADD_DEPENDENCIES(
+	${PNG_LIB_NAME} ${ZLIB_LIB_NAME}
 )
 
 
 #=================================== TIFF ===================================#
 
-INCLUDE_DIRECTORIES("${JPEG_DIR}") # ZLIB_DIR already included above
 
-SET(
-	libtiff_sources
-	tif_aux.c tif_close.c tif_codec.c tif_color.c tif_compress.c
-	tif_dir.c tif_dirinfo.c tif_dirread.c tif_dirwrite.c
-	tif_dumpmode.c tif_error.c tif_extension.c tif_fax3.c
-	tif_fax3sm.c tif_getimage.c tif_jpeg.c tif_ojpeg.c tif_flush.c
-	tif_luv.c tif_lzw.c tif_next.c tif_open.c tif_packbits.c
-	tif_pixarlog.c tif_predict.c tif_print.c tif_read.c tif_swab.c
-	tif_strip.c tif_thunder.c tif_tile.c tif_version.c
-	tif_warning.c tif_write.c tif_zip.c tif_unix.c libtiff.def
-)
-LIST_ITEMS_PREPEND(libtiff_sources "${TIFF_DIR}/libtiff/")
+# Options and dependency locations
+SET(zlib ON CACHE BOOL "use zlib (required for Deflate compression)")
+SET(lzma ON CACHE BOOL "use liblzma (required for LZMA2 compression)")
+SET(ZLIB_FOUND TRUE)
+SET(ZLIB_INCLUDE_DIRS "${ZLIB_DIR}")
+SET(ZLIB_LIBRARIES "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${ZLIB_FILE_NAME}${LIB_EXT}")
+SET(JPEG_INCLUDE_DIR "${JPEG_DIR}")	
+SET(JPEG_LIBRARY "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${JPEG_LIB_NAME}${LIB_EXT}")
 
-SET(tiff_vc_config "${TIFF_DIR}/libtiff/tif_config.vc.h")
-IF(EXISTS "${TIFF_DIR}/libtiff/tif_config.h.vc")
-	SET(tiff_vc_config "${TIFF_DIR}/libtiff/tif_config.h.vc")
-ENDIF(EXISTS "${TIFF_DIR}/libtiff/tif_config.h.vc")
-CONFIGURE_FILE(
-	"${tiff_vc_config}" "${TIFF_DIR}/libtiff/tif_config.h" COPYONLY
-)
-IF(EXISTS "${TIFF_DIR}/libtiff/tiffconf.vc.h")
-	CONFIGURE_FILE(
-		"${TIFF_DIR}/libtiff/tiffconf.vc.h"
-		"${TIFF_DIR}/libtiff/tiffconf.h" COPYONLY
-	)
-ENDIF(EXISTS "${TIFF_DIR}/libtiff/tiffconf.vc.h")
+# TIFF jpeg and zlib dependencies search fails, if the archives do not exist yet.
+# So create them. They will be overwritten with the actual files
+FILE(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/staging/libs/")
+FILE(TOUCH "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${JPEG_LIB_NAME}${LIB_EXT}") 
+#FILE(TOUCH "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${ZLIB_LIB_NAME}${LIB_EXT}") 
 
-ADD_LIBRARY(${TIFF_LIBRARY_NAME} SHARED ${libtiff_sources})
-TARGET_LINK_LIBRARIES(
-	${TIFF_LIBRARY_NAME}
-	${JPEG_LIBRARY_NAME} ${ZLIB_LIBRARY_NAME}
+# Include tiff project
+ADD_SUBDIRECTORY("${TIFF_DIR}" "${PROJECT_BINARY_DIR}/tiff-build")
+#set(ZLIB_SUPPORT TRUE)
+
+# The find jpeg package does not find all includes
+target_include_directories(
+	${TIFF_LIB_NAME} PUBLIC BEFORE
+	PUBLIC "${CMAKE_BINARY_DIR}/jpeg-build"
+	PUBLIC "${CMAKE_BINARY_DIR}/zlib-build"
 )
+
+# Modify target to make sure libs are copied to the correct place
 SET_TARGET_PROPERTIES(
-	${TIFF_LIBRARY_NAME} PROPERTIES
-	COMPILE_FLAGS "-DJPEG_SUPPORT -DOJPEG_SUPPORT -DZIP_SUPPORT"
+	${TIFF_LIB_NAME} PROPERTIES
+	PREFIX ""
 	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/staging/libs"
@@ -316,43 +371,32 @@ SET_TARGET_PROPERTIES(
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${QTBUILD_DIR}/bin"
 	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${QTBUILD_DIR}/bin"
 	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${QTBUILD_DIR}/bin"
+)
+
+ADD_DEPENDENCIES(
+	${TIFF_LIB_NAME} ${ZLIB_LIB_NAME} ${JPEG_LIB_NAME}
 )
 
 
 #================================= OPENJPEG =================================#
 
-SET(
-	openjpeg_sources
-	thread.c bio.c cio.c dwt.c event.c image.c invert.c j2k.c jp2.c mct.c mqc.c
-	openjpeg.c opj_clock.c pi.c t1.c t2.c tcd.c tgt.c function_list.c opj_malloc.c
-	sparse_array.c
-)
-LIST_ITEMS_PREPEND(openjpeg_sources "${OPENJPEG_DIR}/src/lib/openjp2/")
 
-CONFIGURE_FILE(
-  ${OPENJPEG_DIR}/src/lib/openjp2/opj_config.h.cmake.in
-  ${OPENJPEG_DIR}/src/lib/openjp2/opj_config.h
-  @ONLY
-)
+# Options and dependency locations
+SET(BUILD_STATIC_LIBS OFF CACHE BOOL "Build OpenJPEG static library.")
+SET(BUILD_CODEC OFF CACHE BOOL "Build the CODEC executables")
+SET(BUILD_THIRDPARTY OFF CACHE BOOL "Build the thirdparty executables if it is needed")
+SET(PNG_PNG_INCLUDE_DIR "${PNG_DIR}")	
+SET(PNG_LIBRARY "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${PNG_LIB_NAME}${LIB_EXT}")	
+SET(TIFF_INCLUDE_DIR "${TIFF_DIR}")	
+SET(TIFF_LIBRARY "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${TIFF_LIB_NAME}${LIB_EXT}")	
 
-CONFIGURE_FILE(
-  ${OPENJPEG_DIR}/src/lib/openjp2/opj_config_private.h.cmake.in
-  ${OPENJPEG_DIR}/src/lib/openjp2/opj_config_private.h
-  @ONLY
-)
+# Include openjpeg project
+ADD_SUBDIRECTORY("${OPENJPEG_DIR}" "${PROJECT_BINARY_DIR}/openjpeg-build")
 
-add_definitions(-DOPJ_EXPORTS)
-
-ADD_LIBRARY(${OPENJPEG_LIBRARY_NAME} SHARED ${openjpeg_sources})
-
-TARGET_LINK_LIBRARIES(
-	${OPENJPEG_LIBRARY_NAME}
-  ${PNG_LIBRARY_NAME} ${TIFF_LIBRARY_NAME}
-)
-
+# Modify target to make sure libs are copied to the correct place
 SET_TARGET_PROPERTIES(
-	${OPENJPEG_LIBRARY_NAME} PROPERTIES
-	DEFINE_SYMBOL OPENJPEG_BUILD
+	${OPENJPEG_LIB_NAME} PROPERTIES
+	PREFIX ""
 	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/staging/libs"
@@ -361,66 +405,46 @@ SET_TARGET_PROPERTIES(
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${QTBUILD_DIR}/bin"
 	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${QTBUILD_DIR}/bin"
 	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${QTBUILD_DIR}/bin"
+)
+
+# Don't build executables
+SET_TARGET_PROPERTIES(
+	addtiffo ascii_tag custom_dir defer_strile_loading defer_strile_writing fax2ps fax2tiff
+	iptcutil long_tag md5cmp mkg3states pal2rgb ppm2tiff raw_decode raw2tiff rewrite rgb2ycbcr
+	short_tag strip_rw testtypes thumbnail tiff2bw tiff2pdf tiff2ps tiff2rgba tiff-bi tiffcmp
+	tiffcp tiffcrop tiffdither tiffdump tiff-grayscale tiffinfo tiffmedian tiff-palette tiff-rgb
+	tiffset tiffsplit PROPERTIES
+	EXCLUDE_FROM_ALL 1
+	EXCLUDE_FROM_DEFAULT_BUILD 1	# for VS generators
+)
+
+ADD_DEPENDENCIES(
+	${OPENJPEG_LIB_NAME} ${ZLIB_LIB_NAME} ${PNG_LIB_NAME} ${TIFF_LIB_NAME}
 )
 
 
 #================================= FREETYPE =================================#
 
-INCLUDE_DIRECTORIES(${PNG_DIR})
 
-# Patch ftoption.h to:
-# 1. Use our zlib and png libs.
-# 2. Build shared library.
-FILE(READ "${FREETYPE_DIR}/include/freetype/config/ftoption.h"
-  FTOPTION_H)
-STRING(REGEX REPLACE
-  "/\\* +(#define +FT_CONFIG_OPTION_SYSTEM_ZLIB) +\\*/" "\\1"
-  FTOPTION_H "${FTOPTION_H}")
-STRING(REGEX REPLACE
-  "/\\* +(#define +FT_CONFIG_OPTION_USE_PNG) +\\*/" "\\1"
-  FTOPTION_H "${FTOPTION_H}")
-FILE(WRITE "${FREETYPE_DIR}/include/freetype/config/ftoption.h-new"
-  "${FTOPTION_H}")
-EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different
-  "${FREETYPE_DIR}/include/freetype/config/ftoption.h-new"
-  "${FREETYPE_DIR}/include/freetype/config/ftoption.h")
-	
-set(freetype_sources
-	src/autofit/autofit.c src/base/ftbase.c src/base/ftbbox.c src/base/ftbdf.c
-	src/base/ftbitmap.c src/base/ftcid.c src/base/ftfstype.c src/base/ftgasp.c
-	src/base/ftglyph.c src/base/ftgxval.c src/base/ftinit.c src/base/ftmm.c
-	src/base/ftotval.c src/base/ftpatent.c src/base/ftpfr.c src/base/ftstroke.c
-	src/base/ftsynth.c src/base/ftsystem.c src/base/fttype1.c src/base/ftwinfnt.c
-	src/bdf/bdf.c src/bzip2/ftbzip2.c src/cache/ftcache.c src/cff/cff.c
-	src/cid/type1cid.c src/gzip/ftgzip.c src/lzw/ftlzw.c src/pcf/pcf.c
-	src/pfr/pfr.c src/psaux/psaux.c src/pshinter/pshinter.c src/psnames/psnames.c
-	src/raster/raster.c src/sfnt/sfnt.c src/smooth/smooth.c
-	src/truetype/truetype.c src/type1/type1.c src/type42/type42.c
-	src/winfonts/winfnt.c
+# Options and dependency locations
+SET(FREETYPE_NO_DIST 1)
+SET(PNG_INCLUDE_DIRS "${PNG_DIR}")	
+SET(PNG_LIBRARIES "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${PNG_LIB_NAME}${LIB_EXT}")	
+
+# Include freetype project
+ADD_SUBDIRECTORY("${FREETYPE_DIR}" "${PROJECT_BINARY_DIR}/freetype-build")
+
+# the find png package does not find all includes
+target_include_directories(
+	${FREETYPE_LIB_NAME} PUBLIC AFTER
+	PUBLIC "${CMAKE_BINARY_DIR}/png-build"
+	PUBLIC "${CMAKE_BINARY_DIR}/zlib-build"
 )
 
-if (WIN32)
-  set(freetype_sources ${freetype_sources} builds/windows/ftdebug.c
-																					 src/base/ftver.rc)
-else (WIN32)
-  set(freetype_sources ${freetype_sources} src/base/ftdebug.c)
-endif (WIN32)
-
-LIST_ITEMS_PREPEND(freetype_sources "${FREETYPE_DIR}/")
-
-INCLUDE_DIRECTORIES("${FREETYPE_DIR}/include")
-
-ADD_LIBRARY(${FREETYPE_LIBRARY_NAME} SHARED ${freetype_sources})
-
-target_link_libraries(
-	${FREETYPE_LIBRARY_NAME}
-	${ZLIB_LIBRARY_NAME} ${PNG_LIBRARY_NAME}
-)
-
+# Modify target to make sure libs are copied to the correct place
 SET_TARGET_PROPERTIES(
-	${FREETYPE_LIBRARY_NAME} PROPERTIES
-	C_VISIBILITY_PRESET hidden
-	DEFINE_SYMBOL FREETYPE_DLL
+	${FREETYPE_LIB_NAME} PROPERTIES
+	PREFIX ""
 	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/staging/libs"
@@ -431,42 +455,45 @@ SET_TARGET_PROPERTIES(
 	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${QTBUILD_DIR}/bin"
 )
 
-target_compile_definitions(
-  ${FREETYPE_LIBRARY_NAME} PRIVATE FT2_BUILD_LIBRARY _CRT_SECURE_NO_WARNINGS
-	_CRT_NONSTDC_NO_WARNINGS DLL_EXPORT)
+ADD_DEPENDENCIES(
+	${FREETYPE_LIB_NAME} ${ZLIB_LIB_NAME} ${PNG_LIB_NAME}
+)
 
 
 #================================== PODOFO ==================================#
 
-# we use a bit of a different approach here than above and add podofo as as
-# an external subproject
 
-# Tell Podofo the correct dependency paths
-IF(WIN32)
-	SET(LIB_EXT ".lib")
-ELSE()
-	SET(LIB_EXT ".so")
-ENDIF()
-
-SET(PODOFO_BUILD_LIB_ONLY ON)
-SET(ZLIB_INCLUDE_DIR ${ZLIB_DIR})	
-SET(ZLIB_LIBRARY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs/${ZLIB_LIBRARY_NAME}${LIB_EXT}")
+# Options and dependency locations
+SET(PODOFO_BUILD_LIB_ONLY 1)
+SET(PODOFO_BUILD_SHARED 1)
+SET(ZLIB_INCLUDE_DIR "${ZLIB_DIR}")	
+SET(ZLIB_LIBRARY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${ZLIB_FILE_NAME}${LIB_EXT}")
 SET(LIBJPEG_INCLUDE_DIR ${JPEG_DIR})	
-SET(LIBJPEG_LIBRARY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs/${JPEG_LIBRARY_NAME}${LIB_EXT}")	
+SET(LIBJPEG_LIBRARY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${JPEG_LIB_NAME}${LIB_EXT}")	
 SET(PNG_PNG_INCLUDE_DIR ${PNG_DIR})	
-SET(PNG_LIBRARY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs/${PNG_LIBRARY_NAME}${LIB_EXT}")	
+SET(PNG_LIBRARY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${PNG_LIB_NAME}${LIB_EXT}")	
 SET(TIFF_INCLUDE_DIR "${TIFF_DIR}/libtiff")	
-SET(TIFF_LIBRARY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs/${TIFF_LIBRARY_NAME}${LIB_EXT}")	
+SET(TIFF_LIBRARY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${TIFF_LIB_NAME}${LIB_EXT}")	
 SET(FREETYPE_INCLUDE_DIR_FT2BUILD "${FREETYPE_DIR}/include")
 SET(FREETYPE_INCLUDE_DIR_FTHEADER "${FREETYPE_DIR}/include/freetype")	
-SET(FREETYPE_LIBRARY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs/${FREETYPE_LIBRARY_NAME}${LIB_EXT}")	
+SET(FREETYPE_LIBRARY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs/${LIB_PREFIX}${FREETYPE_LIB_NAME}${LIB_EXT}")	
 
 # Include podofo project
 ADD_SUBDIRECTORY(${PODOFO_DIR} "${PROJECT_BINARY_DIR}/podofo-build")
 
+# Some headers of dependencies need to be included manually
+target_include_directories(
+	podofo_shared PUBLIC AFTER
+	PUBLIC "${CMAKE_BINARY_DIR}/jpeg-build"
+	PUBLIC "${CMAKE_BINARY_DIR}/tiff-build/libtiff"
+	PUBLIC "${CMAKE_BINARY_DIR}/png-build"
+	PUBLIC "${CMAKE_BINARY_DIR}/zlib-build"
+)
+
 # Modify target to make sure libs are copied to the correct place
 SET_TARGET_PROPERTIES(
 	podofo_shared PROPERTIES
+	PREFIX ""
 	ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/staging/libs"
 	ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_BINARY_DIR}/staging/libs"
@@ -477,25 +504,39 @@ SET_TARGET_PROPERTIES(
 	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${QTBUILD_DIR}/bin"
 )
 
+ADD_DEPENDENCIES(
+	podofo_shared ${ZLIB_LIB_NAME} ${PNG_LIB_NAME} ${TIFF_LIB_NAME}
+	${JPEG_LIB_NAME} ${FREETYPE_LIB_NAME}
+)
+
+
 #================================= Boost ================================#
 
+
+# Boost 1.7 does not pass the toolset from the bootstrap to the b2 build
+# makefile. So it uses msvc by default. Build fails if you use mingw in a
+# non-standard location (e.g. not in c:\Mingw).
+# Fix: line 15 in bootstrap.bat: call .\build.bat %1
 SET(boost_64bit_flags "")
 IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	LIST(APPEND boost_64bit_flags "address-model=64")
 ENDIF()
 
+SET(BOOST_BUILD_DIR "${CMAKE_BINARY_DIR}/boost-build")
+
 ADD_CUSTOM_TARGET(
 	boost ALL
-	COMMAND cmd /c bootstrap
-	COMMAND b2 --with-test toolset=msvc
+	COMMAND cmd /c bootstrap ${boost_toolset}
+	COMMAND b2 --with-test toolset=${boost_toolset}
 	threading=multi link=static variant=debug,release ${boost_64bit_flags}
-	stage
+	--stagedir=${BOOST_BUILD_DIR} --build-dir=${BOOST_BUILD_DIR}
 	WORKING_DIRECTORY "${BOOST_DIR}"
 	VERBATIM
 )
 
 
 #=================================== Qt ===================================#
+
 
 # Backward compatibility.  We used to patch projects.pro, but now we achieve
 # the same result by other means.
@@ -518,23 +559,23 @@ TO_NATIVE_PATH("${QTBASE_DIR}" QTBASE_DIR_NATIVE)
 # Find all *.conf files under mkspecs that mention -Zc:wchar_t- and remove
 # that minus at the end.  That's necessary to make Qt compatible with other
 # libraries that use wchar_t stuff.
-FILE(GLOB_RECURSE conf_files "${QTBASE_DIR}/mkspecs/*.conf")
-FOREACH(conf_file ${conf_files})
-	FILE(READ "${conf_file}" contents)
-	STRING(REGEX REPLACE "-Zc:wchar_t-" "-Zc:wchar_t" new_contents "${contents}")
-	IF(NOT "${contents}" STREQUAL "${new_contents}")
-		# Make a backup copy, if not already there.
-		IF(NOT EXISTS "${conf_file}.orig")
-			CONFIGURE_FILE("${conf_file}" "${conf_file}.orig" COPYONLY)
-		ENDIF()
+# FILE(GLOB_RECURSE conf_files "${QTBASE_DIR}/mkspecs/*.conf")
+# FOREACH(conf_file ${conf_files})
+	# FILE(READ "${conf_file}" contents)
+	# STRING(REGEX REPLACE "-Zc:wchar_t-" "-Zc:wchar_t" new_contents "${contents}")
+	# IF(NOT "${contents}" STREQUAL "${new_contents}")
+		# # Make a backup copy, if not already there.
+		# IF(NOT EXISTS "${conf_file}.orig")
+			# CONFIGURE_FILE("${conf_file}" "${conf_file}.orig" COPYONLY)
+		# ENDIF()
 
-		FILE(WRITE "${conf_file}" "${new_contents}")
-	ENDIF()
-ENDFOREACH()
+		# FILE(WRITE "${conf_file}" "${new_contents}")
+	# ENDIF()
+# ENDFOREACH()
 
 
 IF(MSVC)
-	# Disable frame pointer ommission in release mode to ensure
+	# Disable frame pointer omission in release mode to ensure
 	# good stack traces from our built-in crash reporter.
 	PATCH_FILE(
 		"${QTBASE_DIR}/mkspecs/win32-msvc/qmake.conf"
@@ -548,17 +589,6 @@ IF(MSVC)
 ENDIF()
 	
 
-# Force debugging symbols even for release builds.
-# Qt5 has a -force-debug-info configure option
-# but I had to do the following to make it actually work:
-PATCH_FILE(
-	"${QTBASE_DIR}/.qmake.conf"
-	
-	# Put "CONFIG += force_debug_info" at the end.
-	"/(.)$/\\1\nCONFIG += force_debug_info\n/"
-)
-
-
 SET(qt_build_script "${CMAKE_BINARY_DIR}/build-qt.bat")
 
 SET(maybe_skip_building_tools "")
@@ -571,19 +601,19 @@ ADD_CUSTOM_COMMAND(
 	COMMAND "${CMAKE_COMMAND}"
 	"-DPROJECT_ROOT=${CMAKE_SOURCE_DIR}/../../.."
 	"-DTARGET_FILE=${qt_build_script}"
-	"-DPLATFORM=win32-msvc"
+	"-DPLATFORM=${qt_platform}"
 	"-DMAYBE_SKIP_BUILDING_TOOLS=${maybe_skip_building_tools}"
-	"-DMAKE_COMMAND=${make_command}"
+	"-DMAKE_COMMAND=${MAKE_COMMAND}"
 	"-DQTBUILD_DIR=${QTBUILD_DIR}"
 	"-DQTBASE_DIR=${QTBASE_DIR}"
 	"-DJPEG_INCLUDE_DIR=${JPEG_INCLUDE_DIR}"
 	"-DZLIB_INCLUDE_DIR=${ZLIB_INCLUDE_DIR}"
 	"-DPNG_INCLUDE_DIR=${PNG_INCLUDE_DIR}"
 	"-DFREETYPE_INCLUDE_DIR=${FREETYPE_INCLUDE_DIR}"
-	"-DJPEG_LINK_DIR=$<TARGET_LINKER_FILE_DIR:${JPEG_LIBRARY_NAME}>"
-	"-DZLIB_LINK_DIR=$<TARGET_LINKER_FILE_DIR:${ZLIB_LIBRARY_NAME}>"
-	"-DPNG_LINK_DIR=$<TARGET_LINKER_FILE_DIR:${PNG_LIBRARY_NAME}>"
-	"-DFREETYPE_LINK_DIR=$<TARGET_LINKER_FILE_DIR:${FREETYPE_LIBRARY_NAME}>"
+	"-DJPEG_LINK_DIR=$<TARGET_LINKER_FILE_DIR:${JPEG_LIB_NAME}>"
+	"-DZLIB_LINK_DIR=$<TARGET_LINKER_FILE_DIR:${ZLIB_LIB_NAME}>"
+	"-DPNG_LINK_DIR=$<TARGET_LINKER_FILE_DIR:${PNG_LIB_NAME}>"
+	"-DFREETYPE_LINK_DIR=$<TARGET_LINKER_FILE_DIR:${FREETYPE_LIB_NAME}>"
 	-P "${CMAKE_CURRENT_SOURCE_DIR}/generate_qt_build_script.cmake"
 	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/generate_qt_build_script.cmake"
 	VERBATIM
@@ -596,12 +626,12 @@ ADD_CUSTOM_TARGET(
 	WORKING_DIRECTORY "${QTBUILD_DIR}"
 )
 
-# boost added so that boost is built before Qt. That's helpful if build
+# Boost added so that boost is built before Qt. That's helpful if build
 # errors occur, as rebuilding boost is much faster than rebuilding Qt.
 ADD_DEPENDENCIES(
-	Qt ${ZLIB_LIBRARY_NAME} ${JPEG_LIBRARY_NAME}
-	${PNG_LIBRARY_NAME} ${TIFF_LIBRARY_NAME} ${OPENJPEG_LIBRARY_NAME}
-	${FREETYPE_LIBRARY_NAME}
+	Qt boost ${ZLIB_LIB_NAME} ${JPEG_LIB_NAME}
+	${PNG_LIB_NAME} ${TIFF_LIB_NAME} ${OPENJPEG_LIB_NAME}
+	${FREETYPE_LIB_NAME}
 )
 
 # If you have multiple versions of Qt installed, this script
@@ -664,4 +694,5 @@ ENDIF()
 
 #==========================================================================#
 
+# Export some variables for main project
 CONFIGURE_FILE(export-vars.cmake.in "${CMAKE_BINARY_DIR}/export-vars.cmake" @ONLY)

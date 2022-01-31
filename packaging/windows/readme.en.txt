@@ -117,12 +117,20 @@ latest stable version.
    the "Generate" button will become clickable. Click it. Sometimes it's
    necessary to click "Configure" more than once before "Generate" becomes
    clickable.
+	
+	Alternatively, run cmake on the command line from the build directory.
+	Depending on your environment, you may have to specify a generator
+	(e.g "Visual Studio 15 2017" or "MinGW Makefiles" with the -G option):
+	
+	cmake ..\scantailor\packaging\windows\build_deps\ -G "MinGW Makefiles"
 
 6. We will be building Scan Tailor's dependencies here. This step is the
    longest one (may take a few hours), but fortunately it only has to be done
    once. When building newer versions of Scan Tailor, you won't need to
    redo this step unless you want to update any libraries.
    
+	For Visual Studio:
+	
    Go to C:\build\scantailor-deps-build and open file
    "Scan Tailor Dependencies.sln".  It will open in Visual Studio.
    IMPORTANT: Set the build type to RelWithDebInfo. If you leave Debug
@@ -133,6 +141,16 @@ latest stable version.
    selected automatically.
    
    Now do Build -> Build Solution.
+
+
+	For MinGW:
+	
+	Run your native build tool in the build-deps folder from the command line:
+	
+	mingw32-make -j5
+	
+	(-j specifies the number of parallel processes to use).
+	
    
    Make sure the building process finishes without errors. Warnings may
    be ignored.
