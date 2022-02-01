@@ -54,7 +54,6 @@
 #include "imageproc/PolygonUtils.h"
 #include "imageproc/DrawOver.h"
 #include "imageproc/AffineTransform.h"
-#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <QImage>
 #include <QString>

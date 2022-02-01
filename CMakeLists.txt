@@ -925,7 +925,7 @@ IF(WIN32)
 	
 	# Mingw runtimes
 	IF(MINGW)
-		## TODO: Copy ligcc*.dll to build dir
+		## TODO: Copy libcc*.dll to build dir
 	
 	ENDIF()
 
