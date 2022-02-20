@@ -20,5 +20,6 @@ SOURCE_GROUP(Sources FILES ${sources})
 
 ADD_LIBRARY(interaction STATIC ${sources})
 TARGET_LINK_LIBRARIES(interaction Qt5::Widgets)
+target_include_directories(interaction INTERFACE ${EIGEN3_INCLUDE_DIR})
 
 TRANSLATION_SOURCES(scantailor ${sources})

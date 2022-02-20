@@ -513,7 +513,7 @@ ADD_DEPENDENCIES(
 #================================= Boost ================================#
 
 
-# Boost 1.7 does not pass the toolset from the bootstrap to the b2 build
+# Boost 1.77 does not pass the toolset from the bootstrap to the b2 build
 # makefile. So it uses msvc by default. Build fails if you use mingw in a
 # non-standard location (e.g. not in c:\Mingw).
 # Fix: line 15 in bootstrap.bat: call .\build.bat %1

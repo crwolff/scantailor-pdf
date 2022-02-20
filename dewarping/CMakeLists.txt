@@ -21,15 +21,18 @@ SET(
 SOURCE_GROUP("Sources" FILES ${sources})
 
 ADD_DEFINITIONS(-DBUILDING_DEWARPING)
-ADD_LIBRARY(dewarping SHARED ${sources})
+ADD_LIBRARY(dewarping ${MAYBE_STATIC} ${sources})
 TARGET_LINK_LIBRARIES(dewarping imageproc math foundation Qt5::Widgets Qt5::Xml)
+target_include_directories(dewarping INTERFACE ${EIGEN3_INCLUDE_DIR})
 
-# We want the DLL located where executables can find it.
-SET_TARGET_PROPERTIES(
-	dewarping PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-)
+if(NOT STATIC_BUILD)
+	# We want the DLL located where executables can find it.
+	SET_TARGET_PROPERTIES(
+		dewarping PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+	)
 
-INSTALL(TARGETS dewarping DESTINATION lib/scantailor)
+	INSTALL(TARGETS dewarping DESTINATION lib/scantailor)
+endif()
 
 TRANSLATION_SOURCES(scantailor ${sources})

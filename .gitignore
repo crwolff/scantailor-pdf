@@ -25,3 +25,11 @@ scantailor
 scantailor-cli
 scantailor-cli.exe
 scantailor.exe
+
+# Some folders
+extern/*
+!extern/src
+extern/src/*
+!extern/src/patches
+
+

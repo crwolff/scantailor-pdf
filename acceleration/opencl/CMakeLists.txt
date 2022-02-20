@@ -50,6 +50,7 @@ IF(ENABLE_OPENCL)
 
 	ADD_LIBRARY(opencl STATIC ${host_sources} ${device_sources} ${resource_sources})
 	TARGET_LINK_LIBRARIES(opencl acceleration Qt5::Core Qt5::Gui ${OpenCL_LIBRARIES})
+	target_include_directories(opencl INTERFACE ${EIGEN3_INCLUDE_DIR})
 
 	ADD_LIBRARY(opencl_plugin MODULE ${plugin_sources} resources.qrc)
 	TARGET_LINK_LIBRARIES(opencl_plugin opencl dewarping imageproc)

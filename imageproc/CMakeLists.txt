@@ -63,15 +63,18 @@ SET(
 SOURCE_GROUP(Sources FILES ${sources})
 
 ADD_DEFINITIONS(-DBUILDING_IMAGEPROC)
-ADD_LIBRARY(imageproc SHARED ${sources})
+ADD_LIBRARY(imageproc ${MAYBE_STATIC} ${sources})
 TARGET_LINK_LIBRARIES(imageproc foundation Qt5::Core Qt5::Gui)
+target_include_directories(imageproc INTERFACE ${EIGEN3_INCLUDE_DIR})
 
-# We want the DLL located where executables can find it.
-SET_TARGET_PROPERTIES(
-	imageproc PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-)
+if(NOT STATIC_BUILD)
+	# We want the DLL located where executables can find it.
+	SET_TARGET_PROPERTIES(
+		imageproc PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+	)
 
-INSTALL(TARGETS imageproc DESTINATION lib/scantailor)
+	INSTALL(TARGETS imageproc DESTINATION lib/scantailor)
+endif()
 
 ADD_SUBDIRECTORY(tests)

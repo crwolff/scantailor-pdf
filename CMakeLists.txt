@@ -1,15 +1,48 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.6.0)
+cmake_minimum_required(VERSION 3.15.0)
 
-IF(POLICY CMP0003)
+if(POLICY CMP0003)
 	# Allow linking with full library path instead of -L/path -llibrary
-	CMAKE_POLICY(SET CMP0003 NEW)
-ENDIF()
+	cmake_policy(SET CMP0003 NEW)
+endif()
 
-IF(POLICY CMP0048)
+if(POLICY CMP0048)
 	# When PROJECT() is missing the VERSION argument, set the corresponding
 	# CMake variables to zero.
-	CMAKE_POLICY(SET CMP0048 NEW)
-ENDIF()
+	cmake_policy(SET CMP0048 NEW)
+endif()
+
+
+project("Scan Tailor PDF")
+
+
+##---------- User cmake options ----------##
+
+# When using this option, all dependencies need to be installed and be locatable
+# by find_package(), find_library(), and find_file(). You may set
+# CMAKE_PREFIX_PATH accordingly.
+option(USE_SYSTEM_LIBS "Use installed libraries instead of the project supplied ones. Halts and gives an error if a dependency is not found using find_package()." OFF)
+
+# This will always build the project supplied external dependencies, including QT.
+# Most Find….cmake modules only find dynamic libraries. So the maintenance effort
+# is too big, to find system static libraries across all supported platforms and
+# compilers.
+option(STATIC_BUILD "Statically link all libraries." OFF)
+if(STATIC_BUILD)
+	set(MAYBE_STATIC "STATIC")
+endif()
+
+# Crash reporter, only Windows + MSVC supported for now.
+# Must go before generating config.h, as ENABLE_CRASH_REPORTER
+# goes in there.
+IF(MSVC)
+	OPTION(ENABLE_CRASH_REPORTER "Enable crash reporter (only for official builds)" OFF)
+ENDIF(MSVC)
+
+option(BUILD_CLI "Build the command line Scan Tailor executable." OFF)
+
+
+
+
 
 SET(
 	CMAKE_USER_MAKE_RULES_OVERRIDE
@@ -19,8 +52,6 @@ SET(
 	CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
 	"${CMAKE_SOURCE_DIR}/cmake/default_cxxflags.cmake"
 )
-
-PROJECT("Scan Tailor PDF")
 
 SET(CMAKE_CXX_STANDARD 11)
 
@@ -103,453 +134,594 @@ IF(CMAKE_COMPILER_IS_GNUCC)
 	ST_SET_DEFAULT_GCC_FLAGS()
 ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
-GET_FILENAME_COMPONENT(source_outer_dir "${PROJECT_SOURCE_DIR}/.." ABSOLUTE)
-GET_FILENAME_COMPONENT(build_outer_dir "${PROJECT_BINARY_DIR}/.." ABSOLUTE)
+#GET_FILENAME_COMPONENT(source_outer_dir "${PROJECT_SOURCE_DIR}/.." ABSOLUTE)
+#GET_FILENAME_COMPONENT(build_outer_dir "${PROJECT_BINARY_DIR}/.." ABSOLUTE)
 
 
 #==================================================================#
 #====================== Dependency search =========================#
 #==================================================================#
 
-SET(STAGING_LIBS_DIR "")
-SET(DLLS "")
+set(EXTERN ${PROJECT_SOURCE_DIR}/extern)
+message(STATUS "External dependencies will be stored in ${EXTERN}")
 
-#=========================== OpenGL ===============================#
+if(STATIC_BUILD)
+	# https://cmake.org/cmake/help/latest/module/ExternalProject.html
+	include(ExternalProject)
 
-INCLUDE(FindOpenGL)
-CMAKE_DEPENDENT_OPTION(
+	# This dir structure follows the GNU installation structure
+	set(EXTERN_INC_DIR ${EXTERN}/include)
+	set(EXTERN_LIB_DIR ${EXTERN}/lib)
+	set(EXTERN_BIN_DIR ${EXTERN}/bin)
+
+	# Make sure, find_*() functions can find external dependencies
+	set(CMAKE_PREFIX_PATH ${EXTERN})
+
+	# Multiprocessor options for quicker compilation of various libraries
+	set(MP "")	# Configure QT5 to use multiple processors when using nmake
+	set(JX "")	# Make [mingw32-]make use multiple processors for QT5 build
+	if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
+		set(MP "-mp")	# Appended to the QT5 configure step
+	elseif(
+		${CMAKE_GENERATOR} STREQUAL "MinGW Makefiles" OR
+		${CMAKE_GENERATOR} STREQUAL "Unix Makefiles" OR
+		${CMAKE_GENERATOR} STREQUAL "MSYS Makefiles"
+		)
+			include(ProcessorCount)
+			ProcessorCount(N)
+			math(EXPR THREADS "${N} - 1")
+			if(NOT N EQUAL 0)
+				set(JX "-j${THREADS}")
+			endif()
+	elseif(${CMAKE_GENERATOR} STREQUAL "Ninja")
+		if(POLICY CMP0048)
+			# Prevent Warnings about byproducts and phony targets for Ninja generator
+			cmake_policy(SET CMP0058 OLD)
+		endif()
+	endif()
+endif()
+
+# List of include directories for all external libraries
+list(APPEND ALL_EXTERN_INC_DIRS ${EXTERN_INC_DIR})
+
+
+# External library targets
+# The following cmake files will search for and/or download and build
+# all external dependencies. They set all LIB_* variables and add all
+# needed include directories to the ALL_EXTERN_INC_DIRS variable. 
+set(LIB_ZLIB "")
+include(cmake/extern/zlib.cmake)
+
+set(LIB_JPEG "")
+include(cmake/extern/jpeg.cmake)
+
+set(LIB_PNG "")
+include(cmake/extern/png.cmake)
+
+set(LIB_TIFF "")
+include(cmake/extern/tiff.cmake)
+
+set(LIB_OPENJP "")
+include(cmake/extern/openjp.cmake)
+
+set(LIB_FREETYPE "")
+include(cmake/extern/freetype.cmake)
+
+set(LIB_PODOFO "")
+include(cmake/extern/podofo.cmake)
+
+# OpenCL is currently only supported on Windows with MSVC
+if(MSVC)
+	set(LIB_OPENCL "")
+	include(cmake/extern/opencl.cmake)
+	cmake_dependent_option(
+		ENABLE_OPENCL "OpenCL may be used for acceleration of image processing" ON
+		"OpenCL_FOUND" OFF
+	)
+endif()
+
+set(EIGEN3_INCLUDE_DIR "")
+include(cmake/extern/eigen3.cmake)
+
+include(FindOpenGL)
+cmake_dependent_option(
 	ENABLE_OPENGL "OpenGL may be used for UI acceleration" ON
 	"OPENGL_FOUND" OFF
 )
 
+set(LIB_BOOST "")
+include(cmake/extern/boost.cmake)
+
+set(CMAKE_AUTOMOC ON)
+set(qt_min_version 5.3)
+include(cmake/extern/qt5.cmake)
+
+
+# SET(STAGING_LIBS_DIR "")
+# SET(DEPS_BUILD_DIR "")
+# SET(DLLS "")
+
+# IF(WIN32)
+	# FIND_PATH(
+		# DEPS_BUILD_DIR export-vars.cmake
+		# HINTS "${build_outer_dir}/scantailor-deps-build"
+		# DOC "Build directory for Scan Tailor dependencies."
+	# )
+	# IF(NOT DEPS_BUILD_DIR)
+		# MESSAGE(
+			# "The build directory for Scan Tailor dependencies could not be found. "
+			# "If all external libraries are installed, they should be found and used. "
+			# "But if you build them locally, you can specify it manually with the "
+			# "DEPS_BUILD_DIR variable. Make sure you build the dependencies first!"
+		# )
+	# ELSE()
+		# SET(STAGING_LIBS_DIR "${DEPS_BUILD_DIR}/staging/libs")
+		# LIST(PREPEND CMAKE_PREFIX_PATH "${DEPS_BUILD_DIR}/staging")
+		# INCLUDE("${DEPS_BUILD_DIR}/export-vars.cmake")
+	# ENDIF()
+# ENDIF()
+
+#=========================== OpenGL ===============================#
+
+# INCLUDE(FindOpenGL)
+# CMAKE_DEPENDENT_OPTION(
+	# ENABLE_OPENGL "OpenGL may be used for UI acceleration" ON
+	# "OPENGL_FOUND" OFF
+# )
+
 #=========================== OpenCL ===============================#
 
-IF(MSVC)
-	INCLUDE(FindOpenCL)
-	IF(NOT OpenCL_FOUND)
-	  FIND_LIBRARY(
-		 OpenCL_LIBRARY NAMES opencl libopencl
-		 PATHS "${build_outer_dir}/opencl"
-		 DOC "Local OpenCL library path"
-	  )
+# IF(MSVC)
+	# INCLUDE(FindOpenCL)
+	# IF(NOT OpenCL_FOUND)
+	  # FIND_LIBRARY(
+		 # OpenCL_LIBRARY NAMES opencl libopencl
+		 # PATHS "${build_outer_dir}/opencl"
+		 # DOC "Local OpenCL library path"
+	  # )
 
-	  FIND_PATH(
-		 OpenCL_INCLUDE_DIR NAMES opencl.h cl.h cl.hpp
-		 PATHS "${build_outer_dir}/opencl/cl"
-		 DOC "Local OpenCL include path"
-	  )
+	  # FIND_PATH(
+		 # OpenCL_INCLUDE_DIR NAMES opencl.h cl.h cl.hpp
+		 # PATHS "${build_outer_dir}/opencl/cl"
+		 # DOC "Local OpenCL include path"
+	  # )
 
-	  IF(OpenCL_LIBRARY AND OpenCL_INCLUDE_DIR)
-	  SET(OpenCL_FOUND ON)
-	  INCLUDE_DIRECTORIES("${OpenCL_INCLUDE_DIR}")
-	  ENDIF()
-	ENDIF()
-ENDIF(MSVC)
-CMAKE_DEPENDENT_OPTION(
-	ENABLE_OPENCL "OpenCL may be used for acceleration of image processing" ON
-	"OpenCL_FOUND" OFF
-)
+	  # IF(OpenCL_LIBRARY AND OpenCL_INCLUDE_DIR)
+	  # SET(OpenCL_FOUND ON)
+	  # INCLUDE_DIRECTORIES("${OpenCL_INCLUDE_DIR}")
+	  # ENDIF()
+	# ENDIF()
+# ENDIF(MSVC)
+# CMAKE_DEPENDENT_OPTION(
+	# ENABLE_OPENCL "OpenCL may be used for acceleration of image processing" ON
+	# "OpenCL_FOUND" OFF
+# )
 
 
-#========================= Eigen and Qt ===========================#
+#============================= Eigen ===============================#
 
-IF(WIN32)
-	FILE(GLOB eigen_dirs1 "${build_outer_dir}/eigen-*")
-	FILE(GLOB eigen_dirs2 "${source_outer_dir}/eigen-*")
+# Try to find local eigen folders
+# IF(WIN32 AND DEPS_BUILD_DIR)
+	# FILE(GLOB eigen_dirs1 "${build_outer_dir}/eigen-*")
+	# FILE(GLOB eigen_dirs2 "${source_outer_dir}/eigen-*")
+	
+	# FIND_PATH(
+		# EIGEN3_INCLUDE_DIR NAMES signature_of_eigen3_matrix_library
+		# PATHS ${eigen_dirs1} ${eigen_dirs2}
+		# DOC "Path to Eigen include directory (containing \"Eigen\" subdirectory)"
+	# )
+# ENDIF()
 
-	FIND_PATH(
-		EIGEN3_INCLUDE_DIR NAMES signature_of_eigen3_matrix_library
-		PATHS ${eigen_dirs1} ${eigen_dirs2}
-		DOC "Path to Eigen include directory (containing \"Eigen\" subdirectory)"
-	)
+# FIND_PACKAGE(Eigen3)
 
-	FIND_PATH(
-		DEPS_BUILD_DIR export-vars.cmake
-		HINTS "${build_outer_dir}/scantailor-deps-build"
-		DOC "Build directory for Scan Tailor dependencies."
-	)
-	IF(NOT DEPS_BUILD_DIR)
-		MESSAGE(
-			FATAL_ERROR "The build directory for Scan Tailor dependencies could not be found! "
-			"You can specify it manually in DEPS_BUILD_DIR variable. Make sure you build the dependencies first!"
-		)
-	ENDIF()
-	SET(STAGING_LIBS_DIR "${DEPS_BUILD_DIR}/staging/libs")
-	INCLUDE("${DEPS_BUILD_DIR}/export-vars.cmake")
-
-	SET(Qt5Core_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5Core")
-	SET(Qt5Gui_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5Gui")
-	SET(Qt5Widgets_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5Widgets")
-	SET(Qt5Xml_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5Xml")
-	SET(Qt5Network_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5Network")
-	SET(Qt5OpenGL_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5OpenGL")
-	IF(QT_PREBUILT_DIR)
-		SET(Qt5LinguistTools_DIR "${QT_PREBUILT_DIR}/lib/cmake/Qt5LinguistTools")
-	ELSE()
-	  # This has changed from qtbase to qttools probably in Qt version 5.9.
-		# Might also be required above.
-		SET(Qt5LinguistTools_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5LinguistTools")
-	ENDIF()
-ENDIF()
-
-FIND_PACKAGE(Eigen3)
-IF(NOT EIGEN3_FOUND)
-	MESSAGE(FATAL_ERROR
-		"Could not find Eigen (version 3) headers.\n"
-		"You may need to install Eigen3 or set EIGEN3_INCLUDE_DIR manually."
-	)
-ENDIF()
-INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
+# IF(NOT EIGEN3_FOUND)	
+	# MESSAGE(FATAL_ERROR
+		# "Could not find Eigen (version 3) headers.\n"
+		# "You may need to install Eigen3 or set EIGEN3_INCLUDE_DIR manually."
+	# )
+# ENDIF()
+# INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
 
 # Once Eigen starts using C++11 alignas() feature, this can be removed.
 #ADD_DEFINITIONS(-DEIGEN_DONT_ALIGN_STATICALLY)
 
-SET(CMAKE_AUTOMOC ON)
-SET(qt_min_version 5.3)
-FIND_PACKAGE(Qt5Core ${qt_min_version} REQUIRED)
-FIND_PACKAGE(Qt5Gui ${qt_min_version} REQUIRED)
-FIND_PACKAGE(Qt5Widgets ${qt_min_version} REQUIRED)
-FIND_PACKAGE(Qt5Xml ${qt_min_version} REQUIRED)
-FIND_PACKAGE(Qt5Network ${qt_min_version} REQUIRED)
-FIND_PACKAGE(Qt5LinguistTools ${qt_min_version} REQUIRED)
-IF(ENABLE_OPENGL)
-	FIND_PACKAGE(Qt5OpenGL ${qt_min_version} REQUIRED)
-ENDIF()
+
+#============================== Qt ================================#
+
+# IF(WIN32 AND DEPS_BUILD_DIR)
+	# SET(Qt5Core_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5Core")
+	# SET(Qt5Gui_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5Gui")
+	# SET(Qt5Widgets_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5Widgets")
+	# SET(Qt5Xml_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5Xml")
+	# SET(Qt5Network_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5Network")
+	# SET(Qt5OpenGL_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5OpenGL")
+	# IF(QT_PREBUILT_DIR)
+		# SET(Qt5LinguistTools_DIR "${QT_PREBUILT_DIR}/lib/cmake/Qt5LinguistTools")
+	# ELSE()
+	  # # This has changed from qtbase to qttools probably in Qt version 5.9.
+		# # Might also be required above.
+		# SET(Qt5LinguistTools_DIR "${QT_BUILD_DIR}/lib/cmake/Qt5LinguistTools")
+	# ENDIF()
+# ENDIF()
+
+
+
+# SET(CMAKE_AUTOMOC ON)
+# SET(qt_min_version 5.3)
+# FIND_PACKAGE(Qt5Core ${qt_min_version} REQUIRED)
+# FIND_PACKAGE(Qt5Gui ${qt_min_version} REQUIRED)
+# FIND_PACKAGE(Qt5Widgets ${qt_min_version} REQUIRED)
+# FIND_PACKAGE(Qt5Xml ${qt_min_version} REQUIRED)
+# FIND_PACKAGE(Qt5Network ${qt_min_version} REQUIRED)
+# FIND_PACKAGE(Qt5LinguistTools ${qt_min_version} REQUIRED)
+# IF(ENABLE_OPENGL)
+	# FIND_PACKAGE(Qt5OpenGL ${qt_min_version} REQUIRED)
+# ENDIF()
 
 
 
 #============================ JPEG ===============================#
 
-FIND_PATH(
-	JPEG_INCLUDE_DIR jpeglib.h
-	PATHS /usr/local/include /usr/include
-	HINTS ${JPEG_DIR} # JPEG_DIR may come from export-vars.cmake
-	DOC "Path to libjpeg headers."
-)
-IF(NOT JPEG_INCLUDE_DIR)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find jpeg headers.\n"
-		"You may need to install a package named libjpeg62-dev or similarly."
-	)
-ENDIF()
+# FIND_PACKAGE(JPEG)
 
-INCLUDE_DIRECTORIES("${JPEG_INCLUDE_DIR}")
-
-FIND_LIBRARY(
-	JPEG_LIBRARY NAMES jpeg libjpeg
-	PATHS /usr/local/lib /usr/lib
-	HINTS ${STAGING_LIBS_DIR}
-	DOC "Path to jpeg library."
-)
-IF(NOT JPEG_LIBRARY)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find jpeg library.\n"
-		"You may need to install a package named libjpeg62-dev or similarly."
-	)
-ENDIF()
-
-# Find dll
-IF(WIN32)
-	FILE(GLOB JPEG_DLL 
-		LIST_DIRECTORIES false
-		"${QT_BUILD_DIR}/bin/*jpeg*.dll")
-	IF(NOT JPEG_DLL)
-		MESSAGE(
-			FATAL_ERROR
-			"Could not find jpeg dll in dependency qt-build\\bin folder."
-		)
-	ENDIF()
-ENDIF()
-
-
-#============================ ZLIB ===============================#
-
-FIND_PATH(
-	ZLIB_INCLUDE_DIR zlib.h
-	PATHS /usr/local/include /usr/include
-	HINTS ${ZLIB_DIR} # ZLIB_DIR may come from export-vars.cmake
-	DOC "Path to zlib headers."
-)
-IF(NOT ZLIB_INCLUDE_DIR)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find zlib headers.\n"
-		"You may need to install a package named zlib1g-dev or similarly."
-	)
-ENDIF()
-
-INCLUDE_DIRECTORIES("${ZLIB_INCLUDE_DIR}")
-
-FIND_LIBRARY(
-	ZLIB_LIBRARY NAMES z zdll libz
-	PATHS /usr/local/lib /usr/lib
-	HINTS ${STAGING_LIBS_DIR}
-	DOC "Path to zlib library."
-)
-IF(NOT ZLIB_LIBRARY)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find zlib library.\n"
-		"You may need to install a package named zlib1g-dev or similarly."
-	)
-ENDIF()
-
-# Find dll
-IF(WIN32)
-	FILE(GLOB ZLIB_DLL 
-		LIST_DIRECTORIES false
-		"${QT_BUILD_DIR}/bin/*z*.dll")
-	IF(NOT ZLIB_DLL)
-		MESSAGE(
-			FATAL_ERROR
-			"Could not find zlib dll in dependency qt-build\\bin folder."
-		)
-	ENDIF()
-ENDIF()
-
-
-#============================ PNG ===============================#
-
-FIND_PATH(
-	PNG_INCLUDE_DIR png.h
-	PATHS /usr/local/include /usr/include
-	HINTS ${PNG_DIR} # PNG_DIR may come from export-vars.cmake
-	DOC "Path to libpng headers."
-)
-IF(NOT PNG_INCLUDE_DIR)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find libpng headers.\n"
-		"You may need to install a package named libpng12-dev or similarly."
-	)
-ENDIF()
-
-INCLUDE_DIRECTORIES("${PNG_INCLUDE_DIR}")
-
-FIND_LIBRARY(
-	PNG_LIBRARY NAMES png libpng
-	PATHS /usr/local/lib /usr/lib
-	HINTS ${STAGING_LIBS_DIR}
-	DOC "Path to png library."
-)
-IF(NOT PNG_LIBRARY)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find libpng library.\n"
-		"You may need to install a package named libpng12-dev or similarly."
-	)
-ENDIF()
-
-# Find dll
-IF(WIN32)
-	FILE(GLOB PNG_DLL 
-		LIST_DIRECTORIES false
-		"${QT_BUILD_DIR}/bin/*png*.dll")
-	IF(NOT PNG_DLL)
-		MESSAGE(
-			FATAL_ERROR
-			"Could not find png dll in dependency qt-build\\bin folder."
-		)
-	ENDIF()
-ENDIF()
-
-
-#============================ TIFF ===============================#
-
-FIND_PATH(
-	TIFF_INCLUDE_DIR tiff.h
-	PATHS /usr/local/include /usr/include
-	HINTS ${TIFF_DIR} # TIFF_DIR may come from export-vars.cmake
-	PATH_SUFFIXES libtiff
-	DOC "Path to libtiff headers."
-)
-IF(NOT TIFF_INCLUDE_DIR)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find libtiff headers.\n"
-		"You may need to install a package named libtiff4-dev or similarly."
-	)
-ENDIF()
-
-INCLUDE_DIRECTORIES("${TIFF_INCLUDE_DIR}")
-
-FIND_LIBRARY(
-	TIFF_LIBRARY NAMES tiff libtiff
-	PATHS /usr/local/lib /usr/lib
-	HINTS ${STAGING_LIBS_DIR}
-	PATH_SUFFIXES libtiff
-	DOC "Path to tiff library."
-)
-IF(NOT TIFF_LIBRARY)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find libtiff library.\n"
-		"You may need to install a package named libtiff4-dev or similarly."
-	)
-ENDIF()
-
-# Find dll
-IF(WIN32)
-	FILE(GLOB TIFF_DLL 
-		LIST_DIRECTORIES false
-		"${QT_BUILD_DIR}/bin/*tiff*.dll")
-	IF(NOT TIFF_DLL)
-		MESSAGE(
-			FATAL_ERROR
-			"Could not find tiff dll in dependency qt-build\\bin folder."
-		)
-	ENDIF()
-ENDIF()
-
-
-#============================ Openjpeg ===============================#
-
-FIND_PATH(
-	OPENJPEG_INCLUDE_DIR openjpeg.h
-	PATHS ${OPENJPEG_DIR} # OPENJPEG_DIR may come from export-vars.cmake
-	PATH_SUFFIXES /src/lib/openjp2
-	DOC "Path to openjpeg headers."
-)
-IF(NOT OPENJPEG_INCLUDE_DIR)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find openjpeg headers.\n"
-		"You may need to install a package named libopenjp2-dev or similarly."
-	)
-ENDIF()
-
-INCLUDE_DIRECTORIES("${OPENJPEG_INCLUDE_DIR}")
-
-FIND_LIBRARY(
-	OPENJPEG_LIBRARY NAMES openjp2 libopenjp2
-	PATHS /usr/local/lib /usr/lib
-	HINTS ${STAGING_LIBS_DIR}
-	DOC "Path to openjpeg library."
-)
-IF(NOT OPENJPEG_LIBRARY)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find openjpeg library.\n"
-		"You may need to install a package named libopenjp2-dev or similarly."
-	)
-ENDIF()
-
-# Find dll
-IF(WIN32)
-	FILE(GLOB OPENJPEG_DLL 
-		LIST_DIRECTORIES false
-		"${QT_BUILD_DIR}/bin/*openjp*.dll")
-	IF(NOT OPENJPEG_DLL)
-		MESSAGE(
-			FATAL_ERROR
-			"Could not find openjp2 dll in dependency qt-build\\bin folder."
-		)
-	ENDIF()
-ENDIF()
-
-
-#============================ Podofo ===============================#
-
-FIND_PATH(
-	PODOFO_INCLUDE_DIR podofo.h
-	PATHS ${PODOFO_DIR} # PODOFO_DIR may come from export-vars.cmake
-	PATH_SUFFIXES /podofo /src/podofo
-	DOC "Path to podofo headers."
-)
-IF(NOT PODOFO_INCLUDE_DIR)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find podofo headers.\n"
-		"You may need to install a package named podofo or similarly."
-	)
-ENDIF()
-
-INCLUDE_DIRECTORIES("${PODOFO_INCLUDE_DIR}/../"	"${DEPS_BUILD_DIR}/podofo-build"
-)
+# IF(NOT JPEG-FOUND)
 	
-FIND_LIBRARY(
-	PODOFO_LIBRARY NAMES podofo libpodofo
-	PATHS /usr/local/lib /usr/lib
-	HINTS ${STAGING_LIBS_DIR}
-	DOC "Path to podofo library."
-)
-IF(NOT PODOFO_LIBRARY)
-	MESSAGE(
-		FATAL_ERROR
-		"Could not find podofo library.\n"
-		"You may need to install a package named podofo or similarly."
-	)
-ENDIF()
 
 
-IF(WIN32)
-	ADD_DEFINITIONS(-DUSE_LIBTIFF_DLL -DUSING_SHARED_PODOFO)
+# ENDIF()
+
+# FIND_PATH(
+	# JPEG_INCLUDE_DIR jpeglib.h
+	# PATHS /usr/local/include /usr/include
+	# HINTS ${JPEG_DIR} # JPEG_DIR may come from export-vars.cmake
+	# DOC "Path to libjpeg headers."
+# )
+# IF(NOT JPEG_INCLUDE_DIR)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find jpeg headers.\n"
+		# "You may need to install a package named libjpeg62-dev or similarly."
+	# )
+# ENDIF()
+
+# INCLUDE_DIRECTORIES("${JPEG_INCLUDE_DIR}")
+
+# FIND_LIBRARY(
+	# JPEG_LIBRARY NAMES jpeg libjpeg
+	# PATHS /usr/local/lib /usr/lib
+	# HINTS ${STAGING_LIBS_DIR}
+	# DOC "Path to jpeg library."
+# )
+# IF(NOT JPEG_LIBRARY)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find jpeg library.\n"
+		# "You may need to install a package named libjpeg62-dev or similarly."
+	# )
+# ENDIF()
+
+# # Find dll
+# IF(WIN32)
+	# FILE(GLOB JPEG_DLL 
+		# LIST_DIRECTORIES false
+		# "${QT_BUILD_DIR}/bin/*jpeg*.dll")
+	# IF(NOT JPEG_DLL)
+		# MESSAGE(
+			# FATAL_ERROR
+			# "Could not find jpeg dll in dependency qt-build\\bin folder."
+		# )
+	# ENDIF()
+# ENDIF()
+
+
+# #============================ ZLIB ===============================#
+
+# include(ExternalProject)
+
+# set(DEP_INSTALL_DIR ${PROJECT_BINARY_DIR}/build/external)
+
+# FIND_PACKAGE(ZLIB)
+# IF(ZLIB-NOTFOUND)
+	# set(ZLIB zlib)
+
+	# ExternalProject_Add(
+		 # zlib
+		 # URL https://zlib.net/zlib1211.zip
+		 # EP_BASE  ${PROJECT_SOURCE_DIR}/external
+		 # #CONFIGURE_COMMAND ${CMAKE_COMMAND} ../${ZLIB}
+		 # CMAKE_ARGS 
+		 # BUILD_COMMAND ${CMAKE_COMMAND} --build .
+		 # INSTALL_COMMAND ${CMAKE_COMMAND} --install . --prefix ${PROJECT_SOURCE_DIR}
+		 # UPDATE_COMMAND ""  # Don't rebuild on recompilation
+	# )
+	# # add_library(zlib STATIC IMPORTED)
+	# # set_property(TARGET zlib PROPERTY IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/lib/libunity.a)
+	# # add_dependencies(scantailor zlib)
+
+# ENDIF()
+
+# FIND_PATH(
+	# ZLIB_INCLUDE_DIR zlib.h
+	# PATHS /usr/local/include /usr/include
+	# HINTS ${ZLIB_DIR} # ZLIB_DIR may come from export-vars.cmake
+	# DOC "Path to zlib headers."
+# )
+# IF(NOT ZLIB_INCLUDE_DIR)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find zlib headers.\n"
+		# "You may need to install a package named zlib1g-dev or similarly."
+	# )
+# ENDIF()
+
+# INCLUDE_DIRECTORIES("${ZLIB_INCLUDE_DIR}")
+
+# FIND_LIBRARY(
+	# ZLIB_LIBRARY NAMES z zdll libz
+	# PATHS /usr/local/lib /usr/lib
+	# HINTS ${STAGING_LIBS_DIR}
+	# DOC "Path to zlib library."
+# )
+# IF(NOT ZLIB_LIBRARY)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find zlib library.\n"
+		# "You may need to install a package named zlib1g-dev or similarly."
+	# )
+# ENDIF()
+
+# # Find dll
+# IF(WIN32)
+	# FILE(GLOB ZLIB_DLL 
+		# LIST_DIRECTORIES false
+		# "${QT_BUILD_DIR}/bin/*z*.dll")
+	# IF(NOT ZLIB_DLL)
+		# MESSAGE(
+			# FATAL_ERROR
+			# "Could not find zlib dll in dependency qt-build\\bin folder."
+		# )
+	# ENDIF()
+# ENDIF()
+
+
+# #============================ PNG ===============================#
+
+# FIND_PATH(
+	# PNG_INCLUDE_DIR png.h
+	# PATHS /usr/local/include /usr/include
+	# HINTS ${PNG_DIR} # PNG_DIR may come from export-vars.cmake
+	# DOC "Path to libpng headers."
+# )
+# IF(NOT PNG_INCLUDE_DIR)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find libpng headers.\n"
+		# "You may need to install a package named libpng12-dev or similarly."
+	# )
+# ENDIF()
+
+# INCLUDE_DIRECTORIES("${PNG_INCLUDE_DIR}")
+
+# FIND_LIBRARY(
+	# PNG_LIBRARY NAMES png libpng
+	# PATHS /usr/local/lib /usr/lib
+	# HINTS ${STAGING_LIBS_DIR}
+	# DOC "Path to png library."
+# )
+# IF(NOT PNG_LIBRARY)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find libpng library.\n"
+		# "You may need to install a package named libpng12-dev or similarly."
+	# )
+# ENDIF()
+
+# # Find dll
+# IF(WIN32)
+	# FILE(GLOB PNG_DLL 
+		# LIST_DIRECTORIES false
+		# "${QT_BUILD_DIR}/bin/*png*.dll")
+	# IF(NOT PNG_DLL)
+		# MESSAGE(
+			# FATAL_ERROR
+			# "Could not find png dll in dependency qt-build\\bin folder."
+		# )
+	# ENDIF()
+# ENDIF()
+
+
+# #============================ TIFF ===============================#
+
+# FIND_PATH(
+	# TIFF_INCLUDE_DIR tiff.h
+	# PATHS /usr/local/include /usr/include
+	# HINTS ${TIFF_DIR} # TIFF_DIR may come from export-vars.cmake
+	# PATH_SUFFIXES libtiff
+	# DOC "Path to libtiff headers."
+# )
+# IF(NOT TIFF_INCLUDE_DIR)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find libtiff headers.\n"
+		# "You may need to install a package named libtiff4-dev or similarly."
+	# )
+# ENDIF()
+
+# INCLUDE_DIRECTORIES("${TIFF_INCLUDE_DIR}")
+
+# FIND_LIBRARY(
+	# TIFF_LIBRARY NAMES tiff libtiff
+	# PATHS /usr/local/lib /usr/lib
+	# HINTS ${STAGING_LIBS_DIR}
+	# PATH_SUFFIXES libtiff
+	# DOC "Path to tiff library."
+# )
+# IF(NOT TIFF_LIBRARY)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find libtiff library.\n"
+		# "You may need to install a package named libtiff4-dev or similarly."
+	# )
+# ENDIF()
+
+# # Find dll
+# IF(WIN32)
+	# FILE(GLOB TIFF_DLL 
+		# LIST_DIRECTORIES false
+		# "${QT_BUILD_DIR}/bin/*tiff*.dll")
+	# IF(NOT TIFF_DLL)
+		# MESSAGE(
+			# FATAL_ERROR
+			# "Could not find tiff dll in dependency qt-build\\bin folder."
+		# )
+	# ENDIF()
+# ENDIF()
+
+
+# #============================ Openjpeg ===============================#
+
+# FIND_PATH(
+	# OPENJPEG_INCLUDE_DIR openjpeg.h
+	# PATHS ${OPENJPEG_DIR} # OPENJPEG_DIR may come from export-vars.cmake
+	# PATH_SUFFIXES /src/lib/openjp2
+	# DOC "Path to openjpeg headers."
+# )
+# IF(NOT OPENJPEG_INCLUDE_DIR)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find openjpeg headers.\n"
+		# "You may need to install a package named libopenjp2-dev or similarly."
+	# )
+# ENDIF()
+
+# INCLUDE_DIRECTORIES("${OPENJPEG_INCLUDE_DIR}")
+
+# FIND_LIBRARY(
+	# OPENJPEG_LIBRARY NAMES openjp2 libopenjp2
+	# PATHS /usr/local/lib /usr/lib
+	# HINTS ${STAGING_LIBS_DIR}
+	# DOC "Path to openjpeg library."
+# )
+# IF(NOT OPENJPEG_LIBRARY)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find openjpeg library.\n"
+		# "You may need to install a package named libopenjp2-dev or similarly."
+	# )
+# ENDIF()
+
+# # Find dll
+# IF(WIN32)
+	# FILE(GLOB OPENJPEG_DLL 
+		# LIST_DIRECTORIES false
+		# "${QT_BUILD_DIR}/bin/*openjp*.dll")
+	# IF(NOT OPENJPEG_DLL)
+		# MESSAGE(
+			# FATAL_ERROR
+			# "Could not find openjp2 dll in dependency qt-build\\bin folder."
+		# )
+	# ENDIF()
+# ENDIF()
+
+
+# #============================ Podofo ===============================#
+
+# FIND_PATH(
+	# PODOFO_INCLUDE_DIR podofo.h
+	# PATHS ${PODOFO_DIR} # PODOFO_DIR may come from export-vars.cmake
+	# PATH_SUFFIXES /podofo /src/podofo
+	# DOC "Path to podofo headers."
+# )
+# IF(NOT PODOFO_INCLUDE_DIR)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find podofo headers.\n"
+		# "You may need to install a package named podofo or similarly."
+	# )
+# ENDIF()
+
+# INCLUDE_DIRECTORIES("${PODOFO_INCLUDE_DIR}/../"	"${DEPS_BUILD_DIR}/podofo-build"
+# )
 	
-	# Find dll
-	FILE(GLOB PODOFO_DLL 
-		LIST_DIRECTORIES false
-		"${QT_BUILD_DIR}/bin/*podofo*.dll")
-	IF(NOT PODOFO_DLL)
-		MESSAGE(
-			FATAL_ERROR
-			"Could not find podofo dll in dependency qt-build\\bin folder."
-		)
-	ENDIF()
+# FIND_LIBRARY(
+	# PODOFO_LIBRARY NAMES podofo libpodofo
+	# PATHS /usr/local/lib /usr/lib
+	# HINTS ${STAGING_LIBS_DIR}
+	# DOC "Path to podofo library."
+# )
+# IF(NOT PODOFO_LIBRARY)
+	# MESSAGE(
+		# FATAL_ERROR
+		# "Could not find podofo library.\n"
+		# "You may need to install a package named podofo or similarly."
+	# )
+# ENDIF()
+
+
+# IF(WIN32)
+	# ADD_DEFINITIONS(-DUSE_LIBTIFF_DLL -DUSING_SHARED_PODOFO)
 	
-	FILE(GLOB FREETYPE_DLL 
-		LIST_DIRECTORIES false
-		"${QT_BUILD_DIR}/bin/*freetype*.dll")
-	IF(NOT FREETYPE_DLL)
-		MESSAGE(
-			FATAL_ERROR
-			"Could not find freetype dll in dependency qt-build\\bin folder."
-		)
-	ENDIF()
+	# # Find dll
+	# FILE(GLOB PODOFO_DLL 
+		# LIST_DIRECTORIES false
+		# "${QT_BUILD_DIR}/bin/*podofo*.dll")
+	# IF(NOT PODOFO_DLL)
+		# MESSAGE(
+			# FATAL_ERROR
+			# "Could not find podofo dll in dependency qt-build\\bin folder."
+		# )
+	# ENDIF()
 	
-ENDIF()
+	# FILE(GLOB FREETYPE_DLL 
+		# LIST_DIRECTORIES false
+		# "${QT_BUILD_DIR}/bin/*freetype*.dll")
+	# IF(NOT FREETYPE_DLL)
+		# MESSAGE(
+			# FATAL_ERROR
+			# "Could not find freetype dll in dependency qt-build\\bin folder."
+		# )
+	# ENDIF()
+	
+# ENDIF()
 
 #============================ Boost ===============================#
 
-IF(WIN32)
-	SET(Boost_USE_STATIC_LIBS ON)
-ELSE(WIN32)
-	ADD_DEFINITIONS(-DBOOST_TEST_DYN_LINK)
-ENDIF(WIN32)
+# IF(WIN32)
+	# SET(Boost_USE_STATIC_LIBS ON)
+# ELSE(WIN32)
+	# ADD_DEFINITIONS(-DBOOST_TEST_DYN_LINK)
+# ENDIF(WIN32)
 
-SET(Boost_USE_MULTITHREADED ON)
-FIND_PACKAGE(Boost 1.35.0 QUIET COMPONENTS unit_test_framework prg_exec_monitor)
-IF(NOT Boost_FOUND)
+# SET(Boost_USE_MULTITHREADED ON)
+# FIND_PACKAGE(Boost 1.35.0 QUIET COMPONENTS unit_test_framework prg_exec_monitor)
+# IF(NOT Boost_FOUND)
 	
-	# Try to find boost lib build cmake config directory
-	FILE(GLOB BOOST_CMAKE_CONF
-		LIST_DIRECTORIES TRUE
-		"${BOOST_BUILD_DIR}/lib/cmake/Boost-*" # BOOST_BUILD_DIR may come from export-vars.cmake
-	)
+	# # Try to find boost lib build cmake config directory
+	# FILE(GLOB BOOST_CMAKE_CONF
+		# LIST_DIRECTORIES TRUE
+		# "${BOOST_BUILD_DIR}/lib/cmake/Boost-*" # BOOST_BUILD_DIR may come from export-vars.cmake
+	# )
 	
-	# Try again in config mode with our own path
-	FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework prg_exec_monitor
-		PATHS "${BOOST_CMAKE_CONF}"
-	)
+	# # Try again in config mode with our own path
+	# FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework prg_exec_monitor
+		# PATHS "${BOOST_CMAKE_CONF}"
+	# )
 	
-	IF(NOT Boost_FOUND)
-		MESSAGE(
-			FATAL_ERROR
-			"Could not find boost headers or libraries. "
-			"You may need to install a package named libboost1.35-dev or similarly. "
-			"Hint: create a Boost_DEBUG variable in cmake and set it to YES." 
-		)
-	ENDIF(NOT Boost_FOUND)
-ENDIF(NOT Boost_FOUND)
+	# IF(NOT Boost_FOUND)
+		# MESSAGE(
+			# FATAL_ERROR
+			# "Could not find boost headers or libraries. "
+			# "You may need to install a package named libboost1.35-dev or similarly. "
+			# "Hint: create a Boost_DEBUG variable in cmake and set it to YES." 
+		# )
+	# ENDIF(NOT Boost_FOUND)
+# ENDIF(NOT Boost_FOUND)
 
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+# INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
+# LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 
 
 #============================ Threads ===============================#
-
-SET(EXTRA_LIBS "")
 
 IF(UNIX)
 	FindPthreads()
@@ -563,79 +735,80 @@ IF(UNIX)
 			"Try specifying them manually in PTHREADS_CFLAGS and PTHREADS_LIBS."
 		)
 	ENDIF(PTHREADS_FOUND)
-ELSEIF(WIN32)
-	ADD_DEFINITIONS(-DNOMINMAX)
-ENDIF(UNIX)
+elseif(WIN32 AND MSVC)
+	add_definitions(-DNOMINMAX)
+endif(UNIX)
 
-ADD_DEFINITIONS(-DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION)
 
-IF(WIN32)
-	LIST(APPEND EXTRA_LIBS winmm imm32 ws2_32 ole32 oleaut32 uuid gdi32 comdlg32 winspool)
-ENDIF()
+# Other includes and options
+set(EXTRA_LIBS "")
 
-LIST(APPEND EXTRA_LIBS ${TIFF_LIBRARY} ${PNG_LIBRARY} ${ZLIB_LIBRARY}
-	${JPEG_LIBRARY} ${OPENJPEG_LIBRARY} ${PODOFO_LIBRARY})
+if(WIN32)
+	list(APPEND EXTRA_LIBS winmm imm32 ws2_32 ole32 oleaut32 uuid gdi32 comdlg32 winspool)
+endif()
 
-SET(MAYBE_QT_OPENGL_MODULE "")
-IF(ENABLE_OPENGL)
+list(APPEND EXTRA_LIBS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_TIFF}
+	${LIB_OPENJP} ${LIB_PODOFO}
+)
+
+#${TIFF_LIBRARY} ${PNG_LIBRARY} ${ZLIB_LIBRARY}
+#	${JPEG_LIBRARY} ${OPENJPEG_LIBRARY} ${PODOFO_LIBRARY})
+
+set(MAYBE_QT_OPENGL_MODULE "")
+if(ENABLE_OPENGL)
 	LIST(APPEND EXTRA_LIBS ${OPENGL_LIBRARIES})
 	SET(MAYBE_QT_OPENGL_MODULE Qt5::OpenGL)
-ENDIF()
+endif()
 
 
 #==================================================================#
 #========================== Scantailor ============================#
 #==================================================================#
 
-# Crash reporter, only Windows + MSVC supported for now.
-# Must go before generating config.h, as ENABLE_CRASH_REPORTER
-# goes in there.
-IF(MSVC)
-	OPTION(ENABLE_CRASH_REPORTER "Enable crash reporter (only for official builds)" OFF)
-ENDIF(MSVC)
+if(HAVE_QT5)
 
 # Prepare config.h
-IF(WIN32)
-	SET(TRANSLATION_DIRS ".:translations")
-	SET(PLUGIN_DIRS ".")
-ELSE()
-	SET(TRANSLATION_DIRS ".:${CMAKE_INSTALL_PREFIX}/share/scantailor/translations")
-	SET(PLUGIN_DIRS ".:${CMAKE_INSTALL_PREFIX}/lib/scantailor")
-ENDIF()
+if(WIN32)
+	set(TRANSLATION_DIRS ".:translations")
+	set(PLUGIN_DIRS ".")
+else()
+	set(TRANSLATION_DIRS ".:${CMAKE_INSTALL_PREFIX}/share/scantailor/translations")
+	set(PLUGIN_DIRS ".:${CMAKE_INSTALL_PREFIX}/lib/scantailor")
+endif()
 
-CONFIGURE_FILE(config.h.in ${CMAKE_BINARY_DIR}/config.h @ONLY)
+configure_file(config.h.in ${CMAKE_BINARY_DIR}/config.h @ONLY)
 
-ADD_SUBDIRECTORY(ui)
-INCLUDE_DIRECTORIES("${toplevel_ui_sources_BINARY_DIR}")
+add_subdirectory(ui)
+include_directories("${toplevel_ui_sources_BINARY_DIR}")
 
 # crash_reporter is included unconditionally to collect translation sources from there.
-ADD_SUBDIRECTORY(crash_reporter)
-ADD_SUBDIRECTORY(dewarping)
-ADD_SUBDIRECTORY(foundation)
-ADD_SUBDIRECTORY(math)
-ADD_SUBDIRECTORY(imageproc)
-ADD_SUBDIRECTORY(interaction)
-ADD_SUBDIRECTORY(zones)
-ADD_SUBDIRECTORY(acceleration)
-ADD_SUBDIRECTORY(tests)
+add_subdirectory(crash_reporter)
+add_subdirectory(dewarping)
+add_subdirectory(foundation)
+add_subdirectory(math)
+add_subdirectory(imageproc)
+add_subdirectory(interaction)
+add_subdirectory(zones)
+add_subdirectory(acceleration)
+add_subdirectory(tests)
 
-ADD_SUBDIRECTORY(filters/fix_orientation)
-ADD_SUBDIRECTORY(filters/page_split)
-ADD_SUBDIRECTORY(filters/deskew)
-ADD_SUBDIRECTORY(filters/select_content)
-ADD_SUBDIRECTORY(filters/page_layout)
-ADD_SUBDIRECTORY(filters/output)
+add_subdirectory(filters/fix_orientation)
+add_subdirectory(filters/page_split)
+add_subdirectory(filters/deskew)
+add_subdirectory(filters/select_content)
+add_subdirectory(filters/page_layout)
+add_subdirectory(filters/output)
 
-SET(resource_files resources/resources.qrc resources/icons/COPYING)
-IF(WIN32)
-	LIST(APPEND resource_files resources/win32/resources.rc)
-ENDIF()
-SOURCE_GROUP("Resources" FILES ${resource_files})
+set(resource_files resources/resources.qrc resources/icons/COPYING)
+if(WIN32)
+	list(APPEND resource_files resources/win32/resources.rc)
+endif()
+source_group("Resources" FILES ${resource_files})
 
-QT5_ADD_RESOURCES(resource_sources resources/resources.qrc)
-SOURCE_GROUP("Generated" FILES ${resource_sources})
+qt5_add_resources(resource_sources resources/resources.qrc)
+source_group("Generated" FILES ${resource_sources})
 
-SET(
+set(
 	common_sources
 	BackgroundExecutor.cpp BackgroundExecutor.h
 	OpenGLSupport.cpp OpenGLSupport.h
@@ -726,7 +899,7 @@ SET(
 	${common_ui_files}
 )
 
-SET(
+set(
 	gui_only_sources
 	Application.cpp Application.h
 	SkinnedButton.cpp SkinnedButton.h
@@ -749,78 +922,82 @@ SET(
 	main.cpp
 )
 
-SET(
-	cli_only_sources
-	ConsoleBatch.cpp ConsoleBatch.h
-	main-cli.cpp
-)
+if(BUILD_CLI)
+	SET(
+		cli_only_sources
+		ConsoleBatch.cpp ConsoleBatch.h
+		main-cli.cpp
+	)
+endif()
 
-SOURCE_GROUP("Sources" FILES ${common_sources} ${gui_only_sources} ${cli_only_sources})
-SOURCE_GROUP("Special Headers" FILES version.h config.h.in)
+source_group("Sources" FILES ${common_sources} ${gui_only_sources} ${cli_only_sources})
+source_group("Special Headers" FILES version.h config.h.in)
 
 # Compatibility for CMAKE >= 3.10
-IF (POLICY CMP0071)
+if(POLICY CMP0071)
     cmake_policy(SET CMP0071 NEW)
-ENDIF (POLICY CMP0071)
+endif(POLICY CMP0071)
 
-IF(CMAKE_COMPILER_IS_GNUCXX)
-	# There seems to be a bug in either gcc or boost that makes page sorting either crash
-	# or go into infinite loop.  It's reproducible on a very simple test case on at least
-	# gcc 4.4.3 and gcc 4.4.4.  It's not reproducible on gcc 4.5.1.
-	# Adding -fno-strict-aliasing seems to fix it.
-	SET_SOURCE_FILES_PROPERTIES(
-		ThumbnailSequence.cpp PROPERTIES
-		COMPILE_FLAGS "-fno-strict-aliasing"
-	)
-ENDIF()
+# IF(CMAKE_COMPILER_IS_GNUCXX)
+	# # There seems to be a bug in either gcc or boost that makes page sorting either crash
+	# # or go into infinite loop.  It's reproducible on a very simple test case on at least
+	# # gcc 4.4.3 and gcc 4.4.4.  It's not reproducible on gcc 4.5.1.
+	# # Adding -fno-strict-aliasing seems to fix it.
+	# SET_SOURCE_FILES_PROPERTIES(
+		# ThumbnailSequence.cpp PROPERTIES
+		# COMPILE_FLAGS "-fno-strict-aliasing"
+	# )
+# ENDIF()
 
-SET(win32_resource_file "")
-IF(WIN32)
-	SET(rc_file "${CMAKE_SOURCE_DIR}/resources/win32/resources.rc")
-	FILE(GLOB win32_resources resources/win32/*.ico)
-	SET_SOURCE_FILES_PROPERTIES(
+set(win32_resource_file "")
+if(WIN32)
+	set(rc_file "${CMAKE_SOURCE_DIR}/resources/win32/resources.rc")
+	file(GLOB win32_resources resources/win32/*.ico)
+	set_source_files_properties(
 		"${rc_file}" PROPERTIES
 		OBJECT_DEPENDS ${win32_resources}
 	)
-	SET(win32_resource_file "${rc_file}")
-ENDIF(WIN32)
+	set(win32_resource_file "${rc_file}")
+endif(WIN32)
 
-ADD_LIBRARY(stcore STATIC ${common_sources} ${common_ui_sources})
-TARGET_LINK_LIBRARIES(stcore acceleration deskew Qt5::Widgets Qt5::Xml ${MAYBE_QT_OPENGL_MODULE})
-ADD_DEPENDENCIES(stcore toplevel_ui_sources)
+add_library(stcore STATIC ${common_sources} ${common_ui_sources})
+target_link_libraries(stcore acceleration deskew Qt5::Widgets Qt5::Xml ${MAYBE_QT_OPENGL_MODULE})
+add_dependencies(stcore toplevel_ui_sources)
 
 # Some includes need to be added manually in new build system
 target_include_directories(
 	stcore PUBLIC AFTER
-	PUBLIC "${DEPS_BUILD_DIR}/jpeg-build"
-	PUBLIC "${DEPS_BUILD_DIR}/tiff-build/libtiff"
-	PUBLIC "${DEPS_BUILD_DIR}/png-build"
-	PUBLIC "${DEPS_BUILD_DIR}/zlib-build"
-	PUBLIC "${DEPS_BUILD_DIR}/openjpeg-build/src/lib/openjp2"
+	PUBLIC ${ALL_EXTERN_INC_DIRS}
 )
 
-ADD_EXECUTABLE(
+add_executable(
 	scantailor WIN32 ${gui_only_sources} ${resource_sources} ${win32_resource_file}
 )
 
-ADD_EXECUTABLE(scantailor-cli ${cli_only_sources} ${common_ui_sources})
-
-TARGET_LINK_LIBRARIES(
+target_link_libraries(
 	scantailor
 	acceleration page_layout output
 	fix_orientation page_split deskew select_content stcore
 	dewarping zones interaction imageproc math foundation
 	${EXTRA_LIBS}
 )
-TARGET_LINK_LIBRARIES(
-	scantailor-cli
-	acceleration page_layout output
-	fix_orientation page_split deskew select_content stcore
-	dewarping zones interaction imageproc math foundation
-	${EXTRA_LIBS}
-)
 
-INSTALL(TARGETS scantailor scantailor-cli RUNTIME DESTINATION bin)
+install(TARGETS scantailor RUNTIME DESTINATION bin)
+
+if(BUILD_CLI)
+	add_executable(scantailor-cli ${cli_only_sources} ${common_ui_sources})
+
+	target_link_libraries(
+		scantailor-cli
+		acceleration page_layout output
+		fix_orientation page_split deskew select_content stcore
+		dewarping zones interaction imageproc math foundation
+		${EXTRA_LIBS}
+	)
+	
+	install(TARGETS scantailor-cli RUNTIME DESTINATION bin)
+endif()
+
 
 IF(ENABLE_CRASH_REPORTER)
 	FIND_PATH(
@@ -895,11 +1072,13 @@ SET(
 	"CMakeLists.txt.user"
 	"/doxygen/"
 	"${CMAKE_BINARY_DIR}"
+	"${EXTERN}"
 )
 INCLUDE(CPack)
 
-IF(WIN32)
+IF(WIN32 AND NOT STATIC_BUILD)
 	# Copy some DLLs to the staging dir.
+	## TODO: Can we maybe use qtwindeploy here?
 	
 	# Qt core
 	SET(
@@ -985,3 +1164,5 @@ IF(WIN32)
 	# Installer for Windows.  Must go last.
 	ADD_SUBDIRECTORY(packaging/windows)
 ENDIF(WIN32)
+
+endif(HAVE_QT5)
