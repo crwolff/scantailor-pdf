@@ -31,5 +31,5 @@ extern/*
 !extern/src
 extern/src/*
 !extern/src/patches
-
-
+build
+.vscode
