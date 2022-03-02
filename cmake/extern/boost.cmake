@@ -68,7 +68,9 @@ else() # Local static build
 		set(BOOST_ROOT ${EXTERN})
 		find_package(Boost REQUIRED	COMPONENTS test_exec_monitor unit_test_framework)	
 	else()
-		message(STATUS "Boost has not been fully built yet and the build will fail the first time. This is normal. After the build, just rerun the cmake configuration and generation steps and it should find Boost and build fine.")
+		message(STATUS "Boost has not been fully built yet and the build will fail the first time. "
+							"This is normal. After the build, just rerun the cmake configuration and "
+							"generation steps and it should find Boost and build fine.")
 	endif()
 endif()
 

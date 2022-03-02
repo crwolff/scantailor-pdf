@@ -780,6 +780,7 @@ configure_file(config.h.in ${CMAKE_BINARY_DIR}/config.h @ONLY)
 
 add_subdirectory(ui)
 include_directories("${toplevel_ui_sources_BINARY_DIR}")
+link_libraries(${EXTRA_LIBS})
 
 # crash_reporter is included unconditionally to collect translation sources from there.
 add_subdirectory(crash_reporter)
@@ -962,6 +963,9 @@ endif(WIN32)
 
 add_library(stcore STATIC ${common_sources} ${common_ui_sources})
 target_link_libraries(stcore acceleration deskew Qt5::Widgets Qt5::Xml ${MAYBE_QT_OPENGL_MODULE})
+if(STATIC_BUILD)
+	target_link_libraries(stcore imageproc acceleration "${EXTERN}/lib/libtiff.a" "${EXTERN}/lib/libopenjp2.a")
+endif()
 add_dependencies(stcore toplevel_ui_sources)
 
 # Some includes need to be added manually in new build system
@@ -975,7 +979,7 @@ add_executable(
 )
 
 target_link_libraries(
-	scantailor
+	scantailor PUBLIC
 	acceleration page_layout output
 	fix_orientation page_split deskew select_content stcore
 	dewarping zones interaction imageproc math foundation
@@ -1163,6 +1167,6 @@ IF(WIN32 AND NOT STATIC_BUILD)
 	
 	# Installer for Windows.  Must go last.
 	ADD_SUBDIRECTORY(packaging/windows)
-ENDIF(WIN32)
+ENDIF(WIN32 AND NOT STATIC_BUILD)
 
 endif(HAVE_QT5)
