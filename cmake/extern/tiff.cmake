@@ -18,20 +18,20 @@ else() # Local static build
 	endif()
 	
 	# Find lzma and add it as dependency to tiff
-	set(lzma OFF)	
-	find_library(
-		lzma-system
-		NAMES liblzma.a liblzma.lib lzma.a lzma.lib)
-	if(EXISTS ${lzma-system})
-		set(lzma ON)
-		find_path(LIBLZMA_INCLUDE_DIR lzma.h )
-		add_library(lzma2 STATIC IMPORTED)
-		set_property(TARGET lzma2 PROPERTY
-			IMPORTED_LOCATION ${lzma-system}
-			INTERFACE_INCLUDE_DIRECTORIES ${LIBLZMA_INCLUDE_DIR}
-		)
-		set(LIB_LZMA ${lzma2})
-	endif()
+	# set(lzma OFF)	
+	# find_library(
+		# lzma-system
+		# NAMES liblzma.a liblzma.lib lzma.a lzma.lib)
+	# if(EXISTS ${lzma-system})
+		# set(lzma ON)
+		# find_path(LIBLZMA_INCLUDE_DIR lzma.h )
+		# add_library(lzma2 STATIC IMPORTED)
+		# set_property(TARGET lzma2 PROPERTY
+			# IMPORTED_LOCATION ${lzma-system}
+			# INTERFACE_INCLUDE_DIRECTORIES ${LIBLZMA_INCLUDE_DIR}
+		# )
+		# set(LIB_LZMA ${lzma2})
+	# endif()
 
 	set(TIFF_BIN_DIR ${EXTERN}/src/tiff-extern-build)
 	set(TIFF_SRC_DIR ${EXTERN}/src/tiff-extern)
@@ -41,7 +41,7 @@ else() # Local static build
 		PREFIX ${EXTERN}
 		URL http://download.osgeo.org/libtiff/tiff-4.3.0.zip
 		URL_HASH SHA256=882c0bcfa0e69f85a51a4e33d44673d10436c28d89d4a8d3814e40bad5a4338b
-		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DCMAKE_PREFIX_PATH=${EXTERN} -DBUILD_SHARED_LIBS=OFF -Dlzma=${lzma}
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DCMAKE_PREFIX_PATH=${EXTERN} -DBUILD_SHARED_LIBS=OFF -Dwebp=OFF -Dlzma=OFF
 		# Build only needed tiff target
 		BUILD_COMMAND ${CMAKE_COMMAND} --build . -j ${THREADS} -t tiff
 		# Install only needed files
@@ -59,7 +59,7 @@ else() # Local static build
 	add_library(tiff STATIC IMPORTED)
 	set_property(TARGET tiff PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${TIFF_FILE_NAME}")
 	add_dependencies(tiff tiff-extern)
-	target_link_libraries(tiff INTERFACE ${LIB_ZLIB} ${LIB_JPEG} ${LIB_LZMA})
+	target_link_libraries(tiff INTERFACE ${LIB_ZLIB} ${LIB_JPEG} ${LIB_LZMA} "${EXTERN}/lib/libzlibstatic.a")
 	set(LIB_TIFF ${tiff})
 
 endif()

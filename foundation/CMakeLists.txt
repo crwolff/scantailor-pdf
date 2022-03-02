@@ -48,7 +48,6 @@ SOURCE_GROUP("Sources" FILES ${sources})
 ADD_DEFINITIONS(-DBUILDING_FOUNDATION)
 ADD_LIBRARY(foundation ${MAYBE_STATIC} ${sources})
 TARGET_LINK_LIBRARIES(foundation Qt5::Gui Qt5::Core Qt5::Xml)
-target_include_directories(foundation INTERFACE ${EIGEN3_INCLUDE_DIR})
 
 if(NOT STATIC_BUILD)
 	# We want the DLL located where executables can find it.
