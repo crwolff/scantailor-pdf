@@ -20,10 +20,12 @@ SET(
 ADD_EXECUTABLE(generic_tests ${sources})
 TARGET_LINK_LIBRARIES(generic_tests ${libs})
 
-# We want the executable located where we copy all the DLLs.
-SET_TARGET_PROPERTIES(
-	generic_tests PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-)
+if(NOT STATIC_BUILD)
+	# We want the executable located where we copy all the DLLs.
+	SET_TARGET_PROPERTIES(
+		generic_tests PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+	)
+endif()
 
 ADD_TEST(NAME generic_tests COMMAND generic_tests --log_level=message)

@@ -37,6 +37,7 @@ SET(
 REMOVE_DEFINITIONS(-DBUILDING_IMAGEPROC)
 ADD_EXECUTABLE(imageproc_tests ${sources})
 TARGET_LINK_LIBRARIES(imageproc_tests ${libs})
+target_include_directories(imageproc_tests INTERFACE ${EIGEN3_INCLUDE_DIR})
 
 # We want the executable located where we copy all the DLLs.
 SET_TARGET_PROPERTIES(
