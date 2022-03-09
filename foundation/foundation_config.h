@@ -3,10 +3,14 @@
 
 #include <QtGlobal>
 
-#if defined(BUILDING_FOUNDATION)
-#	define FOUNDATION_EXPORT Q_DECL_EXPORT
-#else
-#	define FOUNDATION_EXPORT Q_DECL_IMPORT
+#if defined(SHARED_FOUNDATION)
+#	if defined(BUILDING_FOUNDATION)
+#		define FOUNDATION_EXPORT Q_DECL_EXPORT
+#	else
+#		define FOUNDATION_EXPORT Q_DECL_IMPORT
+#	endif
+#else	// Static build: Don't export Symbols
+#	define FOUNDATION_EXPORT
 #endif
 
 #endif

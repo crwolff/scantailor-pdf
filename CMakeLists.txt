@@ -29,6 +29,9 @@ option(USE_SYSTEM_LIBS "Use installed libraries instead of the project supplied 
 option(STATIC_BUILD "Statically link all libraries." OFF)
 if(STATIC_BUILD)
 	set(MAYBE_STATIC "STATIC")
+	if (MINGW)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+	endif()
 endif()
 
 # Crash reporter, only Windows + MSVC supported for now.
@@ -765,7 +768,8 @@ endif()
 #========================== Scantailor ============================#
 #==================================================================#
 
-if(HAVE_QT5)
+if(HAVE_QT5) # Check that we have found/built Qt5
+# We have to do this because we might have to build Qt5 on first cmake run.
 
 # Prepare config.h
 if(WIN32)
@@ -784,10 +788,10 @@ link_libraries(${EXTRA_LIBS})
 
 # crash_reporter is included unconditionally to collect translation sources from there.
 add_subdirectory(crash_reporter)
-add_subdirectory(dewarping)
 add_subdirectory(foundation)
 add_subdirectory(math)
 add_subdirectory(imageproc)
+add_subdirectory(dewarping)
 add_subdirectory(interaction)
 add_subdirectory(zones)
 add_subdirectory(acceleration)
@@ -964,7 +968,7 @@ endif(WIN32)
 add_library(stcore STATIC ${common_sources} ${common_ui_sources})
 target_link_libraries(stcore acceleration deskew Qt5::Widgets Qt5::Xml ${MAYBE_QT_OPENGL_MODULE})
 if(STATIC_BUILD)
-	target_link_libraries(stcore imageproc acceleration "${EXTERN}/lib/libtiff.a" "${EXTERN}/lib/libopenjp2.a")
+	target_link_libraries(stcore ${LIB_TIFF} ${LIB_OPENJP})
 endif()
 add_dependencies(stcore toplevel_ui_sources)
 

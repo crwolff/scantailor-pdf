@@ -5,7 +5,7 @@
 if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
 
 	find_package(ZLIB REQUIRED)		# This only finds shared libs
-	set(LIB_ZLIB ${ZLIB::ZLIB})
+	set(LIB_ZLIB ZLIB::ZLIB)
 	list(APPEND ALL_EXTERN_INC_DIRS ${ZLIB_INCLUDE_DIRS})
 	
 else() # Local static build
@@ -26,8 +26,8 @@ else() # Local static build
 		URL https://zlib.net/zlib1211.zip
 		URL_HASH SHA256=d7510a8ee1918b7d0cad197a089c0a2cd4d6df05fee22389f67f115e738b178d
 		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DBUILD_SHARED_LIBS=OFF
-		# Only need zlibstatic target
-		BUILD_COMMAND ${CMAKE_COMMAND} --build . -j ${THREADS} -t zlibstatic
+		# Only need zlibstatic target; uses multiple threads if [mingw32-]make or ninja is used
+		BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} zlibstatic
 		# We only install needed files
 		INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZLIB_BIN_DIR}/${ZLIB_FILE_NAME} ${EXTERN_LIB_DIR}/${ZLIB_FILE_NAME}
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZLIB_BIN_DIR}/zconf.h ${EXTERN_INC_DIR}/zconf.h

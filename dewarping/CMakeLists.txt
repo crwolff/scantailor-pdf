@@ -20,7 +20,11 @@ SET(
 )
 SOURCE_GROUP("Sources" FILES ${sources})
 
-ADD_DEFINITIONS(-DBUILDING_DEWARPING)
+if(NOT STATIC_BUILD)
+	ADD_DEFINITIONS(-DSHARED_DEWARPING)
+	ADD_DEFINITIONS(-DBUILDING_DEWARPING)
+endif()
+
 ADD_LIBRARY(dewarping ${MAYBE_STATIC} ${sources})
 TARGET_LINK_LIBRARIES(dewarping imageproc math foundation Qt5::Widgets Qt5::Xml)
 target_include_directories(dewarping INTERFACE ${EIGEN3_INCLUDE_DIR})

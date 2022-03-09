@@ -4,7 +4,7 @@
 if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
 
 	find_package(Freetype REQUIRED)		# This only finds shared libs
-	set(LIB_FREETYPE ${Freetype::Freetype})
+	set(LIB_FREETYPE Freetype::Freetype)
 	list(APPEND ALL_EXTERN_INC_DIRS ${FREETYPE_INCLUDE_DIRS})
 	
 else() # Local static build
@@ -34,6 +34,6 @@ else() # Local static build
 	list(APPEND ALL_EXTERN_INC_DIRS ${EXTERN_INC_DIR}/freetype2 ${EXTERN_INC_DIR}/freetype2/freetype)
 	add_dependencies(freetype freetype-extern)
 	target_link_libraries(freetype INTERFACE ${LIB_ZLIB} ${LIB_PNG})
-	set(LIB_FREETYPE ${freetype})
+	set(LIB_FREETYPE freetype)
 
 endif()

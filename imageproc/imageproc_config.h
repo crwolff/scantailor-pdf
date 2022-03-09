@@ -3,10 +3,14 @@
 
 #include <QtGlobal>
 
-#if defined(BUILDING_IMAGEPROC)
-#	define IMAGEPROC_EXPORT Q_DECL_EXPORT
-#else
-#	define IMAGEPROC_EXPORT Q_DECL_IMPORT
+#if defined(SHARED_IMAGEPROC)
+#	if defined(BUILDING_IMAGEPROC)
+#		define IMAGEPROC_EXPORT Q_DECL_EXPORT
+#	else
+#		define IMAGEPROC_EXPORT Q_DECL_IMPORT
+#	endif
+#else	// Static build: Don't export Symbols
+#	define IMAGEPROC_EXPORT
 #endif
 
 #endif

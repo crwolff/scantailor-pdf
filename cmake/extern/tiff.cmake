@@ -4,7 +4,7 @@
 if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
 
 	find_package(TIFF REQUIRED)		# This only finds shared libs
-	set(LIB_PNG ${TIFF::TIFF})
+	set(LIB_TIFF TIFF::TIFF)
 	list(APPEND ALL_EXTERN_INC_DIRS ${TIFF_INCLUDE_DIRS})
 	
 else() # Local static build
@@ -41,9 +41,9 @@ else() # Local static build
 		PREFIX ${EXTERN}
 		URL http://download.osgeo.org/libtiff/tiff-4.3.0.zip
 		URL_HASH SHA256=882c0bcfa0e69f85a51a4e33d44673d10436c28d89d4a8d3814e40bad5a4338b
-		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DCMAKE_PREFIX_PATH=${EXTERN} -DBUILD_SHARED_LIBS=OFF -Dwebp=OFF -Dlzma=OFF
-		# Build only needed tiff target
-		BUILD_COMMAND ${CMAKE_COMMAND} --build . -j ${THREADS} -t tiff
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DCMAKE_PREFIX_PATH=${EXTERN} -DBUILD_SHARED_LIBS=OFF -Dwebp=OFF -Dlzma=OFF -Dzstd=OFF -DCMAKE_DISABLE_FIND_PACKAGE_GLUT=TRUE
+		# Build only needed tiff target; uses multiple threads if [mingw32-]make or ninja is used
+		BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} tiff
 		# Install only needed files
 		INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TIFF_BIN_DIR}/libtiff/${TIFF_FILE_NAME} ${EXTERN_LIB_DIR}/${TIFF_FILE_NAME}
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TIFF_BIN_DIR}/libtiff/tiffconf.h ${EXTERN_INC_DIR}/tiffconf.h
@@ -59,7 +59,7 @@ else() # Local static build
 	add_library(tiff STATIC IMPORTED)
 	set_property(TARGET tiff PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${TIFF_FILE_NAME}")
 	add_dependencies(tiff tiff-extern)
-	target_link_libraries(tiff INTERFACE ${LIB_ZLIB} ${LIB_JPEG} ${LIB_LZMA} "${EXTERN}/lib/libzlibstatic.a")
-	set(LIB_TIFF ${tiff})
+	target_link_libraries(tiff INTERFACE ${LIB_ZLIB} ${LIB_JPEG} ${LIB_LZMA})
+	set(LIB_TIFF tiff)
 
 endif()

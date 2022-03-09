@@ -3,10 +3,14 @@
 
 #include <QtGlobal>
 
-#if defined(BUILDING_MATH)
-#	define MATH_EXPORT Q_DECL_EXPORT
-#else
-#	define MATH_EXPORT Q_DECL_IMPORT
+#if defined(SHARED_MATH)
+#	if defined(BUILDING_MATH)
+#		define MATH_EXPORT Q_DECL_EXPORT
+#	else
+#		define MATH_EXPORT Q_DECL_IMPORT
+#	endif
+#else	// Static build: Don't export Symbols
+#	define MATH_EXPORT
 #endif
 
 #endif

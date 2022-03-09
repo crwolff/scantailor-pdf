@@ -6,7 +6,7 @@
 if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
 
 	find_package(JPEG REQUIRED)		# This only finds shared libs
-	set(LIB_JPEG ${JPEG::JPEG})
+	set(LIB_JPEG JPEG::JPEG)
 	list(APPEND ALL_EXTERN_INC_DIRS ${JPEG_INCLUDE_DIRS})
 	
 else() # Local static build
@@ -27,8 +27,8 @@ else() # Local static build
 		URL https://sourceforge.net/projects/libjpeg-turbo/files/2.1.2/libjpeg-turbo-2.1.2.tar.gz/download
 		URL_MD5 e181bd78884dd5392a869209bfa41d4a
 		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DWITH_TURBOJPEG=OFF -DWITH_JPEG8=ON -DENABLE_SHARED=OFF
-		# Build only needed jpeg-static target
-		BUILD_COMMAND ${CMAKE_COMMAND} --build . -j ${THREADS} -t jpeg-static
+		# Build only needed jpeg-static target; uses multiple threads if [mingw32-]make or ninja is used
+		BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} jpeg-static
 		# Manually install only needed files
 		INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${JPEG_BIN_DIR}/${JPEG_FILE_NAME} ${EXTERN_LIB_DIR}/${JPEG_FILE_NAME}
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${JPEG_BIN_DIR}/pkgscripts/libjpeg.pc ${EXTERN_LIB_DIR}/pkgconfig/libjpeg.pc

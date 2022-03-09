@@ -5,7 +5,7 @@ if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
 
 	include(FindOpenJPEG)
 	find_package(OpenJPEG REQUIRED)		# This only finds shared libs
-	set(LIB_OPENJP ${OPENJPEG::OpenJPEG})
+	set(LIB_OPENJP OPENJPEG::OpenJPEG)
 	list(APPEND ALL_EXTERN_INC_DIRS ${OPENJPEG_INCLUDE_DIR})
 	
 else() # Local static build
@@ -30,10 +30,11 @@ else() # Local static build
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	add_library(openjp2 STATIC IMPORTED)
+	add_definitions(-DOPJ_STATIC)	# Static linking
 	set_property(TARGET openjp2 PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${OPENJP_FILE_NAME}")
 	list(APPEND ALL_EXTERN_INC_DIRS ${EXTERN_INC_DIR}/openjpeg-2.4)
 	add_dependencies(openjp2 openjp2-extern)
-	set(LIB_OPENJP ${openjp2})
+	set(LIB_OPENJP openjp2)
 
 endif()
 

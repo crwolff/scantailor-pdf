@@ -50,6 +50,9 @@ QT5_WRAP_UI(ui_sources ${ui_files})
 
 ADD_LIBRARY(output STATIC ${sources} ${ui_sources})
 TARGET_LINK_LIBRARIES(output Qt5::Widgets Qt5::Xml)
+if(BUILD_STATIC)
+	TARGET_LINK_LIBRARIES(output foundation imageproc Qt5::Widgets Qt5::Xml)
+endif()
 ADD_DEPENDENCIES(output toplevel_ui_sources)
 
 TRANSLATION_SOURCES(scantailor ${sources} ${ui_files})

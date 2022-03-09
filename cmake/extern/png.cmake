@@ -4,7 +4,7 @@
 if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
 
 	find_package(PNG REQUIRED)		# This only finds shared libs
-	set(LIB_PNG ${PNG::PNG})
+	set(LIB_PNG PNG::PNG)
 	list(APPEND ALL_EXTERN_INC_DIRS ${PNG_INCLUDE_DIRS})
 	
 else() # Local static build
