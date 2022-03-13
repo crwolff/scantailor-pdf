@@ -1,0 +1,103 @@
+project("Core Library")
+
+set(
+	common_sources
+	AbstractCommand.h
+	AbstractFilter.h
+	AbstractRelinker.h
+	AtomicFileOverwriter.cpp AtomicFileOverwriter.h
+	AutoManualMode.h
+	BackgroundExecutor.cpp BackgroundExecutor.h
+	BackgroundTask.cpp BackgroundTask.h
+	BasicImageView.cpp BasicImageView.h
+	BeforeOrAfter.h
+	BubbleAnimation.cpp BubbleAnimation.h
+	ChangedStateItemDelegate.h
+	CommandLine.cpp CommandLine.h
+	CompositeCacheDrivenTask.h
+	ContentBox.cpp ContentBox.h
+	ContentBoxPropagator.cpp ContentBoxPropagator.h
+	ContentSpanFinder.cpp ContentSpanFinder.h
+	DebugImagesImpl.cpp DebugImagesImpl.h
+	DebugImageView.cpp DebugImageView.h
+	DebugViewFactory.h
+	Despeckle.cpp Despeckle.h
+	ErrorWidget.cpp ErrorWidget.h
+	EstimateBackground.cpp EstimateBackground.h
+	FileNameDisambiguator.cpp FileNameDisambiguator.h
+	FilterOptionsWidget.h
+	FilterResult.h
+	filter_dc/AbstractFilterDataCollector.h
+	filter_dc/ContentBoxCollector.h
+	filter_dc/PageOrientationCollector.h
+	filter_dc/ThumbnailCollector.h
+	ImageFileInfo.h
+	ImageId.cpp ImageId.h
+	ImageInfo.cpp ImageInfo.h
+	ImageLoader.cpp ImageLoader.h
+	ImageMetadata.cpp ImageMetadata.h
+	ImageMetadataLoader.cpp ImageMetadataLoader.h
+	ImagePixmapUnion.h
+	ImageViewBase.cpp ImageViewBase.h
+	IncompleteThumbnail.cpp IncompleteThumbnail.h
+	JP2MetadataLoader.cpp JP2MetadataLoader.h
+	JP2Reader.cpp JP2Reader.h
+	JpegMetadataLoader.cpp JpegMetadataLoader.h
+	LoadFileTask.cpp LoadFileTask.h
+	NonOwningWidget.cpp NonOwningWidget.h
+	OpenGLSupport.cpp OpenGLSupport.h
+	OrthogonalRotation.cpp OrthogonalRotation.h
+	OutOfMemoryHandler.cpp OutOfMemoryHandler.h
+	OutputFileNameGenerator.cpp OutputFileNameGenerator.h
+	PageId.cpp PageId.h
+	PageInfo.cpp PageInfo.h
+	PageOrderOption.h
+	PageOrderProvider.h
+	PageOrientationPropagator.cpp PageOrientationPropagator.h
+	PageRange.cpp PageRange.h
+	PageSelectionAccessor.cpp PageSelectionAccessor.h
+	PageSelectionProvider.h
+	PageSequence.cpp PageSequence.h
+	PageView.h
+	PayloadEvent.h
+	PdfMetadataLoader.cpp PdfMetadataLoader.h
+	PdfReader.cpp PdfReader.h
+	PixmapRenderer.cpp PixmapRenderer.h
+	PngMetadataLoader.cpp PngMetadataLoader.h
+	ProcessingIndicationWidget.cpp ProcessingIndicationWidget.h
+	ProcessingTaskQueue.cpp ProcessingTaskQueue.h
+	ProjectPages.cpp ProjectPages.h
+	ProjectReader.cpp ProjectReader.h
+	ProjectWriter.cpp ProjectWriter.h
+	RecentProjects.cpp RecentProjects.h
+	RelinkablePath.cpp RelinkablePath.h
+	SelectedPage.cpp SelectedPage.h
+	SmartFilenameOrdering.cpp SmartFilenameOrdering.h
+	StageSequence.cpp StageSequence.h
+	TabbedDebugImages.cpp TabbedDebugImages.h
+	TaskStatus.h FilterUiInterface.h
+	ThumbnailBase.cpp ThumbnailBase.h
+	ThumbnailFactory.cpp ThumbnailFactory.h
+	ThumbnailLoadResult.h
+	ThumbnailPixmapCache.cpp ThumbnailPixmapCache.h
+	TiffMetadataLoader.cpp TiffMetadataLoader.h
+	TiffReader.cpp TiffReader.h
+	TiffWriter.cpp TiffWriter.h
+	Utils.cpp Utils.h
+	VectorFieldImageView.cpp VectorFieldImageView.h
+	WorkerThreadPool.cpp WorkerThreadPool.h
+	${CMAKE_SOURCE_DIR}/version.h
+	${CMAKE_SOURCE_DIR}/config.h.in
+	${common_ui_files}
+)
+
+add_library(stcore STATIC ${common_sources} ${common_ui_sources})
+target_link_libraries(stcore acceleration deskew Qt5::Widgets Qt5::Xml ${MAYBE_QT_OPENGL_MODULE})
+add_dependencies(stcore toplevel_ui_sources)
+
+# Some includes need to be added manually in new build system
+target_include_directories(
+	stcore PUBLIC AFTER
+	PUBLIC ${ALL_EXTERN_INC_DIRS}
+)
+

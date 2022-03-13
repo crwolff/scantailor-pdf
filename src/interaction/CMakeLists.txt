@@ -1,0 +1,25 @@
+project("Interaction")
+
+include_directories("${CMAKE_CURRENT_BINARY_DIR}" "../core")
+
+set(
+	sources
+	DraggableObject.h
+	DraggablePoint.cpp DraggablePoint.h
+	DraggableLineSegment.cpp DraggableLineSegment.h
+	ObjectDragHandler.cpp ObjectDragHandler.h
+	InteractionHandler.cpp InteractionHandler.h
+	InteractionState.cpp InteractionState.h
+	DragHandler.cpp DragHandler.h
+	DragWatcher.cpp DragWatcher.h
+	ZoomHandler.cpp ZoomHandler.h
+	InteractiveXSpline.cpp InteractiveXSpline.h
+)
+
+source_group(Sources FILES ${sources})
+
+add_library(interaction STATIC ${sources})
+target_link_libraries(interaction Qt5::Widgets)
+target_include_directories(interaction INTERFACE ${EIGEN3_INCLUDE_DIR})
+
+translation_sources(scantailor ${sources})

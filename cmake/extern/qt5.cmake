@@ -7,6 +7,7 @@ if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
 	if(ENABLE_OPENGL)
 		find_package(Qt5 COMPONENTS OpenGL REQUIRED)
 	endif()
+	set(HAVE_QT5 TRUE)
 	# Now, use the QT5::* targets.
 	
 else() # Local static build

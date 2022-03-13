@@ -1,0 +1,22 @@
+project("Application CLI")
+
+set(
+	cli_only_sources
+	ConsoleBatch.cpp ConsoleBatch.h
+	main-cli.cpp
+)
+
+add_executable(scantailor-cli ${cli_only_sources} ${common_ui_sources})
+
+target_link_libraries(
+	scantailor-cli
+	acceleration page_layout output
+	fix_orientation page_split deskew select_content stcore
+	dewarping zones interaction imageproc math foundation
+	${EXTRA_LIBS}
+)
+
+install(TARGETS scantailor-cli RUNTIME DESTINATION bin)
+
+
+

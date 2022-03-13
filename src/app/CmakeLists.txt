@@ -1,0 +1,74 @@
+project("Application")
+
+include_directories("../core")
+
+set(
+	gui_only_sources
+	Application.cpp Application.h
+	LoadFilesStatusDialog.cpp LoadFilesStatusDialog.h
+	main.cpp
+	MainWindow.cpp MainWindow.h
+	NewOpenProjectPanel.cpp NewOpenProjectPanel.h
+	OutOfMemoryDialog.cpp OutOfMemoryDialog.h
+	ProjectCreationContext.cpp ProjectCreationContext.h
+	ProjectFilesDialog.cpp ProjectFilesDialog.h
+	ProjectOpeningContext.cpp ProjectOpeningContext.h
+	RelinkablePathVisualization.cpp RelinkablePathVisualization.h
+	RelinkingDialog.cpp RelinkingDialog.h
+	RelinkingListView.cpp RelinkingListView.h
+	RelinkingModel.cpp RelinkingModel.h
+	RelinkingSortingModel.cpp RelinkingSortingModel.h
+	SettingsDialog.cpp SettingsDialog.h
+	SkinnedButton.cpp SkinnedButton.h
+	StageListView.cpp StageListView.h
+	SystemLoadWidget.cpp SystemLoadWidget.h
+	ThumbnailSequence.cpp ThumbnailSequence.h
+)
+
+set(win32_resource_file "")
+if(WIN32)
+	set( rc_file "${CMAKE_SOURCE_DIR}/src/app/resources/win32/resources.rc")
+	file(GLOB win32_resources resources/win32/*.ico)
+	set_source_files_properties(
+		"${rc_file}" PROPERTIES
+		OBJECT_DEPENDS ${win32_resources}
+	)
+	set( win32_resource_file "${rc_file}")
+endif(WIN32)
+
+set(resource_files app/resources/resources.qrc app/resources/icons/COPYING)
+if(WIN32)
+	list(APPEND resource_files app/resources/win32/resources.rc)
+endif()
+source_group("Resources" FILES ${resource_files})
+
+qt5_add_resources(resource_sources resources/resources.qrc)
+
+if(WIN32)
+	add_executable(
+		scantailor WIN32 ${gui_only_sources} ${resource_sources} ${win32_resource_file}
+	)
+elseif(APPLE)
+	set( ICON_NAME "ScanTailor.icns" )
+	set( ICON_PATH "${PROJECT_SOURCE_DIR}/src/packaging/osx/${ICON_NAME}" )
+	set_source_files_properties( ${ICON_PATH} PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+	add_executable(
+		scantailor MACOSX_BUNDLE ${gui_only_sources} ${resource_sources} ${ICON_PATH}
+        )
+        set_target_properties(scantailor-universal PROPERTIES MACOSX_BUNDLE_INFO_PLIST
+                                  ${PROJECT_SOURCE_DIR}/src/packaging/osx/Info.plist.in)
+else() # Other *nixs
+	add_executable(
+		scantailor ${gui_only_sources} ${resource_sources} ${win32_resource_file}
+	)
+endif()
+
+target_link_libraries(
+	scantailor
+	acceleration page_layout output fix_orientation page_split
+	deskew select_content stcore dewarping zones interaction
+	imageproc math foundation
+	${EXTRA_LIBS}
+)
+
+install(TARGETS scantailor RUNTIME DESTINATION bin)
