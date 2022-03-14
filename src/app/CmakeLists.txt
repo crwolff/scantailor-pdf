@@ -71,4 +71,10 @@ target_link_libraries(
 	${EXTRA_LIBS}
 )
 
+# We want the executable located where we copy all the DLLs.
+set_target_properties(
+	scantailor PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
+
 install(TARGETS scantailor RUNTIME DESTINATION bin)

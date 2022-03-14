@@ -45,6 +45,12 @@ if(ENABLE_CRASH_REPORTER)
 		CrashReporter Qt5::Widgets Qt5::Xml Qt5::Network
 		${PNG_LIBRARY} ${JPEG_LIBRARY} winmm imm32 ws2_32
 	)
+	
+	# We want the executable located where we copy all the DLLs.
+	set_target_properties(
+		CrashReporter PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+	)
 endif()
 
 TRANSLATION_SOURCES(crashreporter ${crash_reporter_sources} ${ui_files})

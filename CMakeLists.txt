@@ -317,11 +317,11 @@ set(
 )
 include(CPack)
 
-# When using lhmouse's MinGW distribution, the threading lib cannot be statically linked. Copy it to build dir.
+# When using lhmouse's MinGW distribution, the threading lib cannot be statically linked. Always copy it to build dir.
 if(MINGW)
 	find_file(mcf mcfgthread-12.dll HINTS ENV PATH)
 	if(EXISTS ${mcf})
-		file(COPY ${mcf} DESTINATION ${EXTERN}/bin)
+		file(COPY ${mcf} DESTINATION ${CMAKE_BINARY_DIR})
 	endif()
 endif()
 
