@@ -210,8 +210,9 @@ include(cmake/extern/freetype.cmake)
 set(LIB_PODOFO "")
 include(cmake/extern/podofo.cmake)
 
-# OpenCL is currently only supported on Windows with MSVC
-if(MSVC)
+# OpenCL is currently only supported on Windows with MSVC or MinGW
+# For MSVC, you need to have an opencl SDK installed.
+if(MSVC OR MINGW)
 	set(LIB_OPENCL "")
 	include(cmake/extern/opencl.cmake)
 	cmake_dependent_option(

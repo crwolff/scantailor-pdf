@@ -10,7 +10,7 @@ file(GLOB khronos_headers khronos/CL/*.h khronos/CL/*.hpp)
 
 set(
 	host_sources
-	${khronos_headers}
+#	${khronos_headers}
 	OpenCLGrid.h
 	OpenCLGaussBlur.cpp OpenCLGaussBlur.h
 	OpenCLTextFilterBank.cpp OpenCLTextFilterBank.h
@@ -49,7 +49,7 @@ if(ENABLE_OPENCL)
 	source_group("Generated" FILES ${resource_sources})
 
 	add_library(opencl STATIC ${host_sources} ${device_sources} ${resource_sources})
-	target_link_libraries(opencl acceleration Qt5::Core Qt5::Gui ${OpenCL_LIBRARIES})
+	target_link_libraries(opencl acceleration Qt5::Core Qt5::Gui ${OpenCL_LIBRARY})
 	target_include_directories(opencl INTERFACE ${EIGEN3_INCLUDE_DIR})
 
 	add_library(opencl_plugin MODULE ${plugin_sources} resources.qrc)

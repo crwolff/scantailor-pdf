@@ -2,26 +2,26 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 ## TODO: This needs a rework. Also find out, if we can get opencl to work on MinGW and other platforms 
-IF(MSVC)
-	INCLUDE(FindOpenCL)
-	IF(NOT OpenCL_FOUND)
-	  FIND_LIBRARY(
-		 OpenCL_LIBRARY NAMES opencl libopencl
-		 PATHS "${build_outer_dir}/opencl"
-		 DOC "Local OpenCL library path"
-	  )
+find_package(OpenCL QUIET)
 
-	  FIND_PATH(
-		 OpenCL_INCLUDE_DIR NAMES opencl.h cl.h cl.hpp
-		 PATHS "${build_outer_dir}/opencl/cl"
-		 DOC "Local OpenCL include path"
-	  )
+if(NOT OpenCL_FOUND)
+	find_library(
+		OpenCL_LIBRARY NAMES opencl opencl.a
+		PATHS "${CMAKE_SOURCE_DIR}/src/acceleration/opencl/khronos"
+		DOC "Local OpenCL library path"
+	)
 
-	  IF(OpenCL_LIBRARY AND OpenCL_INCLUDE_DIR)
-	  SET(OpenCL_FOUND ON)
-	  INCLUDE_DIRECTORIES("${OpenCL_INCLUDE_DIR}")
-	  ENDIF()
-	ENDIF()
-ENDIF(MSVC)
+	find_path(
+		OpenCL_INCLUDE_DIR NAMES opencl.h cl.h cl.hpp
+		PATHS "${CMAKE_SOURCE_DIR}/src/acceleration/opencl/khronos/CL"
+		DOC "Local OpenCL include path"
+	)
+
+	if(OpenCL_LIBRARY AND OpenCL_INCLUDE_DIR)
+		set(OpenCL_FOUND ON)
+		include_directories("${OpenCL_INCLUDE_DIR}")
+		message(STATUS "Found OpenCL in ${OpenCL_LIBRARY} and ${OpenCL_INCLUDE_DIR}.")
+	endif()
+endif()
 
 

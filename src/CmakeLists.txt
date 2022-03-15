@@ -24,9 +24,9 @@ add_subdirectory(filters/page_layout)
 add_subdirectory(filters/output)
 
 
-#source_group("Generated" FILES ${resource_sources})
-#source_group("Sources" FILES ${common_sources} ${gui_only_sources} ${cli_only_sources})
-#source_group("Special Headers" FILES version.h config.h.in)
+source_group("Generated" FILES ${resource_sources})
+source_group("Sources" FILES ${common_sources} ${gui_only_sources} ${cli_only_sources})
+source_group("Special Headers" FILES version.h config.h.in)
 
 # Compatibility for CMAKE >= 3.10
 if(POLICY CMP0071)

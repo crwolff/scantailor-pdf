@@ -2,7 +2,7 @@ include_directories(BEFORE ..)
 
 set(
 	sources
-	"${CMAKE_SOURCE_DIR}/tests/main.cpp"
+	"${CMAKE_SOURCE_DIR}/src/tests/main.cpp"
 	TestCopy.cpp
 	TestTranspose.cpp
 	TestGaussBlur.cpp
@@ -20,7 +20,7 @@ source_group("Sources" FILES ${sources})
 set(
 	libs
 	opencl dewarping imageproc math foundation
-	Qt5::Core ${OpenCL_LIBRARIES}
+	Qt5::Core ${OpenCL_LIBRARY}
 	${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 	${Boost_PRG_EXECUTION_MONITOR_LIBRARY} ${EXTRA_LIBS}
 )
