@@ -16,22 +16,6 @@ else() # Local static build
 	elseif(MINGW)
 		set(TIFF_FILE_NAME "libtiff.a")
 	endif()
-	
-	# Find lzma and add it as dependency to tiff
-	# set(lzma OFF)	
-	# find_library(
-		# lzma-system
-		# NAMES liblzma.a liblzma.lib lzma.a lzma.lib)
-	# if(EXISTS ${lzma-system})
-		# set(lzma ON)
-		# find_path(LIBLZMA_INCLUDE_DIR lzma.h )
-		# add_library(lzma2 STATIC IMPORTED)
-		# set_property(TARGET lzma2 PROPERTY
-			# IMPORTED_LOCATION ${lzma-system}
-			# INTERFACE_INCLUDE_DIRECTORIES ${LIBLZMA_INCLUDE_DIR}
-		# )
-		# set(LIB_LZMA ${lzma2})
-	# endif()
 
 	set(TIFF_BIN_DIR ${EXTERN}/src/tiff-extern-build)
 	set(TIFF_SRC_DIR ${EXTERN}/src/tiff-extern)

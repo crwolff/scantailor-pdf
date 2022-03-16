@@ -1,10 +1,9 @@
 # SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-## TODO: This needs a rework. Also find out, if we can get opencl to work on MinGW and other platforms 
 find_package(OpenCL QUIET)
 
-if(NOT OpenCL_FOUND)
+if(NOT OpenCL_FOUND AND MINGW)
 	find_library(
 		OpenCL_LIBRARY NAMES opencl opencl.a
 		PATHS "${CMAKE_SOURCE_DIR}/src/acceleration/opencl/khronos"
