@@ -25,7 +25,7 @@
 #include <QRectF>
 #include <QTransform>
 #include <QColor>
-#include <CL/cl2.hpp>
+#include <opencl.hpp>
 
 namespace imageproc
 {

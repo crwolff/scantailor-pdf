@@ -517,8 +517,7 @@ OpenCLGrid<float> gaussBlur(
 	// transpose() -> verticalPass() -> transpose()
 	// provided we have fast local memory. On CPUs and integrated GPUs
 	// it's not worth doing though.
-	if (device.getInfo<CL_DEVICE_HOST_UNIFIED_MEMORY>() == CL_TRUE ||
-		device.getInfo<CL_DEVICE_LOCAL_MEM_TYPE>() == CL_GLOBAL) {
+	if (device.getInfo<CL_DEVICE_LOCAL_MEM_TYPE>() == CL_GLOBAL) {
 
 		horizontalPass(command_queue, program, src_grid, dst_grid, h_sigma, &events);
 		verticalPass(command_queue, program, dst_grid, dst_grid, v_sigma, &events);
@@ -570,8 +569,7 @@ OpenCLGrid<float> anisotropicGaussBlur(
 		// transpose() -> verticalPass() -> transpose()
 		// provided we have fast local memory. On CPUs and integrated GPUs
 		// it's not worth doing though.
-		if (device.getInfo<CL_DEVICE_HOST_UNIFIED_MEMORY>() == CL_TRUE ||
-			device.getInfo<CL_DEVICE_LOCAL_MEM_TYPE>() == CL_GLOBAL) {
+		if (device.getInfo<CL_DEVICE_LOCAL_MEM_TYPE>() == CL_GLOBAL) {
 
 			cl::Buffer dst_buffer(
 				context, CL_MEM_READ_WRITE, src_grid.totalBytesWithDifferentPadding(1)
@@ -628,8 +626,7 @@ OpenCLGrid<float> anisotropicGaussBlur(
 		// transpose() -> verticallyTraversedSkewedPassInPlace() -> transpose()
 		// provided we have fast local memory. On CPUs and integrated GPUs
 		// it's not worth doing though.
-		if (device.getInfo<CL_DEVICE_HOST_UNIFIED_MEMORY>() == CL_TRUE ||
-			device.getInfo<CL_DEVICE_LOCAL_MEM_TYPE>() == CL_GLOBAL) {
+		if (device.getInfo<CL_DEVICE_LOCAL_MEM_TYPE>() == CL_GLOBAL) {
 
 			horizontallyTraversedSkewedPassInPlace(
 				command_queue, program, dst_grid, adjusted_sigma_phi, dy, &events

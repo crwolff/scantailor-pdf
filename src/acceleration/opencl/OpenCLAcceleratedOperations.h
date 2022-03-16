@@ -29,7 +29,7 @@
 #include <QSizeF>
 #include <QRectF>
 #include <QColor>
-#include <CL/cl2.hpp>
+#include <opencl.hpp>
 #include <vector>
 #include <memory>
 

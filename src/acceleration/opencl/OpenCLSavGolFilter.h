@@ -20,7 +20,7 @@
 #define OPENCL_SAV_GOL_FILTER_H_
 
 #include "imageproc/GrayImage.h"
-#include <CL/cl2.hpp>
+#include <opencl.hpp>
 #include <QSize>
 
 namespace opencl

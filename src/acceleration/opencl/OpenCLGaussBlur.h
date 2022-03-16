@@ -21,7 +21,7 @@
 
 #include "OpenCLGrid.h"
 #include "VecNT.h"
-#include <CL/cl2.hpp>
+#include <opencl.hpp>
 #include <vector>
 
 namespace opencl

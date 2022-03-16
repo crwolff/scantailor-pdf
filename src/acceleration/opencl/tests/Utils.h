@@ -21,7 +21,7 @@
 
 #include "OpenCLGrid.h"
 #include "imageproc/BinaryImage.h"
-#include <CL/cl2.hpp>
+#include <opencl.hpp>
 #include <vector>
 #include <deque>
 

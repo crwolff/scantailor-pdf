@@ -21,7 +21,7 @@
 
 #include "AccelerationPlugin.h"
 #include "AcceleratableOperations.h"
-#include <CL/cl2.hpp>
+#include <opencl.hpp>
 #include <QObject>
 #include <vector>
 #include <string>

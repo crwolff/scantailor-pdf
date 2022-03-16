@@ -25,7 +25,7 @@
 #include <QColor>
 #include <QSysInfo>
 #include <QDebug>
-#include <CL/cl2.hpp>
+#include <opencl.hpp>
 #include <utility>
 #include <stdexcept>
 #include <algorithm>
