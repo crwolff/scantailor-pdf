@@ -49,13 +49,13 @@ add_library(math ${MAYBE_STATIC} ${GENERIC_SOURCES} ${SPFIT_SOURCES} ${ADIFF_SOU
 target_link_libraries(math foundation Qt5::Core)
 target_include_directories(math INTERFACE ${EIGEN3_INCLUDE_DIR})
 
-if(NOT STATIC_BUILD)
-	# We want the DLL located where executables can find it.
-	set_target_properties(
-		math PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-	)
+# We want the DLL located where executables can find it.
+set_target_properties(
+	math PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
 
+if(NOT STATIC_BUILD)
 	install(TARGETS math DESTINATION lib/scantailor)
 endif()
 

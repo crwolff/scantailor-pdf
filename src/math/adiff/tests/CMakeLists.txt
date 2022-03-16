@@ -17,12 +17,10 @@ set(
 add_executable(adiff_tests ${sources})
 target_link_libraries(adiff_tests ${libs})
 
-if(NOT STATIC_BUILD)
-	# We want the executable located where we copy all the DLLs.
-	set_target_properties(
-		adiff_tests PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-	)
-endif()
+# We want the executable located where we copy all the DLLs.
+set_target_properties(
+	adiff_tests PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
 
 add_test(NAME adiff_tests COMMAND adiff_tests --log_level=message)

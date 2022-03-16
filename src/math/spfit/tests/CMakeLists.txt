@@ -17,12 +17,10 @@ set(
 add_executable(spfit_tests ${sources})
 target_link_libraries(spfit_tests ${libs})
 
-if(NOT STATIC_BUILD)
-	# We want the executable located where we copy all the DLLs.
-	set_target_properties(
-		spfit_tests PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-	)
-endif()
+# We want the executable located where we copy all the DLLs.
+set_target_properties(
+	spfit_tests PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
 
 add_test(NAME spfit_tests COMMAND spfit_tests --log_level=message)
