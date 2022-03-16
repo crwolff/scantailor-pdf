@@ -22,7 +22,7 @@ else() # Local static build
 		PREFIX ${EXTERN}
 		URL https://sourceforge.net/projects/freetype/files/freetype2/2.11.1/freetype-2.11.1.tar.xz/download
 		URL_MD5 24e79233d607ded439ef36ff1f3ab68f
-		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DCMAKE_PREFIX_PATH=${EXTERN} -DFT_DISABLE_BZIP2=TRUE
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DCMAKE_PREFIX_PATH=${EXTERN} -DFT_DISABLE_BZIP2=TRUE -DFT_DISABLE_BROTLI=TRUE -DFT_DISABLE_HARFBUZZ=TRUE
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 		DEPENDS ${LIB_ZLIB} ${LIB_PNG}
 	)	
