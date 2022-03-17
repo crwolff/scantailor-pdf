@@ -184,6 +184,10 @@ endif()
 # List of include directories for all external libraries
 list(APPEND ALL_EXTERN_INC_DIRS ${EXTERN_INC_DIR})
 
+# Assume we have all dependencies. If a dependency is not found below,
+# this variable is set to false and cmake won't configure the actual
+# Scan Tailor build.
+set(HAVE_DEPENDENCIES TRUE)
 
 # External library targets
 # The following cmake files will search for and/or download and build
@@ -279,7 +283,7 @@ endif()
 #========================== Scantailor ============================#
 #==================================================================#
 
-if(HAVE_QT5) # Check that we have found/built Qt5
+if(HAVE_DEPENDENCIES) # Check that we have found/built Qt5
 # We have to do this because we might have to build Qt5 on first cmake run.
 
 # Prepare config.h
@@ -416,4 +420,4 @@ if(WIN32 AND NOT STATIC_BUILD)
 	add_subdirectory(packaging/windows)
 endif(WIN32 AND NOT STATIC_BUILD)
 
-endif(HAVE_QT5)
+endif(HAVE_DEPENDENCIES)

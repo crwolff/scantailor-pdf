@@ -7,7 +7,6 @@ if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
 	if(ENABLE_OPENGL)
 		find_package(Qt5 COMPONENTS OpenGL REQUIRED)
 	endif()
-	set(HAVE_QT5 TRUE)
 	# Now, use the QT5::* targets.
 	
 else() # Local static build
@@ -23,14 +22,14 @@ else() # Local static build
 		target_link_libraries(Qt5::Gui INTERFACE ${LIB_PNG} "${EXTERN}/lib/libqtharfbuzz.a")
 		target_link_libraries(Qt5::Core INTERFACE "${EXTERN}/lib/libqtpcre2.a")
 		# Now, use the QT5::* targets.
-		set(HAVE_QT5 TRUE)
 		
 	else() # Qt5 has not been built yet. Configure for build.
 		
 		message(STATUS "Qt5 has not been fully built yet. "
 							"After the first build without errors, just rerun the cmake configuration "
 							"and generation steps and it should find Qt5 and build fine.")
-							
+		set(HAVE_DEPENDENCIES FALSE)
+		
 		ExternalProject_Add(
 		qt5-base-extern
 		PREFIX ${EXTERN}

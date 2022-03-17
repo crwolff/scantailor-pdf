@@ -23,20 +23,24 @@ else(USE_SYSTEM_LIBS) # Local static build
 		message(STATUS "Boost has not been fully built yet. "
 							"After the first build without errors, just rerun the cmake configuration and "
 							"generation steps and it should find Boost and build fine.")
-
+		set(HAVE_DEPENDENCIES FALSE)
+		
 		set(BOOST_64BIT_FLAGS "")
 		if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 			list(APPEND BOOST_64BIT_FLAGS "address-model=64")
 		endif()
 		
 		set(BOOST_TOOLSET "")
+		set(BOOST_BOOTSTRAP "bootstrap")
 		if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
 			set(BOOST_TOOLSET "msvc")
 		elseif(	${CMAKE_GENERATOR} STREQUAL "Ninja" OR
-					${CMAKE_GENERATOR} STREQUAL "MinGW Makefiles" OR
-					${CMAKE_GENERATOR} STREQUAL "Unix Makefiles" OR
-					${CMAKE_GENERATOR} STREQUAL "MSYS Makefiles")
+					${CMAKE_GENERATOR} STREQUAL "MinGW Makefiles")
 			set(BOOST_TOOLSET "gcc")
+		elseif(	${CMAKE_GENERATOR} STREQUAL "MSYS Makefiles" OR
+					${CMAKE_GENERATOR} STREQUAL "Unix Makefiles")
+			set(BOOST_TOOLSET "gcc")
+			set(BOOST_BOOTSTRAP "./bootstrap.sh")
 		endif()
 		
 		# Since at least boost 1.76 and maybe earlier does not pass the toolset from the
@@ -64,14 +68,14 @@ else(USE_SYSTEM_LIBS) # Local static build
 		ExternalProject_Add_Step(boost-extern bootstrap
 			DEPENDEES configure
 			DEPENDERS build
-			COMMAND bootstrap ${BOOST_TOOLSET}
+			COMMAND ${BOOST_BOOTSTRAP} ${BOOST_TOOLSET}
 			WORKING_DIRECTORY <SOURCE_DIR>
 		)
 		
 		ExternalProject_Add_Step(boost-extern b2
 			DEPENDEES bootstrap
 			DEPENDERS install
-			COMMAND b2 --with-test toolset=${BOOST_TOOLSET} threading=multi link=static runtime-link=static variant=release ${BOOST_64BIT_FLAGS} --build-dir=<BINARY_DIR> --stagedir=${EXTERN}
+			COMMAND ./b2 --with-test toolset=${BOOST_TOOLSET} threading=multi link=static runtime-link=static variant=release ${BOOST_64BIT_FLAGS} --build-dir=<BINARY_DIR> --stagedir=${EXTERN}
 			WORKING_DIRECTORY <SOURCE_DIR>
 		)
 
@@ -79,5 +83,5 @@ else(USE_SYSTEM_LIBS) # Local static build
 endif(USE_SYSTEM_LIBS)
 
 set(LIB_BOOST Boost_LIBRARIES)
-list(APPEND ALL_EXTERN_INC_DIRS ${Boost_INCLUDE_DIRS})
+list(APPEND ALL_EXTERN_INC_DIRS ${Boost_INCLUDE_DIR})
 add_definitions(-DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION)
