@@ -50,6 +50,7 @@ qt5_wrap_ui(ui_sources ${ui_files})
 
 add_library(output STATIC ${sources} ${ui_sources})
 target_link_libraries(output Qt5::Widgets Qt5::Xml)
+target_include_directories(output PUBLIC ${Boost_INCLUDE_DIRS})
 add_dependencies(output toplevel_ui_sources)
 
 translation_sources(scantailor ${sources} ${ui_files})

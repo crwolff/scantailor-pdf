@@ -24,5 +24,6 @@ source_group(Sources FILES ${sources})
 
 add_library(zones STATIC ${sources})
 target_link_libraries(zones Qt5::Widgets Qt5::Xml)
+target_include_directories(zones PUBLIC ${Boost_INCLUDE_DIRS})
 
 translation_sources(scantailor ${sources})

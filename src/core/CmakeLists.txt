@@ -93,6 +93,7 @@ set(
 
 add_library(stcore STATIC ${common_sources} ${common_ui_sources})
 target_link_libraries(stcore acceleration deskew Qt5::Widgets Qt5::Xml ${MAYBE_QT_OPENGL_MODULE})
+target_include_directories(stcore PUBLIC ${Boost_INCLUDE_DIRS})
 add_dependencies(stcore toplevel_ui_sources)
 
 # Some includes need to be added manually in new build system
