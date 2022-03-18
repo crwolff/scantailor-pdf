@@ -44,24 +44,23 @@ add_definitions(-DCL_HPP_ENABLE_EXCEPTIONS)
 add_definitions(-DCL_HPP_TARGET_OPENCL_VERSION=110)
 add_definitions(-DCL_HPP_MINIMUM_OPENCL_VERSION=110)
 
-if(ENABLE_OPENCL)
-	qt5_add_resources(resource_sources resources.qrc)
-	source_group("Generated" FILES ${resource_sources})
 
-	add_library(opencl STATIC ${host_sources} ${device_sources} ${resource_sources})
-	target_link_libraries(opencl acceleration Qt5::Core Qt5::Gui ${OpenCL_LIBRARY})
-	target_include_directories(opencl INTERFACE ${EIGEN3_INCLUDE_DIR})
+qt5_add_resources(resource_sources resources.qrc)
+source_group("Generated" FILES ${resource_sources})
 
-	add_library(opencl_plugin MODULE ${plugin_sources} resources.qrc)
-	target_link_libraries(opencl_plugin opencl dewarping imageproc)
+add_library(opencl STATIC ${host_sources} ${device_sources} ${resource_sources})
+target_link_libraries(opencl acceleration Qt5::Core Qt5::Gui ${OpenCL_LIBRARY})
+target_include_directories(opencl INTERFACE ${EIGEN3_INCLUDE_DIR})
 
-	# Output to the root of the build directory, where it can be found by QPluginLoader.
-	set_target_properties(
-		opencl_plugin PROPERTIES
-		LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
-	)
+add_library(opencl_plugin MODULE ${plugin_sources} resources.qrc)
+target_link_libraries(opencl_plugin opencl dewarping imageproc)
 
-	install(TARGETS opencl_plugin LIBRARY DESTINATION lib/scantailor)
+# Output to the root of the build directory, where it can be found by QPluginLoader.
+set_target_properties(
+	opencl_plugin PROPERTIES
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
 
-	add_subdirectory(tests)
-endif()
+install(TARGETS opencl_plugin LIBRARY DESTINATION lib/scantailor)
+
+add_subdirectory(tests)

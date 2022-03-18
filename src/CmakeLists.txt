@@ -1,6 +1,7 @@
 # This has to go quite early on, as otherwise we risk picking
 # up an identically named header from a system include path.
-include_directories(. foundation math interaction zones)
+# Also, these are propagated to sub-projects.
+include_directories(. foundation math interaction zones core)
 
 add_subdirectory(ui)
 include_directories("${toplevel_ui_sources_BINARY_DIR}")

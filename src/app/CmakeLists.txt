@@ -1,7 +1,5 @@
 project("Application")
 
-include_directories("../core")
-
 set(
 	gui_only_sources
 	Application.cpp Application.h

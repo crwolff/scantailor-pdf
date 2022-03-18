@@ -1,5 +1,3 @@
-include_directories(BEFORE "../core")
-
 set(
 	sources
 	main.cpp TestContentSpanFinder.cpp

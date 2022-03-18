@@ -1,6 +1,6 @@
 project("Page Layout Filter")
 
-include_directories(BEFORE "${CMAKE_CURRENT_BINARY_DIR}" "../../core")
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})
 
 set(
 	sources

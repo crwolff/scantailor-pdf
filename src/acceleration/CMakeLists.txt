@@ -1,7 +1,10 @@
 project(Acceleration)
 
 include_directories(.)
-add_subdirectory(opencl)
+
+if(ENABLE_OPENCL)
+	add_subdirectory(opencl)
+endif()
 
 set(
 	sources

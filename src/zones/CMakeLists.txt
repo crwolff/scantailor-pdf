@@ -1,6 +1,6 @@
 project("zones")
 
-include_directories("${CMAKE_CURRENT_BINARY_DIR}" "../core")
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(
 	sources
