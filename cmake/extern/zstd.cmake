@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-only
+
+if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
+
+	find_package(ZSTD)		# This only finds shared libs
+	if(ZSTD_FOUND)
+		set(LIB_ZSTD ZSTD::ZSTD)
+		list(APPEND ALL_EXTERN_INC_DIRS ${ZSTD_INCLUDE_DIRS})
+	endif()
+	
+else() # Local static build
+	
+	# TODO: Filenames for other platforms and dynamic library
+	set(ZSTD_FILE_NAME "")
+	if(MSVC)
+		set(ZSTD_FILE_NAME "zstd.lib")
+	elseif(MINGW)
+		set(ZSTD_FILE_NAME "libzstd.a")
+	endif()
+
+	ExternalProject_Add(
+		zstd-extern
+		PREFIX ${EXTERN}
+		URL https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz
+		URL_HASH SHA256=7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0
+		SOURCE_SUBDIR build/cmake
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DCMAKE_PREFIX_PATH=${EXTERN} -DZSTD_BUILD_STATIC=ON -DZSTD_BUILD_SHARED=OFF -DZSTD_BUILD_PROGRAMS=OFF -DZSTD_BUILD_TESTS=OFF
+		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
+	)	
+
+	# We can't use the external target directly (utility target), so 
+	# create a new target and depend it on the external target.
+	add_library(zstd STATIC IMPORTED)
+	set_property(TARGET zstd PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ZSTD_FILE_NAME}")
+	add_dependencies(zstd zstd-extern)
+	set(LIB_ZSTD zstd)
+
+endif()

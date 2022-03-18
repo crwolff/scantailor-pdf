@@ -11,7 +11,7 @@ source_group("Sources" FILES ${sources})
 set(
 	libs
 	math ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-	${Boost_PRG_EXECUTION_MONITOR_LIBRARY} ${EXTRA_LIBS}
+	${Boost_PRG_EXECUTION_MONITOR_LIBRARY}
 )
 
 add_executable(adiff_tests ${sources})

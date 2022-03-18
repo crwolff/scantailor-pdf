@@ -202,6 +202,12 @@ include(cmake/extern/jpeg.cmake)
 set(LIB_PNG "")
 include(cmake/extern/png.cmake)
 
+set(LIB_LZMA "")
+include(cmake/extern/lzma.cmake)
+
+set(LIB_ZSTD "")
+include(cmake/extern/zstd.cmake)
+
 set(LIB_TIFF "")
 include(cmake/extern/tiff.cmake)
 
@@ -269,7 +275,7 @@ if(WIN32)
 endif()
 
 list(APPEND EXTRA_LIBS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_TIFF}
-	${LIB_OPENJP} ${LIB_PODOFO}
+	${LIB_ZSTD} ${LIB_LZMA} ${LIB_OPENJP} ${LIB_PODOFO}
 )
 
 set(MAYBE_QT_OPENGL_MODULE "")

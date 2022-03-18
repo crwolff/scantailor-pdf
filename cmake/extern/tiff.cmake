@@ -25,7 +25,7 @@ else() # Local static build
 		PREFIX ${EXTERN}
 		URL http://download.osgeo.org/libtiff/tiff-4.3.0.zip
 		URL_HASH SHA256=882c0bcfa0e69f85a51a4e33d44673d10436c28d89d4a8d3814e40bad5a4338b
-		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DCMAKE_PREFIX_PATH=${EXTERN} -DBUILD_SHARED_LIBS=OFF -Dwebp=OFF -Dlzma=OFF -Dzstd=OFF -DCMAKE_DISABLE_FIND_PACKAGE_GLUT=TRUE
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DCMAKE_PREFIX_PATH=${EXTERN} -DBUILD_SHARED_LIBS=OFF -Dwebp=OFF -Dlzma=ON -Dzstd=ON -DCMAKE_DISABLE_FIND_PACKAGE_GLUT=TRUE
 		# Build only needed tiff target; uses multiple threads if [mingw32-]make or ninja is used
 		BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} tiff
 		# Install only needed files
@@ -35,7 +35,7 @@ else() # Local static build
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TIFF_SRC_DIR}/libtiff/tiffio.h ${EXTERN_INC_DIR}/tiffio.h
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TIFF_SRC_DIR}/libtiff/tiffvers.h ${EXTERN_INC_DIR}/tiffvers.h
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		DEPENDS ${LIB_ZLIB} ${LIB_JPEG}
+		DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_ZSTD} ${LIB_LZMA}
 	)	
 
 	# We can't use the external target directly (utility target), so 
@@ -43,7 +43,7 @@ else() # Local static build
 	add_library(tiff STATIC IMPORTED)
 	set_property(TARGET tiff PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${TIFF_FILE_NAME}")
 	add_dependencies(tiff tiff-extern)
-	target_link_libraries(tiff INTERFACE ${LIB_ZLIB} ${LIB_JPEG} ${LIB_LZMA})
+	target_link_libraries(tiff INTERFACE ${LIB_ZLIB} ${LIB_JPEG} ${LIB_LZMA} ${LIB_ZSTD})
 	set(LIB_TIFF tiff)
 
 endif()

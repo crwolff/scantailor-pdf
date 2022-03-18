@@ -31,7 +31,7 @@ set(
 	libs
 	imageproc math foundation Qt5::Widgets Qt5::Xml
 	${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-	${Boost_PRG_EXECUTION_MONITOR_LIBRARY} ${EXTRA_LIBS}
+	${Boost_PRG_EXECUTION_MONITOR_LIBRARY}
 )
 
 remove_definitions(-DBUILDING_IMAGEPROC)

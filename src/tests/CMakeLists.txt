@@ -12,7 +12,7 @@ source_group("Sources" FILES ${sources})
 set(
 	libs
 	imageproc math Qt5::Widgets ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-	${Boost_PRG_EXECUTION_MONITOR_LIBRARY} ${EXTRA_LIBS}
+	${Boost_PRG_EXECUTION_MONITOR_LIBRARY}
 )
 
 add_executable(generic_tests ${sources})

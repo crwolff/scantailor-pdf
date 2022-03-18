@@ -22,7 +22,7 @@ set(
 	opencl dewarping imageproc math foundation
 	Qt5::Core ${OpenCL_LIBRARY}
 	${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-	${Boost_PRG_EXECUTION_MONITOR_LIBRARY} ${EXTRA_LIBS}
+	${Boost_PRG_EXECUTION_MONITOR_LIBRARY}
 )
 
 add_executable(opencl_tests ${sources})
