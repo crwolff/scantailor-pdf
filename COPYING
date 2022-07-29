@@ -8,5 +8,5 @@ The GNU General Public License version 3 can be found in GPL3.txt
 Some parts of the program are licensed under different, but compatible
 with GPL3 terms. For more details, see:
 
-boost/LICENSE_1_0.txt
-resources/icons/COPYING
+https://www.boost.org/users/license.html
+src/app/resources/icons/COPYING
