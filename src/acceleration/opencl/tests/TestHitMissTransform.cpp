@@ -54,7 +54,7 @@ public:
 
 BOOST_FIXTURE_TEST_SUITE(HitMissTransformTestSuite, HitMissTransformFixture)
 
-#define LOG_PERFORMANCE 0
+#define LOG_PERFORMANCE 1
 
 BOOST_AUTO_TEST_CASE(test_hit_miss_replace_correctness)
 {

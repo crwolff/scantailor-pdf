@@ -29,7 +29,7 @@ if(NOT STATIC_BUILD)
 	# We want the DLL located where executables can find it.
 	set_target_properties(
 		acceleration PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>
 	)
 
 	install(TARGETS acceleration DESTINATION lib/scantailor)

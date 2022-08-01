@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15.0)
+cmake_minimum_required(VERSION 3.21.0)
 
 if(POLICY CMP0003)
 	# Allow linking with full library path instead of -L/path -llibrary
@@ -15,37 +15,6 @@ endif()
 project("Scan Tailor PDF")
 
 
-#===================== User cmake options =========================#
-
-# When using this option, all dependencies need to be installed and be locatable
-# by find_package(), find_library(), and find_file(). You may set
-# CMAKE_PREFIX_PATH accordingly.
-option(USE_SYSTEM_LIBS "Use installed libraries instead of the project supplied ones. Halts and gives an error if find_package() can't find a dependency." OFF)
-
-# This will always build the project supplied external dependencies, including QT.
-# Most Find….cmake modules only find dynamic libraries. So the maintenance effort
-# is too big to find system static libraries across all supported platforms and
-# compilers.
-option(STATIC_BUILD "Statically link all libraries." OFF)
-if(STATIC_BUILD)
-	set(MAYBE_STATIC "STATIC")
-	if (MINGW)
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
-	endif()
-endif()
-
-option(BUILD_QT_TOOLS "Build and install all QT tools, including assistant, designer, windeployqt etc.)." OFF)
-
-# Crash reporter, only Windows + MSVC supported for now.
-# Must go before generating config.h, as ENABLE_CRASH_REPORTER
-# goes in there.
-if(MSVC)
-	option(ENABLE_CRASH_REPORTER "Enable crash reporter (only for official builds)" OFF)
-endif(MSVC)
-
-option(BUILD_CLI "Build the command line Scan Tailor PDF executable." OFF)
-
-
 #============== Cmake files for custom functions ==================#
 
 include(CheckIncludeFile)
@@ -59,6 +28,42 @@ include(cmake/ToNativePath.cmake)
 include(cmake/UpdateTranslations.cmake)
 include(cmake/CopyToBuildDir.cmake)
 include(cmake/LibToDLL.cmake)
+
+#===================== User cmake options =========================#
+
+# This will always build the project supplied external dependencies, including QT.
+# Most Find*.cmake modules only find dynamic libraries. So the maintenance effort
+# is too big to find system static libraries across all supported platforms and
+# compilers. Currently only works on WIN32.
+option(STATIC_BUILD "Statically link all libraries." OFF)
+
+if(STATIC_BUILD)
+	set(MAYBE_STATIC "STATIC")
+	set(STATIC_BOOL "ON")	# For Options in ExternalProject_add()
+	set(SHARED_BOOL "OFF")	# For Options in ExternalProject_add()
+	if (MINGW)
+		# Even link against static libgcc and libstdc++ on Windows since these are not available by default.
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+	endif()
+else()
+	set(MAYBE_STATIC "SHARED")
+	set(STATIC_BOOL "OFF")
+	set(SHARED_BOOL "ON")
+endif()
+
+# We usually only build linguist and windeployqt because we need it for the translations.
+# Turn this on, if you wish to build all qt tools (assistant, designer, etc.).
+option(BUILD_QT_TOOLS "Build and install all QT tools, including assistant, designer, etc.)." OFF)
+
+# Crash reporter, only Windows + MSVC supported for now.
+# Must go before generating config.h, as ENABLE_CRASH_REPORTER
+# goes in there.
+if(MSVC)
+	option(ENABLE_CRASH_REPORTER "Enable crash reporter (only for official builds)" ON)
+endif(MSVC)
+
+# Currently broken…
+#option(BUILD_CLI "Build the command line Scan Tailor PDF executable." OFF)
 
 
 
@@ -153,31 +158,34 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 #====================== Dependency search =========================#
 #==================================================================#
 
-set(EXTERN ${PROJECT_SOURCE_DIR}/extern)
-message(STATUS "External dependencies will be stored in ${EXTERN}")
-
+set(EXTERN ${CMAKE_CURRENT_BINARY_DIR}/extern)
 if(STATIC_BUILD)
-	# https://cmake.org/cmake/help/latest/module/ExternalProject.html
-	include(ExternalProject)
+	message(STATUS "External dependencies will be stored in ${EXTERN}")
+endif()
 
-	# This dir structure follows the GNU installation structure
-	set(EXTERN_INC_DIR ${EXTERN}/include)
-	set(EXTERN_LIB_DIR ${EXTERN}/lib)
-	set(EXTERN_BIN_DIR ${EXTERN}/bin)
+# https://cmake.org/cmake/help/latest/module/ExternalProject.html
+include(ExternalProject)
 
-	# Make sure, find_*() functions can find external dependencies
-	set(CMAKE_PREFIX_PATH ${EXTERN})
+# This dir structure follows the GNU installation structure
+# It uses the default ExternalProject_add() dir structure.
+set(EXTERN_INC_DIR ${EXTERN}/include)
+set(EXTERN_LIB_DIR ${EXTERN}/lib)
+set(EXTERN_BIN_DIR ${EXTERN}/bin)
 
-	# Multiprocessor options for quicker compilation of various libraries
-	set(MP "")	# Configure QT5 to use multiple processors when using nmake
-	set(JX "")	# Make [mingw32-]make use multiple processors for QT5 build
-	if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
-		set(MP "-mp")	# Appended to the QT5 configure step
-	elseif(${CMAKE_GENERATOR} STREQUAL "Ninja")
-		if(POLICY CMP0048)
-			# Prevent Warnings about byproducts and phony targets for Ninja generator
-			cmake_policy(SET CMP0058 OLD)
-		endif()
+# Make sure, find_*() functions can find external dependencies
+set(CMAKE_PREFIX_PATH ${EXTERN})
+
+# Location of patches for building external libraries
+set(EXTERN_PATCH_DIR ${CMAKE_SOURCE_DIR}/extern-patches)
+
+# Multiprocessor options for quicker compilation of various libraries
+set(MP "")	# Configure QT5 to use multiple processors when using nmake
+if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
+	set(MP "-mp")	# Appended to the QT5 configure step
+elseif(${CMAKE_GENERATOR} STREQUAL "Ninja")
+	if(POLICY CMP0048)
+		# Prevent warnings about byproducts and phony targets for Ninja generator
+		cmake_policy(SET CMP0058 OLD)
 	endif()
 endif()
 
@@ -270,7 +278,7 @@ endif(UNIX)
 # Other includes and options
 set(EXTRA_LIBS "")
 
-if(WIN32)
+if(MINGW AND STATIC_BUILD)
 	list(APPEND EXTRA_LIBS winmm imm32 ws2_32 ole32 oleaut32 uuid gdi32 comdlg32 winspool)
 endif()
 
@@ -328,102 +336,43 @@ set(
 )
 include(CPack)
 
-# When using lhmouse's MinGW distribution, the threading lib cannot be statically linked. Always copy it to build dir.
-if(MINGW)
-	find_file(mcf mcfgthread-12.dll HINTS ENV PATH)
-	if(EXISTS ${mcf})
-		file(COPY ${mcf} DESTINATION ${CMAKE_BINARY_DIR})
-	endif()
-endif()
-
 
 if(WIN32 AND NOT STATIC_BUILD)
-	# Copy some DLLs to the staging dir.
-	## TODO: Can we maybe use qtwindeploy here?
 	
-	# Qt core
-	set(
-		qt5_libs
-		${Qt5Widgets_LIBRARIES} ${Qt5Gui_LIBRARIES}
-		${Qt5Core_LIBRARIES} ${Qt5Xml_LIBRARIES}
-	)
-	if(ENABLE_OPENGL)
-		list(APPEND qt5_libs ${Qt5OpenGL_LIBRARIES})
-	endif()
-	foreach(target ${qt5_libs})
-		get_target_property(debug_loc "${target}" LOCATION_DEBUG)
-		get_target_property(release_loc "${target}" LOCATION_RELEASE)
-		COPY_TO_BUILD_DIR("${debug_loc}" CONFIGURATIONS Debug)
-		COPY_TO_BUILD_DIR("${release_loc}" CONFIGURATIONS Release MinSizeRel RelWithDebInfo)
-	endforeach()
+	## Copy all needed DLLs to the staging dir.
+	# Our external libraries
+	# add_custom_command(TARGET scantailor POST_BUILD
+	  # COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:scantailor> $<TARGET_FILE_DIR:scantailor>
+	  # COMMAND_EXPAND_LISTS
+	# )
+
+	# # QT5 stuff; this also copies needed system runtime files
+	# add_custom_command(TARGET scantailor POST_BUILD
+	  # COMMAND ${EXTERN_BIN_DIR}/windeployqt --dir $<TARGET_FILE_DIR:scantailor> $<TARGET_FILE:scantailor>
+	# )
 	
+	# if(ENABLE_OPENGL)
+	# list(APPEND qt5_libs ${Qt5OpenGL_LIBRARIES})
+	# endif()
+	# foreach(target ${qt5_libs})
+		# get_target_property(debug_loc "${target}" LOCATION_DEBUG)
+		# get_target_property(release_loc "${target}" LOCATION_RELEASE)
+		# COPY_TO_BUILD_DIR("${debug_loc}" CONFIGURATIONS Debug)
+		# COPY_TO_BUILD_DIR("${release_loc}" CONFIGURATIONS Release MinSizeRel RelWithDebInfo)
+	# endforeach()
+	
+	# Not needed any more. This is done by the dependency itself
 	# Libs
-	COPY_TO_BUILD_DIR(
-		"${JPEG_DLL}" "${PNG_DLL}" "${ZLIB_DLL}" "${TIFF_DLL}" "${OPENJPEG_DLL}"
-		"${PODOFO_DLL}" "${FREETYPE_DLL}" 
-	)
-	
-	# Mingw runtimes
-	if(MINGW)
-		## TODO: Copy libcc*.dll to build dir
-	
-	endif()
-
-	# Qt's plugins
-	set(PLUGINS_DIR "${QT_BUILD_DIR}/plugins")
-	COPY_TO_BUILD_DIR(
-		"${PLUGINS_DIR}/platforms/qwindows.dll" SUBDIR platforms
-		CONFIGURATIONS Release MinSizeRel RelWithDebInfo
-	)
-	COPY_TO_BUILD_DIR(
-		"${PLUGINS_DIR}/platforms/qwindowsd.dll" SUBDIR platforms
-		CONFIGURATIONS Debug
-	)
-
-	COPY_TO_BUILD_DIR(
-		"${PLUGINS_DIR}/imageformats/qjpeg.dll" SUBDIR imageformats
-		CONFIGURATIONS Release MinSizeRel RelWithDebInfo
-	)
-	COPY_TO_BUILD_DIR(
-		"${PLUGINS_DIR}/imageformats/qjpegd.dll" SUBDIR imageformats
-		CONFIGURATIONS Debug
-	)
-	
-	# Compatibility with QT >= 5.10
-	if(EXISTS "${PLUGINS_DIR}/styles/qwindowsvistastyle.dll")
-		COPY_TO_BUILD_DIR(
-			"${PLUGINS_DIR}/styles/qwindowsvistastyle.dll" SUBDIR styles
-			CONFIGURATIONS Release MinSizeRel RelWithDebInfo
-		)
-	endif()
-	
-	if(EXISTS "${PLUGINS_DIR}/styles/qwindowsvistastyled.dll")
-		COPY_TO_BUILD_DIR(
-			"${PLUGINS_DIR}/styles/qwindowsvistastyled.dll" SUBDIR styles
-			CONFIGURATIONS Debug
-		)
-	endif()
-	
-	# Compatibility with QT < 5.4
-	if(EXISTS "${PLUGINS_DIR}/accessible/qtaccessiblewidgets.dll")
-		COPY_TO_BUILD_DIR(
-			"${PLUGINS_DIR}/accessible/qtaccessiblewidgets.dll" SUBDIR accessible
-			CONFIGURATIONS Release MinSizeRel RelWithDebInfo
-		)
-	endif()
-
-	if(EXISTS "${PLUGINS_DIR}/accessible/qtaccessiblewidgetsd.dll")
-		COPY_TO_BUILD_DIR(
-			"${PLUGINS_DIR}/accessible/qtaccessiblewidgetsd.dll" SUBDIR accessible
-			CONFIGURATIONS Debug
-		)
-	endif()
+	# COPY_TO_BUILD_DIR(
+		# "${JPEG_DLL}" "${PNG_DLL}" "${ZLIB_DLL}" "${TIFF_DLL}" "${OPENJPEG_DLL}"
+		# "${PODOFO_DLL}" "${FREETYPE_DLL}" 
+	# )
 	
 	# Generate the target that will actually do the copying.
-	GENERATE_COPY_TO_BUILD_DIR_TARGET(copy_to_build_dir)
+	#GENERATE_COPY_TO_BUILD_DIR_TARGET(copy_to_build_dir)
 	
 	# Installer for Windows.  Must go last.
-	add_subdirectory(packaging/windows)
+	add_subdirectory(src/packaging/windows)
 endif(WIN32 AND NOT STATIC_BUILD)
 
 endif(HAVE_DEPENDENCIES)

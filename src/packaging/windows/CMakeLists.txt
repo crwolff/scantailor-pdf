@@ -105,7 +105,7 @@ ADD_CUSTOM_TARGET(
 )
 ADD_DEPENDENCIES(
 	prepare_staging_dir
-	scantailor scantailor-cli compile_translations
+	scantailor compile_translations #scantailor-cli
 )
 IF(ENABLE_CRASH_REPORTER)
 	ADD_DEPENDENCIES(prepare_staging_dir CrashReporter)
@@ -125,8 +125,8 @@ IF(ENABLE_CRASH_REPORTER)
 		COMMAND "${CMAKE_COMMAND}" ARGS "-DSYMBOLS_PATH=${SYMBOLS_PATH}"
 		-P "${CMAKE_SOURCE_DIR}/cmake/move_sym_file.cmake"
 		
-		COMMAND "${DUMP_SYMS_EXECUTABLE}" ARGS "$<TARGET_FILE:scantailor-cli>"
-		">" "${SYMBOLS_PATH}/temp.sym"
+		# COMMAND "${DUMP_SYMS_EXECUTABLE}" ARGS "$<TARGET_FILE:scantailor-cli>"
+		# ">" "${SYMBOLS_PATH}/temp.sym"
 		COMMAND "${CMAKE_COMMAND}" ARGS "-DSYMBOLS_PATH=${SYMBOLS_PATH}"
 		-P "${CMAKE_SOURCE_DIR}/cmake/move_sym_file.cmake"
 	)
@@ -168,9 +168,9 @@ IF (MAKENSIS_EXE)
 		VERBATIM
 	)
 
-	OPTION(BUILD_INSTALLER_BY_DEFAULT "Wheter the \"installer\" target gets built by default" ON)
+	OPTION(BUILD_INSTALLER "Wheter the \"installer\" target gets built by default" OFF)
 	SET(maybe_all "")
-	IF(BUILD_INSTALLER_BY_DEFAULT)
+	IF(BUILD_INSTALLER)
 		SET(maybe_all ALL)
 	ENDIF()
 	ADD_CUSTOM_TARGET(

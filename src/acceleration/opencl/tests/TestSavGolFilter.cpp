@@ -49,7 +49,7 @@ public:
 
 BOOST_FIXTURE_TEST_SUITE(SavGolFilterTestSuite, SavGolFilterFixture);
 
-#define LOG_PERFORMANCE 0
+#define LOG_PERFORMANCE 1
 
 BOOST_AUTO_TEST_CASE(test1)
 {

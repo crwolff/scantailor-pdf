@@ -97,8 +97,4 @@ target_include_directories(stcore PUBLIC ${Boost_INCLUDE_DIRS})
 add_dependencies(stcore toplevel_ui_sources)
 
 # Some includes need to be added manually in new build system
-target_include_directories(
-	stcore PUBLIC AFTER
-	PUBLIC ${ALL_EXTERN_INC_DIRS}
-)
-
+target_include_directories(stcore AFTER PUBLIC ${ALL_EXTERN_INC_DIRS})

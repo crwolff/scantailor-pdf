@@ -1,16 +1,18 @@
 # SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-# Some options for find_package()
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_STATIC_RUNTIME ON)
+# Suppress a warning
+set(Boost_NO_WARN_NEW_VERSIONS 1)
 
-if(USE_SYSTEM_LIBS) # We always link boost statically
+if(NOT WIN32 AND NOT STATIC_BUILD)
 
-	find_package(Boost REQUIRED	COMPONENTS test_exec_monitor unit_test_framework)
+	find_package(Boost REQUIRED COMPONENTS test_exec_monitor unit_test_framework)
 	
-else(USE_SYSTEM_LIBS) # Local static build
-
+else() # Local static build
+	
+	set(Boost_USE_STATIC_LIBS ON)
+	set(Boost_USE_STATIC_RUNTIME ON)
+	
 	# Instead of manually searching for the library files, we let find_package() do it.
 	# Set search directory hint
 	if(EXISTS ${EXTERN}/lib/cmake/Boost-1.78.0)
@@ -54,7 +56,7 @@ else(USE_SYSTEM_LIBS) # Local static build
 			URL https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
 			URL_HASH SHA256=090cefea470bca990fa3f3ed793d865389426915b37a2a3258524a7258f0790c
 			# Fix for comment above
-			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN}/src/patches/boost-extern/bootstrap.bat <SOURCE_DIR>/bootstrap.bat
+			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/boost-extern/bootstrap.bat <SOURCE_DIR>/bootstrap.bat
 			CONFIGURE_COMMAND ""
 			BUILD_COMMAND ""  # All steps are done below because of working directory
 			INSTALL_COMMAND ""
@@ -80,7 +82,7 @@ else(USE_SYSTEM_LIBS) # Local static build
 		)
 
 	endif()
-endif(USE_SYSTEM_LIBS)
+endif()
 
 set(LIB_BOOST Boost_LIBRARIES)
 list(APPEND ALL_EXTERN_INC_DIRS ${Boost_INCLUDE_DIR})

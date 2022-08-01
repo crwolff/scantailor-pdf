@@ -51,7 +51,7 @@ public:
 
 BOOST_FIXTURE_TEST_SUITE(GaussBlurTestSuite, GaussBlurFixture);
 
-#define LOG_PERFORMANCE 0
+#define LOG_PERFORMANCE 1
 
 BOOST_AUTO_TEST_CASE(test_axis_aligned_gauss_blur)
 {

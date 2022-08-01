@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
+if(NOT WIN32 AND NOT STATIC_BUILD)
 
 	find_package(Qt5 COMPONENTS Core Gui Widgets Xml Network LinguistTools REQUIRED)
 	if(ENABLE_OPENGL)
@@ -9,7 +9,7 @@ if(USE_SYSTEM_LIBS AND NOT STATIC_BUILD)
 	endif()
 	# Now, use the QT5::* targets.
 	
-else() # Local static build
+else() # Local build
 			
 	if(EXISTS ${EXTERN}/lib/cmake/Qt5LinguistTools)
 		# Tell find_package() where to find Qt5
@@ -19,8 +19,10 @@ else() # Local static build
 			find_package(Qt5 COMPONENTS OpenGL REQUIRED)
 		endif()
 		# For a static build, we have to add more dependencies manually
-		target_link_libraries(Qt5::Gui INTERFACE ${LIB_PNG} "${EXTERN}/lib/libqtharfbuzz.a")
-		target_link_libraries(Qt5::Core INTERFACE "${EXTERN}/lib/libqtpcre2.a")
+		if(STATIC_BUILD)
+			target_link_libraries(Qt5::Gui INTERFACE ${LIB_PNG} "${EXTERN}/lib/libqtharfbuzz.a")
+			target_link_libraries(Qt5::Core INTERFACE "${EXTERN}/lib/libqtpcre2.a")
+		endif()
 		# Now, use the QT5::* targets.
 		
 	else() # Qt5 has not been built yet. Configure for build.
@@ -28,57 +30,80 @@ else() # Local static build
 		message(STATUS "Qt5 has not been fully built yet. "
 							"After the first build without errors, just rerun the cmake configuration "
 							"and generation steps and it should find Qt5 and build fine.")
+		
 		set(HAVE_DEPENDENCIES FALSE)
 		
+		set(QT5_STATIC_OPTIONS "")
+		if (STATIC_BUILD)
+			set(QT5_STATIC_OPTIONS "-static -static-runtime")
+		endif()
+		
 		ExternalProject_Add(
-		qt5-base-extern
-		PREFIX ${EXTERN}
-		URL https://download.qt.io/official_releases/qt/5.15/5.15.2/submodules/qtbase-everywhere-src-5.15.2.tar.xz
-		URL_HASH SHA256=909fad2591ee367993a75d7e2ea50ad4db332f05e1c38dd7a5a274e156a4e0f8
-		# Qt < 6 with gcc 11 error: limits is not included by compiler by default any more.
-		PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN}/src/patches/qt5-base-extern/src/corelib/global/qfloat16.h <SOURCE_DIR>/src/corelib/global/qfloat16.h
-		COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN}/src/patches/qt5-base-extern/src/corelib/global/qendian.h <SOURCE_DIR>/src/corelib/global/qendian.h
-		COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN}/src/patches/qt5-base-extern/src/corelib/text/qbytearraymatcher.h <SOURCE_DIR>/src/corelib/text/qbytearraymatcher.h
-		CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform win32-g++ -debug-and-release -static -static-runtime -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
-		# This uses multiple threads with [mingw32-]make if main build was started with -jN option
-		BUILD_COMMAND ${CMAKE_MAKE_PROGRAM}
-		INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
-		UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
-		DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_FREETYPE}
+			qt5-base-extern
+			PREFIX ${EXTERN}
+			URL https://download.qt.io/official_releases/qt/5.15/5.15.2/submodules/qtbase-everywhere-src-5.15.2.tar.xz
+			URL_HASH SHA256=909fad2591ee367993a75d7e2ea50ad4db332f05e1c38dd7a5a274e156a4e0f8
+			# Qt < 6 with gcc 11 error: limits is not included by compiler by default any more.
+			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/global/qfloat16.h <SOURCE_DIR>/src/corelib/global/qfloat16.h
+			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/global/qendian.h <SOURCE_DIR>/src/corelib/global/qendian.h
+			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/text/qbytearraymatcher.h <SOURCE_DIR>/src/corelib/text/qbytearraymatcher.h
+			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform win32-g++ -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
+			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
+			DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_FREETYPE}
 		)
-				
+					
 		ExternalProject_Add(
 			qt-tools
 			PREFIX ${EXTERN}
 			URL https://download.qt.io/official_releases/qt/5.15/5.15.2/submodules/qttools-everywhere-src-5.15.2.tar.xz
 			URL_HASH SHA256=c189d0ce1ff7c739db9a3ace52ac3e24cb8fd6dbf234e49f075249b38f43c1cc
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern-build/bin/qmake -makefile -after "CONFIG += release" <SOURCE_DIR>/${QT_TOOLS}
-			# This uses multiple threads with [mingw32-]make if main build was started with -jN option
-			BUILD_COMMAND ${CMAKE_MAKE_PROGRAM}
-			# Install to Qt5 build dir so linguist is found by main project
-			INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
 			DEPENDS qt5-base-extern
 		)
 		
 		if(NOT BUILD_QT_TOOLS)
-			# Build only linguist tool and its dependencies
+			# Build only linguist and its dependencies
 			ExternalProject_Add_Step(
 				qt-tools custom-patch
 				DEPENDEES configure
 				DEPENDERS build
-				# Patch to build files to only build linguist tool and its dependencies
-				COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN}/src/patches/qt-tools/src/src.pro ${EXTERN}/src/qt-tools/src/src.pro
-				COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN}/src/patches/qt-tools/src/designer/src/src.pro ${EXTERN}/src/qt-tools/src/designer/src/src.pro
+				# Patch to build files to only build linguist tool and windeployqt and their dependencies
+				COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt-tools/src/src.pro ${EXTERN}/src/qt-tools/src/src.pro
+				COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt-tools/src/designer/src/src.pro ${EXTERN}/src/qt-tools/src/designer/src/src.pro
 			)
 		endif()
 		
-		# When using lhmouse's MinGW distribution, the threading lib cannot be statically linked. Copy it to bin dir.
+		# When using lhmouse's MinGW distribution, the threading lib cannot be statically linked.
+		# Also, we might need some system runtimes. Gather all of them into a list.
+		set(RUNTIME_FILES "")
 		if(MINGW)
-			find_file(mcf mcfgthread-12.dll HINTS ENV PATH)
-			if(EXISTS ${mcf})
-				file(COPY ${mcf} DESTINATION ${EXTERN}/bin)
+			find_file(mcf NAMES mcfgthread-12.dll libmcfgthread-1.dll HINTS ENV PATH)
+			if(NOT STATIC_BUILD)
+				find_file(libgcc NAMES libgcc_s_seh-1.dll HINTS ENV PATH)
+				find_file(libstdc NAMES libstdc++-6.dll HINTS ENV PATH)
+				find_file(run_zlib NAMES zlib1.dll HINTS ENV PATH)
+				list(APPEND RUNTIME_FILES ${libgcc} ${libstdc} ${run_zlib} ${mcf})
 			endif()
+		endif()
+		
+		# Copy the runtime files if needed
+		if(RUNTIME_FILES)
+			ExternalProject_Add_Step(
+				qt-tools post-install
+				DEPENDEES install
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RUNTIME_FILES} ${EXTERN_BIN_DIR}
+			)
+		endif()
+		
+		# Copy QT5 files if needed
+		if(EXISTS ${EXTERN_BIN_DIR}/designer.exe)
+			ExternalProject_Add_Step(
+				qt-tools post-post-install
+				DEPENDEES post-install
+				# This also copies the system runtime files, but we have to copy them for windeployqt to work…
+				COMMAND ${EXTERN_BIN_DIR}/windeployqt --release --no-translations --dir ${EXTERN_BIN_DIR} ${EXTERN_BIN_DIR}/designer.exe
+			)
 		endif()
 		
 		# Strip utility programs of Qt5 and some static libraries to reduce the huge size.
@@ -100,8 +125,10 @@ else() # Local static build
 		add_custom_command(
 			TARGET qt-tools POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan
-			"All dependencies have been built. "
+			" "
+			"All dependencies have been built."
 			"Please re-run cmake."
+			" "
 		)
 	endif()
 

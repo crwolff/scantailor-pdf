@@ -339,6 +339,8 @@ target_include_directories(liblzma PRIVATE
     src/liblzma/delta
     src/liblzma/simple
     src/common
+	 # To avoid config.h error in liblzma_w32res.rc / common_w32res.rc
+	 windows/vs2019
 )
 
 target_link_libraries(liblzma Threads::Threads)

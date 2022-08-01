@@ -111,6 +111,15 @@ find_package_handle_standard_args(OpenJPEG
                                   FOUND_VAR OPENJPEG_FOUND
                                   REQUIRED_VARS OPENJPEG_LIBRARY OPENJPEG_INCLUDE_DIR
                                   VERSION_VAR OPENJPEG_VERSION_STRING)
+
+if (OpenJPEG_LIBRARY AND NOT TARGET OpenJPEG::OpenJPEG)
+    add_library(OpenJPEG::OpenJPEG UNKNOWN IMPORTED GLOBAL)
+    set_target_properties(OpenJPEG::OpenJPEG PROPERTIES
+        IMPORTED_LOCATION "${OpenJPEG_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${OpenJPEG_INCLUDE_DIR}"
+    )
+endif ()
+
 if(OPENJPEG_FOUND)
   set(OPENJPEG_LIBRARIES ${OPENJPEG_LIBRARY})
   set(OPENJPEG_INCLUDE_DIRS ${OPENJPEG_INCLUDE_DIR})

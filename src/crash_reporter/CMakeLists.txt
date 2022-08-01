@@ -49,7 +49,7 @@ if(ENABLE_CRASH_REPORTER)
 	# We want the executable located where we copy all the DLLs.
 	set_target_properties(
 		CrashReporter PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>
 	)
 endif()
 

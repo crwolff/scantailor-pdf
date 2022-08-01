@@ -58,7 +58,7 @@ target_link_libraries(opencl_plugin opencl dewarping imageproc)
 # Output to the root of the build directory, where it can be found by QPluginLoader.
 set_target_properties(
 	opencl_plugin PROPERTIES
-	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+	LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>
 )
 
 install(TARGETS opencl_plugin LIBRARY DESTINATION lib/scantailor)

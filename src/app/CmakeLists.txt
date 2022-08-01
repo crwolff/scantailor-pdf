@@ -72,7 +72,41 @@ target_link_libraries(
 # We want the executable located where we copy all the DLLs.
 set_target_properties(
 	scantailor PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>
 )
+
+## Copy all needed DLLs to the staging dir.
+if(WIN32 AND NOT STATIC_BUILD)
+	# Our external libraries
+	set(RUNTIME_DEPS $<TARGET_RUNTIME_DLLS:scantailor>)
+	# Remove archive lib files from list
+	# TODO: DOES NOT WORK!!!!! WHY?????
+	list(FILTER RUNTIME_DEPS EXCLUDE REGEX ^.+a$)
+	
+	if(MINGW)
+		find_file(mcf NAMES mcfgthread-12.dll libmcfgthread-1.dll HINTS ENV PATH)
+		list(APPEND RUNTIME_DEPS ${mcf})
+	endif()
+	
+	# add_custom_command(
+		# TARGET scantailor POST_BUILD
+		# COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan
+		# " "
+		# "${RUNTIME_DEPS}"
+		# " "
+	# )
+	
+	add_custom_command(TARGET scantailor POST_BUILD
+	  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RUNTIME_DEPS} $<TARGET_FILE_DIR:scantailor>
+	  COMMAND_EXPAND_LISTS
+	)
+	
+	# QT5 stuff; this also copies needed system runtime files
+	add_custom_command(TARGET scantailor POST_BUILD
+	  COMMAND ${EXTERN_BIN_DIR}/windeployqt --no-translations --dir $<TARGET_FILE_DIR:scantailor> $<TARGET_FILE:scantailor>
+	)
+		
+	
+endif()
 
 install(TARGETS scantailor RUNTIME DESTINATION bin)
