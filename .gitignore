@@ -28,4 +28,5 @@ scantailor.exe
 
 # Some folders
 build*
+!BUILDING.md
 .vscode
