@@ -48,7 +48,7 @@ Proximity::pointAndLineSegment(
 
 	// Calculate intersection.
 	QPointF intersection;
-	segment.intersect(perpendicular, &intersection);
+	segment.intersects(perpendicular, &intersection);
 
 	double const dx1 = segment.p1().x() - intersection.x();
 	double const dy1 = segment.p1().y() - intersection.y();

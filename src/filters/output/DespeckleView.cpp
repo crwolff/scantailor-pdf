@@ -336,13 +336,13 @@ DespeckleView::DespeckleResult::operator()()
 void
 DespeckleView::TaskCancelHandle::cancel()
 {
-	m_cancelFlag.store(1);
+	m_cancelFlag.storeRelaxed(1);
 }
 
 bool
 DespeckleView::TaskCancelHandle::isCancelled() const
 {
-	return m_cancelFlag.load() != 0;
+	return m_cancelFlag.loadRelaxed() != 0;
 }
 
 void

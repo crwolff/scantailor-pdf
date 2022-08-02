@@ -117,10 +117,10 @@ CylindricalSurfaceDewarper::mapGeneratrix(double crv_x, State& state) const
 	QLineF const img_generatrix(img_top_pt, img_bottom_pt);
 	ToLineProjector const projector(img_generatrix);
 	QPointF const img_directrix1_pt(
-		m_imgDirectrix1Intersector.intersect(img_generatrix, state.m_intersectionHint1)
+		m_imgDirectrix1Intersector.intersects(img_generatrix, state.m_intersectionHint1)
 	);
 	QPointF const img_directrix2_pt(
-		m_imgDirectrix2Intersector.intersect(img_generatrix, state.m_intersectionHint2)
+		m_imgDirectrix2Intersector.intersects(img_generatrix, state.m_intersectionHint2)
 	);
 	QPointF const img_straight_line_pt(toPoint(m_pln2img(Vector2d(pln_x, m_plnStraightLineY))));
 	double const img_directrix1_proj(projector.projectionScalar(img_directrix1_pt));
@@ -160,10 +160,10 @@ CylindricalSurfaceDewarper::mapToDewarpedSpace(QPointF const& img_pt, State& sta
 	QLineF const img_generatrix(img_top_pt, img_bottom_pt);
 	ToLineProjector const projector(img_generatrix);
 	QPointF const img_directrix1_pt(
-		m_imgDirectrix1Intersector.intersect(img_generatrix, state.m_intersectionHint1)
+		m_imgDirectrix1Intersector.intersects(img_generatrix, state.m_intersectionHint1)
 	);
 	QPointF const img_directrix2_pt(
-		m_imgDirectrix2Intersector.intersect(img_generatrix, state.m_intersectionHint2)
+		m_imgDirectrix2Intersector.intersects(img_generatrix, state.m_intersectionHint2)
 	);
 	QPointF const img_straight_line_pt(toPoint(m_pln2img(Vector2d(pln_x, m_plnStraightLineY))));
 	double const img_directrix1_proj(projector.projectionScalar(img_directrix1_pt));
@@ -400,7 +400,7 @@ CylindricalSurfaceDewarper::CoupledPolylinesIterator::next1(QPointF& img_pt1, QP
 	Vector2d const pln_ptx(pln_pt1[0], pln_pt1[1] + 1);
 	QPointF const img_ptx(toPoint(m_pln2img(pln_ptx)));
 	
-	if (QLineF(img_pt1, img_ptx).intersect(QLineF(m_nextImgPt2, m_prevImgPt2), &img_pt2) == QLineF::NoIntersection) {
+	if (QLineF(img_pt1, img_ptx).intersects(QLineF(m_nextImgPt2, m_prevImgPt2), &img_pt2) == QLineF::NoIntersection) {
 		img_pt2 = m_nextImgPt2;
 	}
 
@@ -420,7 +420,7 @@ CylindricalSurfaceDewarper::CoupledPolylinesIterator::next2(QPointF& img_pt1, QP
 	Vector2d const pln_ptx(pln_pt2[0], pln_pt2[1] + 1);
 	QPointF const img_ptx(toPoint(m_pln2img(pln_ptx)));
 	
-	if (QLineF(img_pt2, img_ptx).intersect(QLineF(m_nextImgPt1, m_prevImgPt1), &img_pt1) == QLineF::NoIntersection) {
+	if (QLineF(img_pt2, img_ptx).intersects(QLineF(m_nextImgPt1, m_prevImgPt1), &img_pt1) == QLineF::NoIntersection) {
 		img_pt1 = m_nextImgPt1;
 	}
 

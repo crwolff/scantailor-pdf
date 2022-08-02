@@ -41,10 +41,10 @@ public:
 
 	Type type() const { return m_type; }
 
-	virtual void cancel() { m_cancelFlag.store(1); }
+	virtual void cancel() { m_cancelFlag.storeRelaxed(1); }
 	
 	virtual bool isCancelled() const {
-		return m_cancelFlag.load() != 0;
+		return m_cancelFlag.loadRelaxed() != 0;
 	}
 	
 	/**

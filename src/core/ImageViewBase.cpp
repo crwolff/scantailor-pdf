@@ -82,9 +82,9 @@ private:
 		
 		void setData(QImage const& hq_image);
 		
-		void cancel() { m_cancelFlag.store(1); }
+		void cancel() { m_cancelFlag.storeRelaxed(1); }
 		
-		bool isCancelled() const { return m_cancelFlag.load() != 0; }
+		bool isCancelled() const { return m_cancelFlag.loadRelaxed() != 0; }
 		
 		virtual void operator()();
 	private:

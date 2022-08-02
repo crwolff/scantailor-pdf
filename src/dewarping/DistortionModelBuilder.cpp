@@ -343,7 +343,7 @@ DistortionModelBuilder::intersectFront(
 
 	QLineF const front_segment(polyline.front(), polyline[1]);
 	QPointF intersection;
-	if (bound.intersect(front_segment, &intersection) != QLineF::NoIntersection) {
+	if (bound.intersects(front_segment, &intersection) != QLineF::NoIntersection) {
 		polyline.front() = intersection;
 	}
 }
@@ -356,7 +356,7 @@ DistortionModelBuilder::intersectBack(
 
 	QLineF const back_segment(polyline[polyline.size() - 2], polyline.back());
 	QPointF intersection;
-	if (bound.intersect(back_segment, &intersection) != QLineF::NoIntersection) {
+	if (bound.intersects(back_segment, &intersection) != QLineF::NoIntersection) {
 		polyline.back() = intersection;
 	}
 }
@@ -371,7 +371,7 @@ DistortionModelBuilder::fitExtendedSpline(
 	{
 		QLineF const line(polyline[0], polyline[1]);
 		QPointF intersection;
-		if (line.intersect(bounds.first, &intersection) != QLineF::NoIntersection) {
+		if (line.intersects(bounds.first, &intersection) != QLineF::NoIntersection) {
 			if (Vec2d(intersection - polyline[0]).squaredNorm() > 1.0) {
 				spline.appendControlPoint(intersection, -1.0);
 			}
@@ -386,7 +386,7 @@ DistortionModelBuilder::fitExtendedSpline(
 	{
 		QLineF const line(polyline[polyline.size() - 2], polyline.back());
 		QPointF intersection;
-		if (line.intersect(bounds.second, &intersection) != QLineF::NoIntersection) {
+		if (line.intersects(bounds.second, &intersection) != QLineF::NoIntersection) {
 			if (Vec2d(intersection - polyline.back()).squaredNorm() > 1.0) {
 				spline.appendControlPoint(intersection, -1.0);
 			}

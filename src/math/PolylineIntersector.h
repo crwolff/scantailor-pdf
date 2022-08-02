@@ -42,7 +42,7 @@ public:
 	
 	PolylineIntersector(std::vector<QPointF> const& polyline);
 
-	QPointF intersect(QLineF const& line, Hint& hint) const;
+	QPointF intersects(QLineF const& line, Hint& hint) const;
 private:
 	bool intersectsSegment(QLineF const& normal, int segment) const;
 

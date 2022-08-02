@@ -40,7 +40,7 @@ PolylineIntersector::PolylineIntersector(std::vector<QPointF> const& polyline)
 }
 
 QPointF
-PolylineIntersector::intersect(QLineF const& line, Hint& hint) const
+PolylineIntersector::intersects(QLineF const& line, Hint& hint) const
 {
 	QLineF const normal(line.normalVector());
 	
@@ -118,7 +118,7 @@ PolylineIntersector::intersectWithSegment(QLineF const& line, int segment) const
 {
 	QLineF const seg_line(m_polyline[segment], m_polyline[segment + 1]);
 	QPointF intersection;
-	if (line.intersect(seg_line, &intersection) == QLineF::NoIntersection) {
+	if (line.intersects(seg_line, &intersection) == QLineF::NoIntersection) {
 		// Considering we were called for a reason, the segment must
 		// be on the same line as our subject line.  Just return segment
 		// midpoint in this case.
@@ -163,7 +163,7 @@ PolylineIntersector::tryIntersectingOutsideOfPolyline(
 		segment.setPoints(m_polyline.back(), m_polyline[m_polyline.size() - 2]);
 	}
 
-	if (line.intersect(segment, &intersection) == QLineF::NoIntersection) {
+	if (line.intersects(segment, &intersection) == QLineF::NoIntersection) {
 		intersection = ToLineProjector(line).projectionPoint(segment.p1());
 	}
 

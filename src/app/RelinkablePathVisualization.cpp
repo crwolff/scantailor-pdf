@@ -81,7 +81,7 @@ RelinkablePathVisualization::setPath(RelinkablePath const& path, bool clickable)
 {
 	clear();
 
-	QStringList components(path.normalizedPath().split(QChar('/'), QString::SkipEmptyParts));
+	QStringList components(path.normalizedPath().split(QChar('/'), Qt::SkipEmptyParts));
 	if (components.empty()) {
 		return;
 	}

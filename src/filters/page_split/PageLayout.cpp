@@ -233,7 +233,7 @@ PageLayout::inscribedCutterLine(int idx) const
 	for (int i = 0; i < 4; ++i) {
 		QLineF const poly_segment(m_uncutOutline[i], m_uncutOutline[(i + 1) & 3]);
 		QPointF intersection;
-		if (poly_segment.intersect(raw_line, &intersection) == QLineF::NoIntersection) {
+		if (poly_segment.intersects(raw_line, &intersection) == QLineF::NoIntersection) {
 			continue;
 		}
 
@@ -498,7 +498,7 @@ PageLayout::maybeAddIntersectionPoint(
 	QPolygonF& poly, QLineF const& line1, QLineF const& line2)
 {
 	QPointF intersection;
-	if (line1.intersect(line2, &intersection) == QLineF::NoIntersection) {
+	if (line1.intersects(line2, &intersection) == QLineF::NoIntersection) {
 		return;
 	}
 

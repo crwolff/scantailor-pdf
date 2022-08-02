@@ -164,7 +164,7 @@ int main(int argc, char** argv)
 	
 	// Try loading translations from different paths.
 	QStringList const translation_dirs(
-		QString::fromUtf8(TRANSLATION_DIRS).split(QChar(':'), QString::SkipEmptyParts)
+		QString::fromUtf8(TRANSLATION_DIRS).split(QChar(':'), Qt::SkipEmptyParts)
 	);
 	for (QString const& path : translation_dirs) {
 		QString absolute_path;
@@ -187,7 +187,7 @@ int main(int argc, char** argv)
 
 	// Plugin search paths.
 	QStringList const plugin_dirs(
-		QString::fromUtf8(PLUGIN_DIRS).split(QChar(':'), QString::SkipEmptyParts)
+		QString::fromUtf8(PLUGIN_DIRS).split(QChar(':'), Qt::SkipEmptyParts)
 	);
 	// Reversing, as QCoreApplication::addLibraryPath() prepends the new path to the list.
 	for (QString const& path : boost::adaptors::reverse(plugin_dirs)) {

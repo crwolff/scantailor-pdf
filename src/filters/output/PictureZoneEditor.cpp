@@ -75,9 +75,9 @@ private:
 
 		void setData(QPoint const& origin, QImage const& mask);
 
-		void cancel() { m_cancelFlag.store(1); }
+		void cancel() { m_cancelFlag.storeRelaxed(1); }
 
-		bool isCancelled() const { return m_cancelFlag.load() != 0; }
+		bool isCancelled() const { return m_cancelFlag.loadRelaxed() != 0; }
 
 		virtual void operator()();
 	private:

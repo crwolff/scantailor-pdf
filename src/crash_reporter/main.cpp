@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 	
 	// Try loading translations from different paths.
 	QStringList const translation_dirs(
-		QString::fromUtf8(TRANSLATION_DIRS).split(QChar(':'), QString::SkipEmptyParts)
+		QString::fromUtf8(TRANSLATION_DIRS).split(QChar(':'), Qt::SkipEmptyParts)
 	);
 	for (QString const& path : translation_dirs) {
 		QString absolute_path;
