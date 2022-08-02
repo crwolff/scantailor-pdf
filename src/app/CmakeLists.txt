@@ -85,7 +85,9 @@ if(WIN32 AND NOT STATIC_BUILD)
 	
 	if(MINGW)
 		find_file(mcf NAMES mcfgthread-12.dll libmcfgthread-1.dll HINTS ENV PATH)
-		list(APPEND RUNTIME_DEPS ${mcf})
+		if(EXISTS ${mcf})
+			list(APPEND RUNTIME_DEPS ${mcf})
+		endif()
 	endif()
 	
 	# add_custom_command(

@@ -35,7 +35,7 @@ else() # Local build
 		
 		set(QT5_STATIC_OPTIONS "")
 		if (STATIC_BUILD)
-			set(QT5_STATIC_OPTIONS "-static -static-runtime")
+			set(QT5_STATIC_OPTIONS -static -static-runtime)
 		endif()
 		
 		ExternalProject_Add(
@@ -47,6 +47,10 @@ else() # Local build
 			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/global/qfloat16.h <SOURCE_DIR>/src/corelib/global/qfloat16.h
 			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/global/qendian.h <SOURCE_DIR>/src/corelib/global/qendian.h
 			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/text/qbytearraymatcher.h <SOURCE_DIR>/src/corelib/text/qbytearraymatcher.h
+			# Patch configure to also find our mingw zlib (static and shared)
+			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/configure.json <SOURCE_DIR>/configure.json
+			# Copy zlib into qt5 build bin dir; it seems to be missing for moc, etc. for the shared mingw build.
+			# COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_BIN_DIR}/libzlib1.dll <BINARY_DIR>/bin/libzlib1.dll
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform win32-g++ -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
 			DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_FREETYPE}
