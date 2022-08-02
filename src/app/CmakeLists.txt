@@ -84,9 +84,19 @@ if(WIN32 AND NOT STATIC_BUILD)
 	list(FILTER RUNTIME_DEPS EXCLUDE REGEX ^.+a$)
 	
 	if(MINGW)
-		find_file(mcf NAMES mcfgthread-12.dll libmcfgthread-1.dll HINTS ENV PATH)
+		# lh-mouse's ucrt64 MinGW 
+		find_file(mcf NAMES mcfgthread-12.dll libmcfgthread-1.dll HINTS ENV PATH NO_DEFAULT_PATH)
+		# llvm clang MinGW
+		find_file(libc NAMES libc++.dll HINTS ENV PATH NO_DEFAULT_PATH)
+		find_file(libunwind NAMES libunwind.dll HINTS ENV PATH NO_DEFAULT_PATH)
 		if(EXISTS ${mcf})
 			list(APPEND RUNTIME_DEPS ${mcf})
+		endif()
+		if(EXISTS ${libc})
+			list(APPEND RUNTIME_DEPS ${libc})
+		endif()
+		if(EXISTS ${libunwind})
+			list(APPEND RUNTIME_DEPS ${libunwind})
 		endif()
 	endif()
 	

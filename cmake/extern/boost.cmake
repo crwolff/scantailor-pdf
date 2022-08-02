@@ -32,19 +32,20 @@ else() # Local static build
 			list(APPEND BOOST_64BIT_FLAGS "address-model=64")
 		endif()
 		
-		set(BOOST_TOOLSET "")
+		set(BOOST_TOOLSET msvc)	# Assume MSVC
 		set(BOOST_BOOTSTRAP "bootstrap")
-		if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
-			set(BOOST_TOOLSET "msvc")
-		elseif(	${CMAKE_GENERATOR} STREQUAL "Ninja" OR
-					${CMAKE_GENERATOR} STREQUAL "MinGW Makefiles")
-			set(BOOST_TOOLSET "gcc")
-		elseif(	${CMAKE_GENERATOR} STREQUAL "MSYS Makefiles" OR
-					${CMAKE_GENERATOR} STREQUAL "Unix Makefiles")
-			set(BOOST_TOOLSET "gcc")
+
+		if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+			 CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+			set(BOOST_TOOLSET clang)
+		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+			set(BOOST_TOOLSET gcc)
+		endif()	# MSVC is assumed and set above
+		
+		if(UNIX)
 			set(BOOST_BOOTSTRAP "./bootstrap.sh")
 		endif()
-		
+				
 		# Since at least boost 1.76 and maybe earlier does not pass the toolset from the
 		# bootstrap to the b2 build makefile. So it uses msvc by default.
 		# See: https://github.com/boostorg/boost/issues/506

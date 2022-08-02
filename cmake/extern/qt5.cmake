@@ -37,6 +37,40 @@ else() # Local build
 		if (STATIC_BUILD)
 			set(QT5_STATIC_OPTIONS -static -static-runtime)
 		endif()
+
+		# Setting the right mkspecs; this does not cover all… by far… and might not be correct…
+		set(QT5_PLATFORM "")
+		if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+			if (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+				set(QT5_PLATFORM win32-clang-msvc)
+			elseif (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
+				if(MINGW)
+					set(QT5_PLATFORM win32-clang-g++)
+				elseif(UNIX)
+					set(QT5_PLATFORM linux-clang)
+				endif()
+			endif()
+		elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+			set(QT5_PLATFORM macx-clang)
+		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+			if(MINGW)
+				set(QT5_PLATFORM win32-g++)
+			elseif(CYGWIN)
+				set(QT5_PLATFORM cygwin-g++)
+			elseif(UNIX)
+				set(QT5_PLATFORM linux-g++)
+			endif()
+		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+			set(QT5_PLATFORM win32-icc)
+		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+			set(QT5_PLATFORM win32-msvc)
+		endif()
+		
+		if(NOT QT5_PLATFORM)
+			message(FATAL_ERROR
+				"Platform and compiler combination currently not supported!"
+			)	
+		endif()
 		
 		ExternalProject_Add(
 			qt5-base-extern
@@ -49,13 +83,22 @@ else() # Local build
 			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/text/qbytearraymatcher.h <SOURCE_DIR>/src/corelib/text/qbytearraymatcher.h
 			# Patch configure to also find our mingw zlib (static and shared)
 			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/configure.json <SOURCE_DIR>/configure.json
-			# Copy zlib into qt5 build bin dir; it seems to be missing for moc, etc. for the shared mingw build.
-			# COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_BIN_DIR}/libzlib1.dll <BINARY_DIR>/bin/libzlib1.dll
-			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform win32-g++ -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
+			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
 			DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_FREETYPE}
 		)
-					
+		
+		if(MINGW AND NOT STATIC_BUILD)
+			ExternalProject_Add_Step(
+				qt5-base-extern custom-patch
+				DEPENDEES configure
+				DEPENDERS build
+				# Copy some libs into qt5 build bin dir; it seems to be missing for moc, etc. for the shared mingw build.
+				COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_BIN_DIR}/libzlib1.dll <BINARY_DIR>/bin/libzlib1.dll
+				COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_BIN_DIR}/libzstd.dll <BINARY_DIR>/bin/libzstd.dll
+			)
+		endif()
+		
 		ExternalProject_Add(
 			qt-tools
 			PREFIX ${EXTERN}
