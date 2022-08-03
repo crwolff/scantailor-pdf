@@ -98,6 +98,8 @@ else() # Local build
 			URL_HASH MD5=c058f7e20eb716f70790343da37a6b7e
 			# Qt bug with MinGW: https://bugreports.qt.io/browse/QTBUG-94031
 			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
+			# Patch configure to also find our mingw zlib (static and shared)
+			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/configure.json <SOURCE_DIR>/configure.json
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
 			# The next to need to be set. Otherwise QT might use the wrong make.
 			BUILD_COMMAND ${QT5_MAKE}
@@ -150,7 +152,7 @@ else() # Local build
 			if(NOT STATIC_BUILD)
 				find_file(libgcc NAMES libgcc_s_seh-1.dll HINTS ENV PATH)
 				find_file(libstdc NAMES libstdc++-6.dll HINTS ENV PATH)
-				find_file(run_zlib NAMES zlib1.dll HINTS ENV PATH)
+				# find_file(run_zlib NAMES zlib1.dll HINTS ENV PATH)
 				list(APPEND RUNTIME_FILES ${libgcc} ${libstdc} ${run_zlib} ${mcf})
 			endif()
 		endif()
