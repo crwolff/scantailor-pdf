@@ -38,31 +38,49 @@ else() # Local build
 			set(QT5_STATIC_OPTIONS -static -static-runtime)
 		endif()
 
+
+		# Find number of available threads for multithreaded compilation of QT5
+		include(ProcessorCount)
+		ProcessorCount(N)
+		math(EXPR THREADS "${N} - 1")
+		if(NOT N EQUAL 0)
+			set(JX "-j${THREADS}")
+		endif()
+
 		# Setting the right mkspecs; this does not cover all… by far… and might not be correct…
+		set(QT5_MAKE "")
 		set(QT5_PLATFORM "")
 		if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 			if (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+				set(QT5_MAKE nmake)
 				set(QT5_PLATFORM win32-clang-msvc)
 			elseif (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
 				if(MINGW)
+					set(QT5_MAKE mingw32-make ${JX})
 					set(QT5_PLATFORM win32-clang-g++)
 				elseif(UNIX)
+					set(QT5_MAKE make ${JX})
 					set(QT5_PLATFORM linux-clang)
 				endif()
 			endif()
 		elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+			set(QT5_MAKE make ${JX})
 			set(QT5_PLATFORM macx-clang)
 		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 			if(MINGW)
+				set(QT5_MAKE mingw32-make ${JX})
 				set(QT5_PLATFORM win32-g++)
 			elseif(CYGWIN)
+				set(QT5_MAKE make ${JX})
 				set(QT5_PLATFORM cygwin-g++)
 			elseif(UNIX)
+				set(QT5_MAKE make ${JX})
 				set(QT5_PLATFORM linux-g++)
 			endif()
 		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 			set(QT5_PLATFORM win32-icc)
 		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+			set(QT5_MAKE nmake)
 			set(QT5_PLATFORM win32-msvc)
 		endif()
 		
@@ -71,19 +89,19 @@ else() # Local build
 				"Platform and compiler combination currently not supported!"
 			)	
 		endif()
-		
+
+				
 		ExternalProject_Add(
 			qt5-base-extern
 			PREFIX ${EXTERN}
-			URL https://download.qt.io/official_releases/qt/5.15/5.15.2/submodules/qtbase-everywhere-src-5.15.2.tar.xz
-			URL_HASH SHA256=909fad2591ee367993a75d7e2ea50ad4db332f05e1c38dd7a5a274e156a4e0f8
-			# Qt < 6 with gcc 11 error: limits is not included by compiler by default any more.
-			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/global/qfloat16.h <SOURCE_DIR>/src/corelib/global/qfloat16.h
-			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/global/qendian.h <SOURCE_DIR>/src/corelib/global/qendian.h
-			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/text/qbytearraymatcher.h <SOURCE_DIR>/src/corelib/text/qbytearraymatcher.h
-			# Patch configure to also find our mingw zlib (static and shared)
-			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/configure.json <SOURCE_DIR>/configure.json
+			URL https://download.qt.io/official_releases/qt/5.15/5.15.5/submodules/qtbase-everywhere-opensource-src-5.15.5.tar.xz
+			URL_HASH MD5=c058f7e20eb716f70790343da37a6b7e
+			# Qt bug with MinGW: https://bugreports.qt.io/browse/QTBUG-94031
+			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
+			# The next to need to be set. Otherwise QT might use the wrong make.
+			BUILD_COMMAND ${QT5_MAKE}
+			INSTALL_COMMAND ${QT5_MAKE} install
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
 			DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_FREETYPE}
 		)
@@ -102,9 +120,12 @@ else() # Local build
 		ExternalProject_Add(
 			qt-tools
 			PREFIX ${EXTERN}
-			URL https://download.qt.io/official_releases/qt/5.15/5.15.2/submodules/qttools-everywhere-src-5.15.2.tar.xz
-			URL_HASH SHA256=c189d0ce1ff7c739db9a3ace52ac3e24cb8fd6dbf234e49f075249b38f43c1cc
+			URL https://download.qt.io/official_releases/qt/5.15/5.15.5/submodules/qttools-everywhere-opensource-src-5.15.5.tar.xz
+			URL_HASH MD5=7751e31c5fe96d48143719c705dc83aa
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern-build/bin/qmake -makefile -after "CONFIG += release" <SOURCE_DIR>/${QT_TOOLS}
+			# The next to need to be set. Otherwise QT might use the wrong make.
+			BUILD_COMMAND ${QT5_MAKE}
+			INSTALL_COMMAND ${QT5_MAKE} install
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
 			DEPENDS qt5-base-extern
 		)

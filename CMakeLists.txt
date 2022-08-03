@@ -182,11 +182,11 @@ set(EXTERN_PATCH_DIR ${CMAKE_SOURCE_DIR}/extern-patches)
 set(MP "")	# Configure QT5 to use multiple processors when using nmake
 if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
 	set(MP "-mp")	# Appended to the QT5 configure step
-elseif(${CMAKE_GENERATOR} STREQUAL "Ninja")
-	if(POLICY CMP0048)
-		# Prevent warnings about byproducts and phony targets for Ninja generator
-		cmake_policy(SET CMP0058 OLD)
-	endif()
+# elseif(${CMAKE_GENERATOR} STREQUAL "Ninja")
+	# if(POLICY CMP0048)
+		# # Prevent warnings about byproducts and phony targets for Ninja generator
+		# cmake_policy(SET CMP0058 OLD)
+	# endif()
 endif()
 
 # List of include directories for all external libraries
