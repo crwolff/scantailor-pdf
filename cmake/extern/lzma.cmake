@@ -28,25 +28,19 @@ else() # Local build
 		set(ST_LZMA_SHARED "liblzma.so")
 	endif()
 
-	# Set string for ExternalProject_Add below
-	if(STATIC_BUILD)
-		set(LZMA_OPTION "static")
-	else()
-		set(LZMA_OPTION "shared")
-	endif()
-
 	ExternalProject_Add(
 		lzma-extern
 		PREFIX ${EXTERN}
 		URL https://tukaani.org/xz/xz-5.2.5.tar.xz
 		URL_HASH SHA256=3e1e518ffc912f86608a8cb35e4bd41ad1aec210df2a47aaa1f95e7f5576ef56
 		# liblzma does not provide a CmakeLists.txt file. Use one from https://github.com/ShiftMediaProject/liblzma
-		PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/lzma-extern/CMakeLists-${LZMA_OPTION}.txt ${EXTERN}/src/lzma-extern/CMakeLists.txt
+		# It is patched to build both shared and static lib.
+		PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/lzma-extern/CMakeLists.txt ${EXTERN}/src/lzma-extern/CMakeLists.txt
 		COMMAND ${CMAKE_COMMAND} -E copy_directory ${EXTERN_PATCH_DIR}/lzma-extern/cmake <SOURCE_DIR>/cmake
 		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DCMAKE_PREFIX_PATH=${EXTERN}
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)
-
+	
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	if(STATIC_BUILD)

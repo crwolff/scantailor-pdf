@@ -192,6 +192,14 @@ endif()
 # List of include directories for all external libraries
 list(APPEND ALL_EXTERN_INC_DIRS ${EXTERN_INC_DIR})
 
+# ExternalProjects with a build command need to append the .vcxproj to the target
+# so they can be build with msbuild. Define it here and use in the extern cmake files.
+# The variable is empty for non MSVC builds.
+set(vcxproj "")
+if(MSVC)
+	set(vcxproj ".vcxproj")
+endif()
+
 # Assume we have all dependencies. If a dependency is not found below,
 # this variable is set to false and cmake won't configure the actual
 # Scan Tailor build.

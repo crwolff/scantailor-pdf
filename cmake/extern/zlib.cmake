@@ -27,43 +27,14 @@ else() # Local build, both shared and static
 		set(ST_ZLIB_SHARED "libz.so")
 	endif()
 
-	if(STATIC_BUILD)
-		ExternalProject_Add(
-			zlib-extern
-			PREFIX ${EXTERN}
-			URL https://www.zlib.net/zlib-1.2.12.tar.gz
-			URL_HASH SHA256=91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9
-			CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DBUILD_SHARED_LIBS=OFF
-			# Uses multiple threads if [mingw32-]make or ninja is used
-			BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} zlibstatic
-			# We copy the lib to the EXTERN bin dir.
-			INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different <BINARY_DIR>/${ST_ZLIB_STATIC} ${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC}
-			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		)	
-	else()
-		ExternalProject_Add(
-			zlib-extern
-			PREFIX ${EXTERN}
-			URL https://www.zlib.net/zlib-1.2.12.tar.gz
-			URL_HASH SHA256=91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9
-			CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DBUILD_SHARED_LIBS=ON
-			# Uses multiple threads if [mingw32-]make or ninja is used
-			BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} zlib
-			# We copy the dll to the main project build dir and the rest to the EXTERN dirs.
-			INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different <BINARY_DIR>/${ST_ZLIB_DLL} ${EXTERN_BIN_DIR}/${ST_ZLIB_DLL}
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different <BINARY_DIR>/${ST_ZLIB_SHARED} ${EXTERN_LIB_DIR}/${ST_ZLIB_SHARED}
-			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		)	
-	endif()
-	
-	# Install files common for shared and static build
-	ExternalProject_Add_Step(
-		zlib-extern zlib-install
-		DEPENDEES install
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different <BINARY_DIR>/zconf.h ${EXTERN_INC_DIR}/zconf.h
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different <SOURCE_DIR>/zlib.h ${EXTERN_INC_DIR}/zlib.h
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different <BINARY_DIR>/zlib.pc ${EXTERN}/share/pkgconfig/zlib.pc
-	)
+	ExternalProject_Add(
+		zlib-extern
+		PREFIX ${EXTERN}
+		URL https://www.zlib.net/zlib-1.2.12.tar.gz
+		URL_HASH SHA256=91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DBUILD_SHARED_LIBS=OFF
+		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
+	)	
 	
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
@@ -72,6 +43,9 @@ else() # Local build, both shared and static
 		set_property(TARGET zlib PROPERTY
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC}"
 		)
+		if(MSVC)
+			set_property(TARGET zlib PROPERTY DEBUG_POSTFIX "d")
+		endif()
 	else() # Shared
 		add_library(zlib SHARED IMPORTED)
 		if(WIN32)
@@ -79,6 +53,9 @@ else() # Local build, both shared and static
 				IMPORTED_LOCATION "${EXTERN_BIN_DIR}/${ST_ZLIB_DLL}"
 				IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_ZLIB_SHARED}"
 			)
+			if(MSVC)
+				set_property(TARGET zlib PROPERTY DEBUG_POSTFIX "d")
+			endif()
 		else() # *nix
 			set_property(TARGET zlib
 				PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZLIB_SHARED}"

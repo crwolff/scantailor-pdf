@@ -187,7 +187,7 @@ endif()
 
 option(BUILD_SHARED_LIBS "Build liblzma as a shared library instead of static" ON)
 
-add_library(liblzma
+set(TIFF_SOURCES
     src/common/mythread.h
     src/common/sysdefs.h
     src/common/tuklib_common.h
@@ -329,18 +329,21 @@ add_library(liblzma
     src/liblzma/simple/x86.c
 )
 
+# Shared
+add_library(liblzma ${TIFF_SOURCES})
+
 target_include_directories(liblzma PRIVATE
-    src/liblzma/api
-    src/liblzma/common
-    src/liblzma/check
-    src/liblzma/lz
-    src/liblzma/rangecoder
-    src/liblzma/lzma
-    src/liblzma/delta
-    src/liblzma/simple
-    src/common
-	 # To avoid config.h error in liblzma_w32res.rc / common_w32res.rc
-	 windows/vs2019
+	src/liblzma/api
+	src/liblzma/common
+	src/liblzma/check
+	src/liblzma/lz
+	src/liblzma/rangecoder
+	src/liblzma/lzma
+	src/liblzma/delta
+	src/liblzma/simple
+	src/common
+	# To avoid config.h error in liblzma_w32res.rc / common_w32res.rc
+	windows/vs2019
 )
 
 target_link_libraries(liblzma Threads::Threads)
@@ -349,6 +352,30 @@ target_link_libraries(liblzma Threads::Threads)
 target_compile_definitions(liblzma PRIVATE TUKLIB_SYMBOL_PREFIX=lzma_)
 tuklib_cpucores(liblzma)
 tuklib_physmem(liblzma)
+
+# Static
+add_library(liblzma-static ${TIFF_SOURCES})
+
+target_include_directories(liblzma-static PRIVATE
+	src/liblzma/api
+	src/liblzma/common
+	src/liblzma/check
+	src/liblzma/lz
+	src/liblzma/rangecoder
+	src/liblzma/lzma
+	src/liblzma/delta
+	src/liblzma/simple
+	src/common
+	# To avoid config.h error in liblzma_w32res.rc / common_w32res.rc
+	windows/vs2019
+)
+
+target_link_libraries(liblzma-static Threads::Threads)
+
+# Put the tuklib functions under the lzma_ namespace.
+target_compile_definitions(liblzma-static PRIVATE TUKLIB_SYMBOL_PREFIX=lzma_)
+tuklib_cpucores(liblzma-static)
+tuklib_physmem(liblzma-static)
 
 # While liblzma can be built without tuklib_cpucores or tuklib_physmem
 # modules, the liblzma API functions lzma_cputhreads() and lzma_physmem()
@@ -372,7 +399,8 @@ endif()
 include(CheckIncludeFile)
 check_include_file(immintrin.h HAVE_IMMINTRIN_H)
 if(HAVE_IMMINTRIN_H)
-    target_compile_definitions(liblzma PRIVATE HAVE_IMMINTRIN_H)
+   target_compile_definitions(liblzma PRIVATE HAVE_IMMINTRIN_H)
+   target_compile_definitions(liblzma-static PRIVATE HAVE_IMMINTRIN_H)
 
     # SSE2 intrinsics:
     include(CheckCSourceCompiles)
@@ -387,35 +415,37 @@ if(HAVE_IMMINTRIN_H)
         "
         HAVE__MM_MOVEMASK_EPI8)
     tuklib_add_definition_if(liblzma HAVE__MM_MOVEMASK_EPI8)
+    tuklib_add_definition_if(liblzma-static HAVE__MM_MOVEMASK_EPI8)
 endif()
 
 # Support -fvisiblity=hidden when building shared liblzma.
 # These lines do nothing on Windows (even under Cygwin).
 # HAVE_VISIBILITY should always be defined to 0 or 1.
-if(BUILD_SHARED_LIBS)
-    set_target_properties(liblzma PROPERTIES C_VISIBILITY_PRESET hidden)
-    target_compile_definitions(liblzma PRIVATE HAVE_VISIBILITY=1)
-else()
-    target_compile_definitions(liblzma PRIVATE HAVE_VISIBILITY=0)
-endif()
+set_target_properties(liblzma PROPERTIES C_VISIBILITY_PRESET hidden)
+target_compile_definitions(liblzma PRIVATE HAVE_VISIBILITY=1)
+target_compile_definitions(liblzma-static PRIVATE HAVE_VISIBILITY=0)
 
 if(WIN32)
-    if(BUILD_SHARED_LIBS)
-        # Add the Windows resource file for liblzma.dll.
-        target_sources(liblzma PRIVATE src/liblzma/liblzma_w32res.rc)
-
-        # Export the public API symbols with __declspec(dllexport).
-        target_compile_definitions(liblzma PRIVATE DLL_EXPORT)
-    else()
-        # Disable __declspec(dllimport) when linking against static liblzma.
-        target_compile_definitions(liblzma INTERFACE LZMA_API_STATIC)
-    endif()
+	# Add the Windows resource file for liblzma.dll.
+	target_sources(liblzma PRIVATE src/liblzma/liblzma_w32res.rc)
+	# Export the public API symbols with __declspec(dllexport).
+	target_compile_definitions(liblzma PRIVATE DLL_EXPORT)
+	
+	# Disable __declspec(dllimport) when linking against static liblzma.
+	target_compile_definitions(liblzma-static INTERFACE LZMA_API_STATIC)
 elseif(CMAKE_SYSTEM_NAME MATCHES "^Linux$|^FreeBSD$")
     # Symbol versioning for shared liblzma. This doesn't affect static builds.
     target_link_options(liblzma PRIVATE
         "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/liblzma.map"
     )
+	 target_link_options(liblzma-static PRIVATE
+        "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/liblzma.map"
+    )
     set_target_properties(liblzma PROPERTIES
+        LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/liblzma.map"
+        LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/common/common_w32res.rc"
+    )
+	 set_target_properties(liblzma-static PROPERTIES
         LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/liblzma/liblzma.map"
         LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/common/common_w32res.rc"
     )
