@@ -21,7 +21,7 @@ The following procedures assume that cmake is invoked from the command line. But
 
 The following options can be turned on the command line with `-D[OPTION]=ON` or defined and set in the cmake gui. Defaults are given in square brackets.
 
-- `STATIC_BUILD` [OFF]: Creates a static build of Scan Tailor PDF. Only Windows in combination with MinGW is currently supported.
+- `BUILD_SHARED_LIBS` [ON]: If turned off, creates a static build of Scan Tailor PDF. Only Windows in combination with MinGW is currently supported.
 - `BUILD_QT_TOOLS` [OFF]: Build all QT Tools (Assistant, Designer, windeployqt etc.) and not just Linguist, which is required to compile the translations for Scan Tailor PDF.
 - `BUILD_INSTALLER` [OFF]: Option to build the installer. Only works under Windows.
 

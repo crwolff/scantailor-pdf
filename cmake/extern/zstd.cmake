@@ -11,15 +11,34 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	
 else() # Local build
 	
+	# TODO: How do we build both Release and Debug builds for external projects?
+	# Add them twice?
+	ExternalProject_Add(
+		zstd-extern
+		PREFIX ${EXTERN}
+		URL https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz
+		URL_HASH SHA256=7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0
+		SOURCE_SUBDIR build/cmake
+		CMAKE_ARGS
+			-DCMAKE_INSTALL_PREFIX=${EXTERN}
+			-DCMAKE_INSTALL_BINDIR=bin/$<CONFIG>
+			-DCMAKE_INSTALL_LIBDIR=lib/$<CONFIG>
+			-DZSTD_BUILD_STATIC=ON
+			-DZSTD_BUILD_SHARED=ON
+			-DZSTD_BUILD_PROGRAMS=OFF
+			-DZSTD_BUILD_TESTS=OFF
+		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
+	)
+
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_ZSTD_STATIC "zstd.lib")
-		set(ST_ZSTD_SHARED "zstd.lib")
-		set(ST_ZSTD_DLL "zstd.dll")
+		set(ST_ZSTD_STATIC "zstd_static.lib")
+		set(ST_ZSTD_IMPLIB "zstd.lib")
+		set(ST_ZSTD_SHARED "zstd.dll")
 	elseif(MINGW)
 		set(ST_ZSTD_STATIC "libzstd.a")
-		set(ST_ZSTD_SHARED "libzstd.dll.a")
-		set(ST_ZSTD_DLL "libzstd.dll")
+		set(ST_ZSTD_IMPLIB "libzstd.dll.a")
+		set(ST_ZSTD_SHARED "libzstd.dll")
 	elseif(APPLE)
 		set(ST_ZSTD_STATIC "libzstd.a")
 		set(ST_ZSTD_SHARED "libzstd.dylib")
@@ -28,38 +47,39 @@ else() # Local build
 		set(ST_ZSTD_SHARED "libzstd.so")
 	endif()
 
-	ExternalProject_Add(
-		zstd-extern
-		PREFIX ${EXTERN}
-		URL https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz
-		URL_HASH SHA256=7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0
-		SOURCE_SUBDIR build/cmake
-		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DZSTD_BUILD_STATIC=${STATIC_BOOL} -DZSTD_BUILD_SHARED=${SHARED_BOOL} -DZSTD_BUILD_PROGRAMS=OFF -DZSTD_BUILD_TESTS=OFF
-		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-	)
-
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	if(STATIC_BUILD)
-		add_library(zstd STATIC IMPORTED)
-		set_property(TARGET zstd
-			PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZSTD_STATIC}"
-		)
-	else() # Shared
-		add_library(zstd SHARED IMPORTED)
-		if(WIN32)
-			set_target_properties(zstd PROPERTIES
-				IMPORTED_LOCATION "${EXTERN_BIN_DIR}/${ST_ZSTD_DLL}"
-				IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_ZSTD_SHARED}"
-			)
-		else() # *nix
-			set_property(TARGET zstd
-				PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZSTD_SHARED}"
-			)
-		endif()
-	endif()
+	add_library(zstd SHARED IMPORTED)
+	add_library(zstd-static STATIC IMPORTED)
+
+	set_property(
+		TARGET zstd zstd-static APPEND PROPERTY IMPORTED_CONFIGURATIONS $<CONFIG>
+	)
+	
+	# Shared properties
+	set_target_properties(zstd PROPERTIES
+		MAP_IMPORTED_CONFIG_MINSIZEREL Release
+		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		IMPORTED_LOCATION_$<CONFIG> "${EXTERN_LIB_DIR}/$<CONFIG>/${ST_ZSTD_SHARED}"
+		# Ignored on non-WIN32 platforms
+		IMPORTED_IMPLIB_$<CONFIG> "${EXTERN_LIB_DIR}/$<CONFIG>/${ST_ZSTD_IMPLIB}" 
+	)
+	
+	# Static properties
+	set_target_properties(zstd-static PROPERTIES
+		MAP_IMPORTED_CONFIG_MINSIZEREL Release
+		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		IMPORTED_LOCATION_$<CONFIG> "${EXTERN_LIB_DIR}/$<CONFIG>/${ST_ZSTD_STATIC}"
+	)
 	
 	add_dependencies(zstd zstd-extern)
-	set(LIB_ZSTD zstd)
-
+	add_dependencies(zstd-static zstd-extern)
+	
+	# Select the correct build type; this should switch the target,
+	# if the user changes build type (e.g. -DBUILD_SHARED_LIBS=OFF)
+	if(STATIC_BUILD)
+		set(LIB_ZSTD zstd-static)
+	else()
+		set(LIB_ZSTD zstd)
+	endif()
 endif()

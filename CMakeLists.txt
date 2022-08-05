@@ -35,20 +35,18 @@ include(cmake/LibToDLL.cmake)
 # Most Find*.cmake modules only find dynamic libraries. So the maintenance effort
 # is too big to find system static libraries across all supported platforms and
 # compilers. Currently only works on WIN32.
-option(STATIC_BUILD "Statically link all libraries." OFF)
+option(BUILD_SHARED_LIBS "Build a shared version of Scan Tailor PDF." ON)
 
-if(STATIC_BUILD)
+set(STATIC_BUILD OFF)
+if(BUILD_SHARED_LIBS)
+	set(MAYBE_STATIC "SHARED")
+else()
+	set(STATIC_BUILD ON)
 	set(MAYBE_STATIC "STATIC")
-	set(STATIC_BOOL "ON")	# For Options in ExternalProject_add()
-	set(SHARED_BOOL "OFF")	# For Options in ExternalProject_add()
 	if (MINGW)
 		# Even link against static libgcc and libstdc++ on Windows since these are not available by default.
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
 	endif()
-else()
-	set(MAYBE_STATIC "SHARED")
-	set(STATIC_BOOL "OFF")
-	set(SHARED_BOOL "ON")
 endif()
 
 # We usually only build linguist and windeployqt because we need it for the translations.
