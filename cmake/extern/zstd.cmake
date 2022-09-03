@@ -3,7 +3,7 @@
 
 if(NOT WIN32 AND NOT STATIC_BUILD)
 
-	find_package(zstd)		# This only finds shared libs
+    find_package(ZSTD)		# This only finds shared libs
 	if(ZSTD_FOUND)
 		set(LIB_ZSTD ZSTD::ZSTD)
 		list(APPEND ALL_EXTERN_INC_DIRS ${ZSTD_INCLUDE_DIRS})

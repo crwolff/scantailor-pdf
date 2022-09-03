@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21.0)
+cmake_minimum_required(VERSION 3.20.0)
 
 if(POLICY CMP0003)
 	# Allow linking with full library path instead of -L/path -llibrary

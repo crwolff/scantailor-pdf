@@ -3,10 +3,10 @@
 
 if(NOT WIN32 AND NOT STATIC_BUILD)
 
-	include(FindOpenOPENJP)
-	find_package(OpenOPENJP REQUIRED)		# This only finds shared libs
-	set(LIB_OPENJP OpenOPENJP::OpenOPENJP)
-	list(APPEND ALL_EXTERN_INC_DIRS ${OPENOPENJP_INCLUDE_DIR})
+    include(FindOpenJPEG)
+    find_package(OpenJPEG REQUIRED)		# This only finds shared libs
+    set(LIB_OPENJP ${OPENJPEG_LIBRARIES})
+    list(APPEND ALL_EXTERN_INC_DIRS ${OPENJPEG_INCLUDE_DIR})
 	
 else() # Local build
 		
