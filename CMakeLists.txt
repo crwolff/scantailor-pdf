@@ -231,6 +231,13 @@ include(cmake/extern/openjp.cmake)
 set(LIB_FREETYPE "")
 include(cmake/extern/freetype.cmake)
 
+set(LIB_XML2 "")
+include(cmake/extern/xml2.cmake)
+
+set(LIB_SSL "")
+set(LIB_CRYP "")
+include(cmake/extern/openssl.cmake)
+
 set(LIB_PODOFO "")
 include(cmake/extern/podofo.cmake)
 

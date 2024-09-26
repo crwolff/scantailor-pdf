@@ -42,13 +42,13 @@ PdfReader::readMetadata(QIODevice& device,
 	{
 		if ((*iterator)->IsDictionary())
 		{
-			PdfObject* pObjType = (*iterator)->GetDictionary().GetKey(PdfName::KeyType);
-			PdfObject* pObjSubType = (*iterator)->GetDictionary().GetKey(PdfName::KeySubtype);
+			PdfObject* pObjType = (*iterator)->GetDictionary().FindKey(PdfName::KeyType);
+			PdfObject* pObjSubType = (*iterator)->GetDictionary().FindKey(PdfName::KeySubtype);
 			if ((pObjType && pObjType->IsName() && (pObjType->GetName().GetName() == "XObject")) ||
 				(pObjSubType && pObjSubType->IsName() && (pObjSubType->GetName().GetName() == "Image")))
 			{
-				width = (*iterator)->GetDictionary().GetKey(PdfName("Width"))->GetNumber();
-				height = (*iterator)->GetDictionary().GetKey(PdfName("Height"))->GetNumber();
+				width = (*iterator)->GetDictionary().FindKey(PdfName("Width"))->GetNumber();
+				height = (*iterator)->GetDictionary().FindKey(PdfName("Height"))->GetNumber();
 
 				if (dimensions.width() < width && dimensions.height() < height) {
 					dimensions.setWidth(width);
@@ -99,11 +99,11 @@ PdfReader::readImage(QIODevice& device, int const page_num)
 	);
 
 	// get the references to all image objects on this page
-	TKeyMap imageReferences = resources.GetKeys();
+	TKeyMap imageReferences = resources.FindKeys();
 
 	PdfObject * pObj = nullptr;
 
-	// stores the image to extract; only the largst one on the page is chosen
+	// stores the image to extract; only the largest one on the page is chosen
 	PdfObject * pdfImage = nullptr;
 	QSize dimensions(0, 0);
 	qint64 width = 0;
@@ -115,15 +115,15 @@ PdfReader::readImage(QIODevice& device, int const page_num)
 		pObj = pPage->GetFromResources(PdfName("XObject"), it->first);
 
 		if (pObj->IsDictionary()) {
-			PdfObject* pObjType = pObj->GetDictionary().GetKey(PdfName::KeyType);
-			PdfObject* pObjSubType = pObj->GetDictionary().GetKey(PdfName::KeySubtype);
+			PdfObject* pObjType = pObj->GetDictionary().FindKey(PdfName::KeyType);
+			PdfObject* pObjSubType = pObj->GetDictionary().FindKey(PdfName::KeySubtype);
 
 			if ((pObjType && pObjType->IsName() && (pObjType->GetName().GetName() == "XObject")) ||
 				(pObjSubType && pObjSubType->IsName() && (pObjSubType->GetName().GetName() == "Image")))
 			{
 
-				width = pObj->GetDictionary().GetKey(PdfName("Width"))->GetNumber();
-				height = pObj->GetDictionary().GetKey(PdfName("Height"))->GetNumber();
+				width = pObj->GetDictionary().FindKey(PdfName("Width"))->GetNumber();
+				height = pObj->GetDictionary().FindKey(PdfName("Height"))->GetNumber();
 
 				if (dimensions.width() < width && dimensions.height() < height) {
 					dimensions.setWidth(width);
