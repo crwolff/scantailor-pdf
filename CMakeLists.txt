@@ -37,12 +37,15 @@ include(cmake/LibToDLL.cmake)
 
 #===================== User cmake options =========================#
 
+# Folder where the perl executable is located.
+# Use this with -DST_PERL_PATH=[perlpath] if you get an error that Perl cannot be found.
+set(ST_PERL_PATH "")
+
 # This will always build the project supplied external dependencies, including QT.
 # Most Find*.cmake modules only find dynamic libraries. So the maintenance effort
 # is too big to find system static libraries across all supported platforms and
 # compilers. Currently only works on WIN32.
 option(BUILD_SHARED_LIBS "Build a shared version of Scan Tailor PDF." ON)
-
 set(STATIC_BUILD OFF)
 if(BUILD_SHARED_LIBS)
 	set(MAYBE_STATIC "SHARED")
@@ -213,6 +216,10 @@ set(HAVE_DEPENDENCIES TRUE)
 # The following cmake files will search for and/or download and build
 # all external dependencies. They set all LIB_* variables and add all
 # needed include directories to the ALL_EXTERN_INC_DIRS variable. 
+set(LIB_SSL "")
+set(LIB_CRYP "")
+include(cmake/extern/openssl.cmake)
+
 set(LIB_ZLIB "")
 include(cmake/extern/zlib.cmake)
 
@@ -239,10 +246,6 @@ include(cmake/extern/freetype.cmake)
 
 set(LIB_XML2 "")
 include(cmake/extern/xml2.cmake)
-
-set(LIB_SSL "")
-set(LIB_CRYP "")
-include(cmake/extern/openssl.cmake)
 
 set(LIB_PODOFO "")
 include(cmake/extern/podofo.cmake)

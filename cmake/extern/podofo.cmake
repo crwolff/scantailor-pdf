@@ -30,17 +30,11 @@ else() # Local build
 			-DPODOFO_BUILD_LIB_ONLY=ON
 #			-DPODOFO_BUILD_SHARED=ON
 			-DPODOFO_BUILD_STATIC=ON
-#			-DFREETYPE_INCLUDE_DIR_FT2BUILD=${EXTERN_INC_DIR}/freetype2
-#			-DFREETYPE_INCLUDE_DIR_FTHEADER=${EXTERN_INC_DIR}/freetype2/freetype
-#			-DCMAKE_CXX_FLAGS=-Wno-unknown-pragmas
 			-DCMAKE_DISABLE_FIND_PACKAGE_LIBCRYPTO=TRUE
 			-DCMAKE_DISABLE_FIND_PACKAGE_LIBIDN=TRUE
-#			-DCMAKE_DISABLE_FIND_PACKAGE_OpenSSL=TRUE
 			-DCMAKE_DISABLE_FIND_PACKAGE_UNISTRING=TRUE
-#		# Remove FindZlib.cmake from podofo. It's outdated and can't find our zlib even with the right prefix.
-#		PATCH_COMMAND ${CMAKE_COMMAND} -E rm <SOURCE_DIR>/cmake/modules/FindZLIB.cmake
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		DEPENDS ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP}
+		DEPENDS ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} openssl-extern-static
 	)
 
 	

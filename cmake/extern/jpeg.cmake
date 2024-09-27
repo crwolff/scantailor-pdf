@@ -21,8 +21,6 @@ else() # Local build
 			-DENABLE_STATIC=ON
 			-DWITH_TURBOJPEG=OFF
 			-DWITH_JPEG8=ON
-#		PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/jpeg-extern/CMakeLists.txt <SOURCE_DIR>/CMakeLists.txt
-#		COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/jpeg-extern/sharedlib/CMakeLists.txt <SOURCE_DIR>/sharedlib/CMakeLists.txt
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)
 

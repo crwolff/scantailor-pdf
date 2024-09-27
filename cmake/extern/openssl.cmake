@@ -10,16 +10,43 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	
 else() # Local build, only static
 	
+	# Find perl
+	find_package(Cygwin)
+	find_package(Msys)
+
+	set(ST_PERL_PATH
+	  ${CYGWIN_INSTALL_PATH}/bin
+	  ${MSYS_INSTALL_PATH}/usr/bin
+	  )
+
+	if(WIN32)
+	  get_filename_component(
+		 ActivePerl_CurrentVersion
+		 "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActivePerl;CurrentVersion]"
+		 NAME)
+	  set(ST_PERL_PATH ${ST_PERL_PATH}
+		 "C:/Perl/bin"
+		 "C:/Strawberry/perl/bin"
+		 [HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActivePerl\\${ActivePerl_CurrentVersion}]/bin
+		 )
+	endif()
+	
+	list(APPEND ST_PERL_PATH "d:/devel/perl-5.32p/perl/bin/")
+	
+	find_program(PERL_EXECUTABLE
+		NAMES perl
+		PATHS ${ST_PERL_PATH}
+	)
+	
+	
 	set(OPENSSL_SOURCE_DIR ${EXTERN}/src/openssl-extern-static)
 	if(MSVC)
-		set(OPENSSL_CONFIGURE_COMMAND d:/devel/perl5.38/perl/bin/perl.exe ${OPENSSL_SOURCE_DIR}/Configure VC-WIN64A)
-		set(OPENSSL_BUILD_COMMAND nmake)
-		set(OPENSSL_TEST_COMMAND nmake test)
+		set(OPENSSL_CONFIGURE_COMMAND ${PERL_EXECUTABLE} ${OPENSSL_SOURCE_DIR}/Configure VC-WIN64A)
+		set(OPENSSL_BUILD_COMMAND nmake /C /S)
 		set(OPENSSL_INSTALL_COMMAND nmake install)
 	else()
 		set(OPENSSL_CONFIGURE_COMMAND ${OPENSSL_SOURCE_DIR}/Configure)
 		set(OPENSSL_BUILD_COMMAND ninja)
-		set(OPENSSL_TEST_COMMAND ninja test)
 		set(OPENSSL_INSTALL_COMMAND ninja install)
 	endif()
 
@@ -31,10 +58,13 @@ else() # Local build, only static
 		CONFIGURE_COMMAND
 			${OPENSSL_CONFIGURE_COMMAND}
 			--prefix=${EXTERN}
+			--openssldir=${EXTERN}/SSL
 			no-apps
 			no-shared
+			no-tests
+			no-docs
 		BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
-		TEST_COMMAND ${OPENSSL_TEST_COMMAND}
+		TEST_COMMAND ""
 		INSTALL_COMMAND ${OPENSSL_INSTALL_COMMAND}
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)
@@ -42,8 +72,8 @@ else() # Local build, only static
 	
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_SSL_STATIC "libssl.lib")
-		set(ST_CRYP_STATIC "libcrypto.lib")
+		set(ST_SSL_STATIC "libssl.lib")		#checked
+		set(ST_CRYP_STATIC "libcrypto.lib")	#checked
 	else()
 		set(ST_SSL_STATIC "libssl.a")
 		set(ST_CRYP_IMPLIB "libcrypto.a")
