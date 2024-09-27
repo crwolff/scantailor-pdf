@@ -11,6 +11,12 @@ if(POLICY CMP0048)
 	cmake_policy(SET CMP0048 NEW)
 endif()
 
+if(POLICY CMP0135)
+	# ExternalProject_Add() download timestamp handling changed in 3.24
+	# https://cmake.org/cmake/help/latest/policy/CMP0135.html
+	cmake_policy(SET CMP0135 NEW)
+endif()
+
 
 project("Scan Tailor PDF")
 
@@ -296,7 +302,7 @@ if(MINGW AND STATIC_BUILD)
 endif()
 
 list(APPEND EXTRA_LIBS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_TIFF}
-	${LIB_ZSTD} ${LIB_LZMA} ${LIB_OPENJP} ${LIB_PODOFO}
+	${LIB_ZSTD} ${LIB_LZMA} ${LIB_OPENJP} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_PODOFO}
 )
 
 set(MAYBE_QT_OPENGL_MODULE "")

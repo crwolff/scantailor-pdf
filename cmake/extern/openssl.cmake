@@ -10,12 +10,17 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	
 else() # Local build, only static
 	
+	set(OPENSSL_SOURCE_DIR ${EXTERN}/src/openssl-extern-static)
 	if(MSVC)
-		set(OPENSSL_SOURCE_DIR ${EXTERN}/src/openssl-extern-static)
 		set(OPENSSL_CONFIGURE_COMMAND d:/devel/perl5.38/perl/bin/perl.exe ${OPENSSL_SOURCE_DIR}/Configure VC-WIN64A)
 		set(OPENSSL_BUILD_COMMAND nmake)
 		set(OPENSSL_TEST_COMMAND nmake test)
 		set(OPENSSL_INSTALL_COMMAND nmake install)
+	else()
+		set(OPENSSL_CONFIGURE_COMMAND ${OPENSSL_SOURCE_DIR}/Configure)
+		set(OPENSSL_BUILD_COMMAND ninja)
+		set(OPENSSL_TEST_COMMAND ninja test)
+		set(OPENSSL_INSTALL_COMMAND ninja install)
 	endif()
 
 	ExternalProject_Add(

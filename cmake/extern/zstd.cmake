@@ -34,9 +34,9 @@ else() # Local build
 		set(ST_ZSTD_IMPLIB "zstd.lib")
 		set(ST_ZSTD_SHARED "zstd.dll")
 	elseif(MINGW)
-		set(ST_ZSTD_STATIC "libzstd.a")
-		set(ST_ZSTD_IMPLIB "libzstd.dll.a")
-		set(ST_ZSTD_SHARED "libzstd.dll")
+		set(ST_ZSTD_STATIC "libzstd.a")			#checked
+		set(ST_ZSTD_IMPLIB "libzstd.dll.a")		#checked
+		set(ST_ZSTD_SHARED "libzstd.dll")		#checked
 	elseif(APPLE)
 		set(ST_ZSTD_STATIC "libzstd.a")
 		set(ST_ZSTD_SHARED "libzstd.dylib")

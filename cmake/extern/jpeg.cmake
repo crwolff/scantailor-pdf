@@ -9,15 +9,33 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	
 else() # Local build
 
+	ExternalProject_Add(
+		jpeg-extern
+		PREFIX ${EXTERN}
+		URL https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.0.4/libjpeg-turbo-3.0.4.tar.gz
+		URL_HASH SHA256=99130559e7d62e8d695f2c0eaeef912c5828d5b84a0537dcb24c9678c9d5b76b
+		CMAKE_ARGS
+			-DCMAKE_INSTALL_PREFIX=${EXTERN}
+			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
+			-DENABLE_SHARED=ON
+			-DENABLE_STATIC=ON
+			-DWITH_TURBOJPEG=OFF
+			-DWITH_JPEG8=ON
+#		PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/jpeg-extern/CMakeLists.txt <SOURCE_DIR>/CMakeLists.txt
+#		COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/jpeg-extern/sharedlib/CMakeLists.txt <SOURCE_DIR>/sharedlib/CMakeLists.txt
+		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
+	)
+
+
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
 		set(ST_JPEG_STATIC "jpeg-static.lib")
 		set(ST_JPEG_SHARED "jpeg.lib")
 		set(ST_JPEG_DLL "jpeg8.dll")
 	elseif(MINGW)
-		set(ST_JPEG_STATIC "libjpeg.a")
-		set(ST_JPEG_SHARED "libjpeg.dll.a")
-		set(ST_JPEG_DLL "libjpeg-8.dll")
+		set(ST_JPEG_STATIC "libjpeg.a")		#checked
+		set(ST_JPEG_SHARED "libjpeg.dll.a")	#checked
+		set(ST_JPEG_DLL "libjpeg-8.dll")		#checked
 	elseif(APPLE)
 		set(ST_JPEG_STATIC "libjpeg.a")
 		set(ST_JPEG_SHARED "libjpeg.8.dylib")
@@ -26,40 +44,43 @@ else() # Local build
 		set(ST_JPEG_SHARED "libjpeg.so.8")
 	endif()
 
-	ExternalProject_Add(
-		jpeg-extern
-		PREFIX ${EXTERN}
-		URL https://sourceforge.net/projects/libjpeg-turbo/files/2.1.2/libjpeg-turbo-2.1.2.tar.gz/download
-		URL_MD5 e181bd78884dd5392a869209bfa41d4a
-		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DWITH_TURBOJPEG=OFF -DWITH_JPEG8=ON -DENABLE_PROGRAMS=OFF
-		# Disable building and installing all programs
-		PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/jpeg-extern/CMakeLists.txt <SOURCE_DIR>/CMakeLists.txt
-		COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/jpeg-extern/sharedlib/CMakeLists.txt <SOURCE_DIR>/sharedlib/CMakeLists.txt
-		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-	)
 
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	if(STATIC_BUILD)
-		add_library(jpeg STATIC IMPORTED)
-		set_property(TARGET jpeg
-			PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_STATIC}"
-		)
-	else() # Shared
-		add_library(jpeg SHARED IMPORTED)
-		if(WIN32)
-			set_target_properties(jpeg PROPERTIES
-				IMPORTED_LOCATION "${EXTERN_BIN_DIR}/${ST_JPEG_DLL}"
-				IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_JPEG_SHARED}"
-			)
-		else() # *nix
-			set_property(TARGET jpeg
-				PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_SHARED}"
-			)
-		endif()
-	endif()
+	add_library(jpeg SHARED IMPORTED)
+	add_library(jpeg-static STATIC IMPORTED)
+
+	set_property(
+		TARGET jpeg jpeg-static APPEND PROPERTY IMPORTED_CONFIGURATIONS $<CONFIG>
+	)
+	
+	# Shared properties
+	set_target_properties(jpeg PROPERTIES
+		MAP_IMPORTED_CONFIG_DEBUG Release
+		MAP_IMPORTED_CONFIG_MINSIZEREL Release
+		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_SHARED}"
+		# Ignored on non-WIN32 platforms
+		IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_JPEG_IMPLIB}" 
+	)
+	
+	# Static properties
+	set_target_properties(jpeg-static PROPERTIES
+		MAP_IMPORTED_CONFIG_DEBUG Release
+		MAP_IMPORTED_CONFIG_MINSIZEREL Release
+		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_STATIC}"
+	)
 	
 	add_dependencies(jpeg jpeg-extern)
-	set(LIB_JPEG jpeg)
+	add_dependencies(jpeg-static jpeg-extern)
+	
+	# Select the correct build type; this should switch the target,
+	# if the user changes build type (e.g. -DBUILD_SHARED_LIBS=OFF)
+	if(STATIC_BUILD)
+		set(LIB_JPEG jpeg-static)
+	else()
+		set(LIB_JPEG jpeg)
+	endif()
 
 endif()

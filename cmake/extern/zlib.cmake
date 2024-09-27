@@ -29,9 +29,9 @@ else() # Local build, both shared and static
 		set(ST_ZLIB_IMPLIB "zlib.lib")		 	#checked
 		set(ST_ZLIB_SHARED "zlib.dll")			#checked
 	elseif(MINGW)
-		set(ST_ZLIB_STATIC "libzlibstatic.a")
-		set(ST_ZLIB_IMPLIB "libzlib.dll.a")
-		set(ST_ZLIB_SHARED "libzlib1.dll")
+		set(ST_ZLIB_STATIC "libzlib.a")			#checked
+		set(ST_ZLIB_IMPLIB "libzlib.dll.a")		#checked
+		set(ST_ZLIB_SHARED "libzlib.dll")		#checked
 	elseif(APPLE)
 		set(ST_ZLIB_STATIC "libz.a")
 		set(ST_ZLIB_SHARED "libz.dylib")

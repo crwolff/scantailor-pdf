@@ -52,9 +52,9 @@ else() # Local build, both shared and static
 		set(ST_XML2_IMPLIB "libxml2.lib")	#checked
 		set(ST_XML2_SHARED "libxml2.dll")	#checked
 	elseif(MINGW)
-		set(ST_XML2_STATIC "libxml2s.a")
-		set(ST_XML2_IMPLIB "libxml2.dll.a")
-		set(ST_XML2_SHARED "libxml2.dll")
+		set(ST_XML2_STATIC "libxml2.a")		#checked
+		set(ST_XML2_IMPLIB "libxml2.dll.a")	#checked
+		set(ST_XML2_SHARED "libxml2.dll")	#checked
 	elseif(APPLE)
 		set(ST_XML2_STATIC "libxml2.a")
 		set(ST_XML2_SHARED "libxml2.dylib")
