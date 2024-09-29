@@ -80,12 +80,12 @@ else() # Local build
 		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 			set(QT5_PLATFORM win32-icc)
 		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-			# find_program(JOM NAMES jom)
-			# if(JOM)
-				# set(QT5_MAKE ${JOM})
-			# else()
-			# endif()
-			set(QT5_MAKE nmake)
+			find_program(JOM NAMES jom)
+			if(JOM)
+				set(QT5_MAKE ${JOM})
+			else()
+				set(QT5_MAKE nmake)
+			endif()
 			set(QT5_PLATFORM win32-msvc)
 		endif()
 		
@@ -98,13 +98,12 @@ else() # Local build
 		ExternalProject_Add(
 			qt5-base-extern
 			PREFIX ${EXTERN}
-			URL https://download.qt.io/official_releases/qt/5.15/5.15.5/submodules/qtbase-everywhere-opensource-src-5.15.5.tar.xz
-			URL_HASH SHA256=0c42c799aa7c89e479a07c451bf5a301e291266ba789e81afc18f95049524edc
+			URL https://download.qt.io/official_releases/qt/5.15/5.15.15/submodules/qtbase-everywhere-opensource-src-5.15.15.tar.xz
+			URL_HASH SHA256=e5f941fecf694ecba97c550b45b0634e552166cc6c815bcfdc481edd62796ba1
 			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			# Qt bug with MinGW: https://bugreports.qt.io/browse/QTBUG-94031
-			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
+			# PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
-			# The next to need to be set. Otherwise QT might use the wrong make.
 			BUILD_COMMAND ${QT5_MAKE}
 			INSTALL_COMMAND ${QT5_MAKE} install
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
@@ -125,8 +124,8 @@ else() # Local build
 		ExternalProject_Add(
 			qt-tools
 			PREFIX ${EXTERN}
-			URL https://download.qt.io/official_releases/qt/5.15/5.15.5/submodules/qttools-everywhere-opensource-src-5.15.5.tar.xz
-			URL_HASH SHA256=6d0778b71b2742cb527561791d1d3d255366163d54a10f78c683a398f09ffc6c
+			URL https://download.qt.io/official_releases/qt/5.15/5.15.15/submodules/qttools-everywhere-opensource-src-5.15.15.tar.xz
+			URL_HASH SHA256=71946704c6bd6c925910288b97dfcc2e357d4a28e22c8651a5813aae4f238028
 			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern-build/bin/qmake -makefile -after "CONFIG += release" <SOURCE_DIR>/${QT_TOOLS}
 			# The next to need to be set. Otherwise QT might use the wrong make.

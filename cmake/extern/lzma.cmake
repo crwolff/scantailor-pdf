@@ -12,13 +12,14 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 else() # Local build; we build both static and shared libs
 	
 	# Download and unpack lzma
-	set(LZMA-EXTERN lzma-extern)	
+	set(LZMA-EXTERN lzma-extern)
+	set(LZMA_SOURCE_DIR ${EXTERN}/src/${LZMA-EXTERN})
 	FetchContent_Populate(
 		lzma-down
 		URL https://github.com/tukaani-project/xz/releases/download/v5.6.2/xz-5.6.2.tar.xz
 		URL_HASH SHA256=a9db3bb3d64e248a0fae963f8fb6ba851a26ba1822e504dc0efd18a80c626caf
 		DOWNLOAD_DIR ${DOWNLOAD_DIR}
-		SOURCE_DIR ${EXTERN}/src/${LZMA-EXTERN}
+		SOURCE_DIR ${LZMA_SOURCE_DIR}
 		BINARY_DIR ${EXTERN}/down/${LZMA-EXTERN}-build
 		SUBBUILD_DIR ${EXTERN}/down/${LZMA-EXTERN}
 	)
@@ -27,7 +28,7 @@ else() # Local build; we build both static and shared libs
 	ExternalProject_Add(
 		${LZMA-EXTERN}
 		PREFIX ${EXTERN}
-		SOURCE_DIR ${EXTERN}/src/${LZMA-EXTERN} # Re-use source dir from above by omitting URL download method and specifying the same SOURCE_DIR.
+		SOURCE_DIR ${LZMA_SOURCE_DIR}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=${EXTERN}
 			-DCMAKE_PREFIX_PATH=${EXTERN}
@@ -40,7 +41,7 @@ else() # Local build; we build both static and shared libs
 	ExternalProject_Add(
 		${LZMA-EXTERN}-static
 		PREFIX ${EXTERN}
-		SOURCE_DIR ${EXTERN}/src/${LZMA-EXTERN} # Re-use source dir from above by omitting URL download method and specifying the same SOURCE_DIR.
+		SOURCE_DIR ${LZMA_SOURCE_DIR}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=${EXTERN}
 			-DCMAKE_PREFIX_PATH=${EXTERN}
@@ -52,9 +53,9 @@ else() # Local build; we build both static and shared libs
 	
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_LZMA_STATIC "liblzma.lib")	#checked
-		set(ST_LZMA_IMPLIB "lzma.lib")
-		set(ST_LZMA_SHARED "lzma.dll")
+		set(ST_LZMA_STATIC "liblzma.lib")
+		set(ST_LZMA_IMPLIB "liblzma.lib")	#checked
+		set(ST_LZMA_SHARED "liblzma.dll")	#checked
 	elseif(MINGW)
 		set(ST_LZMA_STATIC "liblzma.a")			#checked
 		set(ST_LZMA_IMPLIB "libliblzma.dll.a")	#checked

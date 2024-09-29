@@ -40,7 +40,6 @@ else() # Local build
 			-Dtiff-docs=OFF
 			-DCMAKE_DISABLE_FIND_PACKAGE_GLUT=TRUE
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		STEP_TARGETS patch
 		DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_ZSTD} ${LIB_LZMA}
 	)
 	
@@ -70,8 +69,8 @@ else() # Local build
 	# TODO: Filenames for other platforms and dynamic library
 	if(MSVC)
 		set(ST_TIFF_STATIC "tiff.lib")
-		set(ST_TIFF_IMPLIB "tiff.lib")
-		set(ST_TIFF_SHARED "tiff.dll")
+		set(ST_TIFF_IMPLIB "tiff.lib")	#checked
+		set(ST_TIFF_SHARED "tiff.dll")	#checked
 	elseif(MINGW)
 		set(ST_TIFF_STATIC "libtiff.a")
 		set(ST_TIFF_IMPLIB "libtiff.dll.a")
