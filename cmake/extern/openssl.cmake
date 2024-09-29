@@ -38,16 +38,27 @@ else() # Local build, only static
 		PATHS ${ST_PERL_PATH}
 	)
 	
+	# Find number of available threads for multithreaded compilation of QT5
+	include(ProcessorCount)
+	ProcessorCount(N)
+	math(EXPR THREADS "${N} - 1")
+	if(NOT N EQUAL 0)
+		set(JX "-j${THREADS}")
+	endif()
 	
 	set(OPENSSL_SOURCE_DIR ${EXTERN}/src/openssl-extern-static)
 	if(MSVC)
 		set(OPENSSL_CONFIGURE_COMMAND ${PERL_EXECUTABLE} ${OPENSSL_SOURCE_DIR}/Configure VC-WIN64A)
 		set(OPENSSL_BUILD_COMMAND nmake /C /S)
 		set(OPENSSL_INSTALL_COMMAND nmake install)
+	elseif(MINGW)
+		set(OPENSSL_CONFIGURE_COMMAND ${PERL_EXECUTABLE} ${OPENSSL_SOURCE_DIR}/Configure mingw64)
+		set(OPENSSL_BUILD_COMMAND make ${JX})
+		set(OPENSSL_INSTALL_COMMAND make install)
 	else()
-		set(OPENSSL_CONFIGURE_COMMAND ${OPENSSL_SOURCE_DIR}/Configure)
-		set(OPENSSL_BUILD_COMMAND ninja)
-		set(OPENSSL_INSTALL_COMMAND ninja install)
+		set(OPENSSL_CONFIGURE_COMMAND ${PERL_EXECUTABLE} ${OPENSSL_SOURCE_DIR}/Configure)
+		set(OPENSSL_BUILD_COMMAND make)
+		set(OPENSSL_INSTALL_COMMAND make install)
 	endif()
 
 	ExternalProject_Add(
@@ -55,6 +66,7 @@ else() # Local build, only static
 		PREFIX ${EXTERN}
 		URL https://github.com/openssl/openssl/releases/download/openssl-3.3.2/openssl-3.3.2.tar.gz
 		URL_HASH SHA256=2e8a40b01979afe8be0bbfb3de5dc1c6709fedb46d6c89c10da114ab5fc3d281
+		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		CONFIGURE_COMMAND
 			${OPENSSL_CONFIGURE_COMMAND}
 			--prefix=${EXTERN}

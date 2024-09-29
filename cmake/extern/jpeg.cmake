@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
+# SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
 if(NOT WIN32 AND NOT STATIC_BUILD)
@@ -14,8 +14,10 @@ else() # Local build
 		PREFIX ${EXTERN}
 		URL https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.0.4/libjpeg-turbo-3.0.4.tar.gz
 		URL_HASH SHA256=99130559e7d62e8d695f2c0eaeef912c5828d5b84a0537dcb24c9678c9d5b76b
+		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=${EXTERN}
+			-DCMAKE_PREFIX_PATH=${EXTERN}
 			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
 			-DENABLE_SHARED=ON
 			-DENABLE_STATIC=ON

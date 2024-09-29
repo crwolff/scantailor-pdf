@@ -27,6 +27,7 @@ include(CheckIncludeFile)
 include(CheckIncludeFileCXX)
 include(TestCXXAcceptsFlag)
 include(CMakeDependentOption)
+include(FetchContent)
 include(cmake/FindPthreads.cmake)
 include(cmake/SetDefaultBuildType.cmake)
 include(cmake/SetDefaultGccFlags.cmake)
@@ -215,7 +216,12 @@ set(HAVE_DEPENDENCIES TRUE)
 # External library targets
 # The following cmake files will search for and/or download and build
 # all external dependencies. They set all LIB_* variables and add all
-# needed include directories to the ALL_EXTERN_INC_DIRS variable. 
+# needed include directories to the ALL_EXTERN_INC_DIRS variable.
+
+# All downloaded external dependencies are stored in ./extern-src
+set(DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/extern-src")
+
+
 set(LIB_SSL "")
 set(LIB_CRYP "")
 include(cmake/extern/openssl.cmake)

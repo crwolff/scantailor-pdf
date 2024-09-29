@@ -11,12 +11,24 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 else() # Local build, both shared and static
 	
 	## Can't build shared and static libs at the same time.
-	# Shared
-	ExternalProject_Add(
-		xml2-extern
-		PREFIX ${EXTERN}
+	# Download and unpack xml2
+	set(XML2-EXTERN xml2-extern)
+	FetchContent_Populate(
+		xml2-down
 		URL https://download.gnome.org/sources/libxml2/2.13/libxml2-2.13.4.tar.xz
 		URL_HASH SHA256=65d042e1c8010243e617efb02afda20b85c2160acdbfbcb5b26b80cec6515650
+		DOWNLOAD_DIR ${DOWNLOAD_DIR}
+		SOURCE_DIR ${EXTERN}/src/${XML2-EXTERN}
+		BINARY_DIR ${EXTERN}/down/${XML2-EXTERN}-build
+		SUBBUILD_DIR ${EXTERN}/down/${XML2-EXTERN}
+	)
+	
+	
+	# Shared
+	ExternalProject_Add(
+		${XML2-EXTERN}
+		PREFIX ${EXTERN}
+		SOURCE_DIR ${EXTERN}/src/${XML2-EXTERN}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=${EXTERN}
 			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
@@ -30,10 +42,9 @@ else() # Local build, both shared and static
 	
 	# Static
 	ExternalProject_Add(
-		xml2-extern-static
+		${XML2-EXTERN}-static
 		PREFIX ${EXTERN}
-		URL https://download.gnome.org/sources/libxml2/2.13/libxml2-2.13.4.tar.xz
-		URL_HASH SHA256=65d042e1c8010243e617efb02afda20b85c2160acdbfbcb5b26b80cec6515650
+		SOURCE_DIR ${EXTERN}/src/${XML2-EXTERN}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=${EXTERN}
 			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
@@ -91,8 +102,8 @@ else() # Local build, both shared and static
 		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_XML2_STATIC}"
 	)
 	
-	add_dependencies(xml2 xml2-extern)
-	add_dependencies(xml2-static xml2-extern-static)
+	add_dependencies(xml2 ${XML2-EXTERN})
+	add_dependencies(xml2-static ${XML2-EXTERN}-static)
 	
 	# Select the correct build type; this should switch the target,
 	# if the user changes build type (e.g. -DBUILD_SHARED_LIBS=OFF)

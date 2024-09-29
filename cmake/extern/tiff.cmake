@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
+# SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
 if(NOT WIN32 AND NOT STATIC_BUILD)
@@ -9,11 +9,46 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	
 else() # Local build
 	
-	ExternalProject_Add(
-		tiff-extern
-		PREFIX ${EXTERN}
+	# Download and unpack tiff
+	set(TIFF-EXTERN tiff-extern)
+	FetchContent_Populate(
+		tiff-down
 		URL https://download.osgeo.org/libtiff/tiff-4.7.0.tar.xz
 		URL_HASH SHA256=273a0a73b1f0bed640afee4a5df0337357ced5b53d3d5d1c405b936501f71017
+		DOWNLOAD_DIR ${DOWNLOAD_DIR}
+		SOURCE_DIR ${EXTERN}/src/${TIFF-EXTERN}
+		BINARY_DIR ${EXTERN}/down/${TIFF-EXTERN}-build
+		SUBBUILD_DIR ${EXTERN}/down/${TIFF-EXTERN}
+	)
+	
+	# Shared
+	ExternalProject_Add(
+		${TIFF-EXTERN}
+		PREFIX ${EXTERN}
+		SOURCE_DIR ${EXTERN}/src/${TIFF-EXTERN}	# Re-use source dir from above by omitting URL download method and specifying the same SOURCE_DIR.
+		CMAKE_ARGS
+			-DCMAKE_INSTALL_PREFIX=${EXTERN}
+			-DCMAKE_PREFIX_PATH=${EXTERN}
+			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
+			-DBUILD_SHARED_LIBS=ON
+			-Dwebp=OFF
+			-Dlzma=ON
+			-Dzstd=ON
+			-Dtiff-tools=OFF
+			-Dtiff-tests=OFF
+			-Dtiff-contrib=OFF
+			-Dtiff-docs=OFF
+			-DCMAKE_DISABLE_FIND_PACKAGE_GLUT=TRUE
+		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
+		STEP_TARGETS patch
+		DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_ZSTD} ${LIB_LZMA}
+	)
+	
+	# Static
+	ExternalProject_Add(
+		${TIFF-EXTERN}-static
+		PREFIX ${EXTERN}
+		SOURCE_DIR ${EXTERN}/src/${TIFF-EXTERN}	# Re-use source dir from above by omitting URL download method and specifying the same SOURCE_DIR.
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=${EXTERN}
 			-DCMAKE_PREFIX_PATH=${EXTERN}
@@ -77,8 +112,8 @@ else() # Local build
 		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_TIFF_STATIC}"
 	)
 	
-	add_dependencies(tiff tiff-extern)
-	add_dependencies(tiff-static tiff-extern)
+	add_dependencies(tiff ${TIFF-EXTERN})
+	add_dependencies(tiff-static ${TIFF-EXTERN}-static)
 	
 	target_link_libraries(tiff INTERFACE ${LIB_ZLIB} ${LIB_JPEG} ${LIB_LZMA} ${LIB_ZSTD})
 	target_link_libraries(tiff-static INTERFACE ${LIB_ZLIB} ${LIB_JPEG} ${LIB_LZMA} ${LIB_ZSTD})

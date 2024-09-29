@@ -8,12 +8,12 @@ if(NOT EIGEN3_FOUND)
 	# Try to download Eigen3 and extract it so find_package() can find it if needed
 	if(NOT EXISTS " ${EXTERN}/src/eigen-3.4.0")
 		file(DOWNLOAD https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip
-			${EXTERN}/src/eigen-3.4.0.zip
+			${DOWNLOAD_DIR}/eigen-3.4.0.zip
 			EXPECTED_HASH SHA256=1ccaabbfe870f60af3d6a519c53e09f3dcf630207321dffa553564a8e75c4fc8
 			SHOW_PROGRESS
 		)
 		file(ARCHIVE_EXTRACT
-			INPUT ${EXTERN}/src/eigen-3.4.0.zip
+			INPUT ${DOWNLOAD_DIR}/eigen-3.4.0.zip
 			DESTINATION ${EXTERN}/src
 		)
 	endif()

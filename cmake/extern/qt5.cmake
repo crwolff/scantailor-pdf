@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
+# SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
 if(NOT WIN32 AND NOT STATIC_BUILD)
@@ -100,6 +100,7 @@ else() # Local build
 			PREFIX ${EXTERN}
 			URL https://download.qt.io/official_releases/qt/5.15/5.15.5/submodules/qtbase-everywhere-opensource-src-5.15.5.tar.xz
 			URL_HASH SHA256=0c42c799aa7c89e479a07c451bf5a301e291266ba789e81afc18f95049524edc
+			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			# Qt bug with MinGW: https://bugreports.qt.io/browse/QTBUG-94031
 			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
@@ -126,6 +127,7 @@ else() # Local build
 			PREFIX ${EXTERN}
 			URL https://download.qt.io/official_releases/qt/5.15/5.15.5/submodules/qttools-everywhere-opensource-src-5.15.5.tar.xz
 			URL_HASH SHA256=6d0778b71b2742cb527561791d1d3d255366163d54a10f78c683a398f09ffc6c
+			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern-build/bin/qmake -makefile -after "CONFIG += release" <SOURCE_DIR>/${QT_TOOLS}
 			# The next to need to be set. Otherwise QT might use the wrong make.
 			BUILD_COMMAND ${QT5_MAKE}

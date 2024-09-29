@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
+# SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
 if(NOT WIN32 AND NOT STATIC_BUILD)
@@ -23,6 +23,7 @@ else() # Local build
 		PREFIX ${EXTERN}
 		URL https://github.com/podofo/podofo/archive/refs/tags/0.10.4.tar.gz
 		URL_HASH SHA256=6b1b13cdfb2ba5e8bbc549df507023dd4873bc946211bc6942183b8496986904
+		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=${EXTERN}
 			-DCMAKE_PREFIX_PATH=${EXTERN}

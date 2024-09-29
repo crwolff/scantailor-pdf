@@ -11,11 +11,13 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	
 else() # Local build
 	
+	# Shared and static
 	ExternalProject_Add(
 		zstd-extern
 		PREFIX ${EXTERN}
 		URL https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz
 		URL_HASH SHA256=7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0
+		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		SOURCE_SUBDIR build/cmake
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=${EXTERN}

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
+# SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
 if(NOT WIN32 AND NOT STATIC_BUILD)
@@ -9,11 +9,13 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	
 else() # Local build
 	
+	# Shared and static
 	ExternalProject_Add(
 		png-extern
 		PREFIX ${EXTERN}
 		URL https://download.sourceforge.net/libpng/libpng-1.6.44.tar.xz
 		URL_HASH SHA256=60c4da1d5b7f0aa8d158da48e8f8afa9773c1c8baa5d21974df61f1886b8ce8e
+		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=${EXTERN}
 			-DCMAKE_PREFIX_PATH=${EXTERN}

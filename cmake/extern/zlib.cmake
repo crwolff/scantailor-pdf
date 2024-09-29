@@ -16,6 +16,7 @@ else() # Local build, both shared and static
 		PREFIX ${EXTERN}
 		URL https://www.zlib.net/zlib-1.3.1.tar.xz
 		URL_HASH SHA256=38ef96b8dfe510d42707d9c781877914792541133e1870841463bfa73f883e32
+		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=${EXTERN}
 			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs

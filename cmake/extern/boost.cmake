@@ -56,6 +56,7 @@ else() # Local static build
 			PREFIX ${EXTERN}
 			URL https://boostorg.jfrog.io/artifactory/main/release/1.78.0/source/boost_1_78_0.7z
 			URL_HASH SHA256=090cefea470bca990fa3f3ed793d865389426915b37a2a3258524a7258f0790c
+			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			# Fix for comment above
 			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/boost-extern/bootstrap.bat <SOURCE_DIR>/bootstrap.bat
 			CONFIGURE_COMMAND ""
