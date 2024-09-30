@@ -67,7 +67,7 @@ if(NOT STATIC_BUILD)
 	add_definitions(-DBUILDING_IMAGEPROC)
 endif()
 
-add_library(imageproc ${MAYBE_STATIC} ${sources})
+add_library(imageproc ${LIB_TYPE} ${sources})
 target_link_libraries(imageproc foundation Qt5::Core Qt5::Gui)
 target_include_directories(imageproc INTERFACE ${EIGEN3_INCLUDE_DIR})
 

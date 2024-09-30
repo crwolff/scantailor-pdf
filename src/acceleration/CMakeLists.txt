@@ -22,7 +22,7 @@ if(NOT BUILD_STATIC)
 	add_definitions(-DBUILDING_ACCELERATION)
 endif()
 
-add_library(acceleration ${MAYBE_STATIC} ${sources})
+add_library(acceleration ${LIB_TYPE} ${sources})
 target_link_libraries(acceleration dewarping imageproc Qt5::Core Qt5::Gui)
 
 if(NOT STATIC_BUILD)

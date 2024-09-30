@@ -8,55 +8,31 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	set(LIB_XML2 LibXml2::LibXml2)
 	list(APPEND ALL_EXTERN_INC_DIRS ${LIBXML2_INCLUDE_DIRS})
 	
-else() # Local build, both shared and static
+else() # Local build
 	
-	## Can't build shared and static libs at the same time.
-	# Download and unpack xml2
 	set(XML2-EXTERN xml2-extern)
-	FetchContent_Populate(
-		xml2-down
-		URL https://download.gnome.org/sources/libxml2/2.13/libxml2-2.13.4.tar.xz
-		URL_HASH SHA256=65d042e1c8010243e617efb02afda20b85c2160acdbfbcb5b26b80cec6515650
-		DOWNLOAD_DIR ${DOWNLOAD_DIR}
-		SOURCE_DIR ${EXTERN}/src/${XML2-EXTERN}
-		BINARY_DIR ${EXTERN}/down/${XML2-EXTERN}-build
-		SUBBUILD_DIR ${EXTERN}/down/${XML2-EXTERN}
-	)
-	
-	
-	# Shared
+	set(XML2_SOURCE_DIR ${EXTERN}/src/${XML2-EXTERN})
+		
 	ExternalProject_Add(
 		${XML2-EXTERN}
+		URL https://download.gnome.org/sources/libxml2/2.13/libxml2-2.13.4.tar.xz
+		URL_HASH SHA256=65d042e1c8010243e617efb02afda20b85c2160acdbfbcb5b26b80cec6515650
 		PREFIX ${EXTERN}
-		SOURCE_DIR ${EXTERN}/src/${XML2-EXTERN}
+		DOWNLOAD_DIR ${DOWNLOAD_DIR}
+		SOURCE_DIR ${XML2_SOURCE_DIR}
 		CMAKE_ARGS
-			-DCMAKE_INSTALL_PREFIX=${EXTERN}
+			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
 			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
-			-DBUILD_SHARED_LIBS=ON
+			-DBUILD_SHARED_LIBS=${SHARED_BOOL}
 			-DLIBXML2_WITH_ICONV=OFF
 			-DLIBXML2_WITH_PROGRAMS=OFF
 			-DLIBXML2_WITH_PYTHON=OFF
 			-DLIBXML2_WITH_TESTS=OFF
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)
-	
-	# Static
-	ExternalProject_Add(
-		${XML2-EXTERN}-static
-		PREFIX ${EXTERN}
-		SOURCE_DIR ${EXTERN}/src/${XML2-EXTERN}
-		CMAKE_ARGS
-			-DCMAKE_INSTALL_PREFIX=${EXTERN}
-			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
-			-DBUILD_SHARED_LIBS=OFF
-			-DLIBXML2_WITH_ICONV=OFF
-			-DLIBXML2_WITH_PROGRAMS=OFF
-			-DLIBXML2_WITH_PYTHON=OFF
-			-DLIBXML2_WITH_TESTS=OFF
-		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-	)
-	
-	
+
+
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
 		set(ST_XML2_STATIC "libxml2s.lib")	#checked
@@ -77,40 +53,32 @@ else() # Local build, both shared and static
 	
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	add_library(xml2 SHARED IMPORTED)
-	add_library(xml2-static STATIC IMPORTED)
-
-	set_property(
-		TARGET xml2 xml2-static APPEND PROPERTY IMPORTED_CONFIGURATIONS $<CONFIG>
-	)
-	
-	# Shared properties
-	set_target_properties(xml2 PROPERTIES
-		MAP_IMPORTED_CONFIG_DEBUG Release
-		MAP_IMPORTED_CONFIG_MINSIZEREL Release
-		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_XML2_SHARED}"
-		# Ignored on non-WIN32 platforms
-		IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_XML2_IMPLIB}" 
-	)
-	
-	# Static properties
-	set_target_properties(xml2-static PROPERTIES
-		MAP_IMPORTED_CONFIG_DEBUG Release
-		MAP_IMPORTED_CONFIG_MINSIZEREL Release
-		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_XML2_STATIC}"
-	)
-	
-	add_dependencies(xml2 ${XML2-EXTERN})
-	add_dependencies(xml2-static ${XML2-EXTERN}-static)
-	
-	# Select the correct build type; this should switch the target,
-	# if the user changes build type (e.g. -DBUILD_SHARED_LIBS=OFF)
-	if(STATIC_BUILD)
-		set(LIB_XML2 xml2-static)
-	else()
+	if(${BUILD_SHARED_LIBS})
+		add_library(xml2 SHARED IMPORTED)
+		set_target_properties(xml2 PROPERTIES
+			IMPORTED_CONFIGURATIONS $<CONFIG>
+			MAP_IMPORTED_CONFIG_DEBUG Release
+			MAP_IMPORTED_CONFIG_MINSIZEREL Release
+			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/libxml2/libxml
+			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_XML2_SHARED}"
+			# Ignored on non-WIN32 platforms
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_XML2_IMPLIB}" 
+		)
+		add_dependencies(xml2 ${XML2-EXTERN})
 		set(LIB_XML2 xml2)
+	else()
+		add_library(xml2-static STATIC IMPORTED)
+		set_target_properties(xml2-static PROPERTIES
+			IMPORTED_CONFIGURATIONS $<CONFIG>
+			MAP_IMPORTED_CONFIG_DEBUG Release
+			MAP_IMPORTED_CONFIG_MINSIZEREL Release
+			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/libxml2/libxml
+			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_XML2_STATIC}"
+		)
+		add_dependencies(xml2-static ${XML2-EXTERN})
+		set(LIB_XML2 xml2-static)
 	endif()
 
 endif()

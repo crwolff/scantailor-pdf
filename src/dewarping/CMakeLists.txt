@@ -25,7 +25,7 @@ if(NOT STATIC_BUILD)
 	add_definitions(-DBUILDING_DEWARPING)
 endif()
 
-add_library(dewarping ${MAYBE_STATIC} ${sources})
+add_library(dewarping ${LIB_TYPE} ${sources})
 target_link_libraries(dewarping imageproc math foundation Qt5::Widgets Qt5::Xml)
 target_include_directories(dewarping INTERFACE ${EIGEN3_INCLUDE_DIR})
 

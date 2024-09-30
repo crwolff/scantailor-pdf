@@ -9,8 +9,7 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	list(APPEND ALL_EXTERN_INC_DIRS ${OPENOPENJP_INCLUDE_DIR})
 	
 else() # Local build
-		
-	# Shared and static
+
 	ExternalProject_Add(
 		openjp2-extern
 		PREFIX ${EXTERN}
@@ -18,11 +17,11 @@ else() # Local build
 		URL_HASH SHA256=90e3896fed910c376aaf79cdd98bdfdaf98c6472efd8e1debf0a854938cbda6a
 		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		CMAKE_ARGS
-			-DCMAKE_INSTALL_PREFIX=${EXTERN}
-			-DCMAKE_PREFIX_PATH=${EXTERN}
+			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
 			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
-			-DBUILD_SHARED_LIBS=ON
-			-DBUILD_STATIC_LIBS=ON
+			-DBUILD_SHARED_LIBS=${SHARED_BOOL}
+			-DBUILD_STATIC_LIBS=${STATIC_BOOL}
 			-DBUILD_CODEC=OFF
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)
@@ -34,7 +33,7 @@ else() # Local build
 		set(ST_OPENJP_IMPLIB "libopenjp2.lib")
 		set(ST_OPENJP_SHARED "libopenjp2.dll")
 	elseif(MINGW)
-		set(ST_OPENJP_STATIC "libopenjp2.a")
+		set(ST_OPENJP_STATIC "libopenjp2.a")		#checked
 		set(ST_OPENJP_IMPLIB "libopenjp2.dll.a")
 		set(ST_OPENJP_SHARED "libopenjp2.dll")
 	elseif(APPLE)
@@ -48,40 +47,32 @@ else() # Local build
 
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	add_library(openjp2 SHARED IMPORTED)
-	add_library(openjp2-static STATIC IMPORTED)
-
-	set_property(
-		TARGET openjp2 openjp2-static APPEND PROPERTY IMPORTED_CONFIGURATIONS $<CONFIG>
-	)
-	
-	# Shared properties
-	set_target_properties(openjp2 PROPERTIES
-		MAP_IMPORTED_CONFIG_DEBUG Release
-		MAP_IMPORTED_CONFIG_MINSIZEREL Release
-		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_OPENJP_SHARED}"
-		# Ignored on non-WIN32 platforms
-		IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_OPENJP_IMPLIB}" 
-	)
-	
-	# Static properties
-	set_target_properties(openjp2-static PROPERTIES
-		MAP_IMPORTED_CONFIG_DEBUG Release
-		MAP_IMPORTED_CONFIG_MINSIZEREL Release
-		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_OPENJP_STATIC}"
-	)
-	
-	add_dependencies(openjp2 openjp2-extern)
-	add_dependencies(openjp2-static openjp2-extern)
-	
-	# Select the correct build type; this should switch the target,
-	# if the user changes build type (e.g. -DBUILD_SHARED_LIBS=OFF)
-	if(STATIC_BUILD)
-		set(LIB_OPENJP openjp2-static)
-	else()
+	if(${BUILD_SHARED_LIBS})
+		add_library(openjp2 SHARED IMPORTED)
+		set_target_properties(openjp2 PROPERTIES
+			IMPORTED_CONFIGURATIONS $<CONFIG>
+			MAP_IMPORTED_CONFIG_DEBUG Release
+			MAP_IMPORTED_CONFIG_MINSIZEREL Release
+			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/openjpeg-2.5
+			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_OPENJP_SHARED}"
+			# Ignored on non-WIN32 platforms
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_OPENJP_IMPLIB}" 
+		)		
+		add_dependencies(openjp2 openjp2-extern)
 		set(LIB_OPENJP openjp2)
+	else()
+		add_library(openjp2-static STATIC IMPORTED)
+		set_target_properties(openjp2-static PROPERTIES
+			IMPORTED_CONFIGURATIONS $<CONFIG>
+			MAP_IMPORTED_CONFIG_DEBUG Release
+			MAP_IMPORTED_CONFIG_MINSIZEREL Release
+			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/openjpeg-2.5
+			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_OPENJP_STATIC}"
+		)
+		add_dependencies(openjp2-static openjp2-extern)
+		set(LIB_OPENJP openjp2-static)
 	endif()
 
 endif()

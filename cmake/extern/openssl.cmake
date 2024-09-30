@@ -10,33 +10,27 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	
 else() # Local build, only static
 	
-	# Find perl
-	find_package(Cygwin)
-	find_package(Msys)
-
-	set(ST_PERL_PATH
-	  ${CYGWIN_INSTALL_PATH}/bin
-	  ${MSYS_INSTALL_PATH}/usr/bin
-	  )
-
-	if(WIN32)
-	  get_filename_component(
-		 ActivePerl_CurrentVersion
-		 "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActivePerl;CurrentVersion]"
-		 NAME)
-	  set(ST_PERL_PATH ${ST_PERL_PATH}
-		 "C:/Perl/bin"
-		 "C:/Strawberry/perl/bin"
-		 [HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActivePerl\\${ActivePerl_CurrentVersion}]/bin
-		 )
+	# Find Perl if Windows and not in MSYS
+	if(MSVC)
+		get_filename_component(
+			ActivePerl_CurrentVersion
+			"[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActivePerl;CurrentVersion]"
+			NAME)
+		set(ST_PERL_PATH ${ST_PERL_PATH}
+			"C:/Perl/bin"
+			"C:/Strawberry/perl/bin"
+			[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActivePerl\\${ActivePerl_CurrentVersion}]/bin
+		)
+		
+		# Append custom perl
+		list(APPEND ST_PERL_PATH "d:/devel/perl-5.32p/perl/bin/")
+		
+		find_program(PERL_EXECUTABLE
+			NAMES perl
+			PATHS ${ST_PERL_PATH}
+		)
 	endif()
 	
-	list(APPEND ST_PERL_PATH "d:/devel/perl-5.32p/perl/bin/")
-	
-	find_program(PERL_EXECUTABLE
-		NAMES perl
-		PATHS ${ST_PERL_PATH}
-	)
 	
 	# Find number of available threads for multithreaded compilation of QT5
 	include(ProcessorCount)
@@ -46,31 +40,31 @@ else() # Local build, only static
 		set(JX "-j${THREADS}")
 	endif()
 	
-	set(OPENSSL_SOURCE_DIR ${EXTERN}/src/openssl-extern-static)
+	set(OPENSSL_SOURCE_DIR ${EXTERN}/src/openssl-extern)
 	if(MSVC)
 		set(OPENSSL_CONFIGURE_COMMAND ${PERL_EXECUTABLE} ${OPENSSL_SOURCE_DIR}/Configure VC-WIN64A)
 		set(OPENSSL_BUILD_COMMAND nmake /C /S)
 		set(OPENSSL_INSTALL_COMMAND nmake install)
 	elseif(MINGW)
-		set(OPENSSL_CONFIGURE_COMMAND ${PERL_EXECUTABLE} ${OPENSSL_SOURCE_DIR}/Configure mingw64)
-		set(OPENSSL_BUILD_COMMAND make ${JX})
-		set(OPENSSL_INSTALL_COMMAND make install)
+		set(OPENSSL_CONFIGURE_COMMAND perl ${OPENSSL_SOURCE_DIR}/Configure mingw64)
+		set(OPENSSL_BUILD_COMMAND mingw32-make ${JX})
+		set(OPENSSL_INSTALL_COMMAND mingw32-make install)
 	else()
-		set(OPENSSL_CONFIGURE_COMMAND ${PERL_EXECUTABLE} ${OPENSSL_SOURCE_DIR}/Configure)
-		set(OPENSSL_BUILD_COMMAND make)
+		set(OPENSSL_CONFIGURE_COMMAND perl ${OPENSSL_SOURCE_DIR}/Configure)
+		set(OPENSSL_BUILD_COMMAND make ${JX})
 		set(OPENSSL_INSTALL_COMMAND make install)
 	endif()
 
 	ExternalProject_Add(
-		openssl-extern-static
+		openssl-extern
 		PREFIX ${EXTERN}
 		URL https://github.com/openssl/openssl/releases/download/openssl-3.3.2/openssl-3.3.2.tar.gz
 		URL_HASH SHA256=2e8a40b01979afe8be0bbfb3de5dc1c6709fedb46d6c89c10da114ab5fc3d281
 		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		CONFIGURE_COMMAND
 			${OPENSSL_CONFIGURE_COMMAND}
-			--prefix=${EXTERN}
-			--openssldir=${EXTERN}/SSL
+			--prefix=<INSTALL_DIR>
+			--openssldir=<INSTALL_DIR>/SSL
 			no-apps
 			no-shared
 			no-tests
@@ -94,32 +88,26 @@ else() # Local build, only static
 	
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	add_library(openssl-static STATIC IMPORTED)
-	add_library(crypto-static STATIC IMPORTED)
-
-	set_property(
-		TARGET openssl-static crypto-static APPEND PROPERTY IMPORTED_CONFIGURATIONS $<CONFIG>
-	)
+	add_library(openssl STATIC IMPORTED)
+	add_library(crypto STATIC IMPORTED)
 	
-	
-	# Static properties
-	set_target_properties(openssl-static PROPERTIES
+	set_target_properties(openssl crypto PROPERTIES
+		IMPORTED_CONFIGURATIONS $<CONFIG>
 		MAP_IMPORTED_CONFIG_DEBUG Release
 		MAP_IMPORTED_CONFIG_MINSIZEREL Release
 		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+	)
+	set_target_properties(openssl PROPERTIES
 		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_SSL_STATIC}"
 	)
-	set_target_properties(crypto-static PROPERTIES
-		MAP_IMPORTED_CONFIG_DEBUG Release
-		MAP_IMPORTED_CONFIG_MINSIZEREL Release
-		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+	set_target_properties(crypto PROPERTIES
 		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_CRYP_STATIC}"
 	)
 	
-	add_dependencies(openssl-static openssl-extern)
-	add_dependencies(crypto-static openssl-extern)
+	add_dependencies(openssl openssl-extern)
+	add_dependencies(crypto openssl-extern)
 	
-	set(LIB_SSL openssl-static)
-	set(LIB_CRYP crypto-static)
+	set(LIB_SSL openssl)
+	set(LIB_CRYP crypto)
 
 endif()

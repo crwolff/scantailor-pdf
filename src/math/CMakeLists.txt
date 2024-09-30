@@ -45,7 +45,7 @@ if(NOT STATIC_BUILD)
 	add_definitions(-DBUILDING_MATH)
 endif()
 
-add_library(math ${MAYBE_STATIC} ${GENERIC_SOURCES} ${SPFIT_SOURCES} ${ADIFF_SOURCES})
+add_library(math ${LIB_TYPE} ${GENERIC_SOURCES} ${SPFIT_SOURCES} ${ADIFF_SOURCES})
 target_link_libraries(math foundation Qt5::Core)
 target_include_directories(math INTERFACE ${EIGEN3_INCLUDE_DIR})
 

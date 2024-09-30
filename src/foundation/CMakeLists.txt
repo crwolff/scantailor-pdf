@@ -50,7 +50,7 @@ if(NOT STATIC_BUILD)
 	add_definitions(-DBUILDING_FOUNDATION)
 endif()
 
-add_library(foundation ${MAYBE_STATIC} ${sources})
+add_library(foundation ${LIB_TYPE} ${sources})
 target_link_libraries(foundation Qt5::Gui Qt5::Core Qt5::Xml)
 target_include_directories(foundation PUBLIC ${Boost_INCLUDE_DIRS})
 

@@ -16,11 +16,11 @@ else() # Local build
 		URL_HASH SHA256=99130559e7d62e8d695f2c0eaeef912c5828d5b84a0537dcb24c9678c9d5b76b
 		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		CMAKE_ARGS
-			-DCMAKE_INSTALL_PREFIX=${EXTERN}
-			-DCMAKE_PREFIX_PATH=${EXTERN}
+			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
 			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
-			-DENABLE_SHARED=ON
-			-DENABLE_STATIC=ON
+			-DENABLE_SHARED=${SHARED_BOOL}
+			-DENABLE_STATIC=${STATIC_BOOL}
 			-DWITH_TURBOJPEG=OFF
 			-DWITH_JPEG8=ON
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
@@ -30,12 +30,12 @@ else() # Local build
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
 		set(ST_JPEG_STATIC "jpeg-static.lib")
-		set(ST_JPEG_SHARED "jpeg.lib")
-		set(ST_JPEG_DLL "jpeg8.dll")
+		set(ST_JPEG_IMPLIB "jpeg.lib")
+		set(ST_JPEG_SHARED "jpeg8.dll")
 	elseif(MINGW)
-		set(ST_JPEG_STATIC "libjpeg.a")		#checked
-		set(ST_JPEG_SHARED "libjpeg.dll.a")	#checked
-		set(ST_JPEG_DLL "libjpeg-8.dll")		#checked
+		set(ST_JPEG_STATIC "libjpeg.a")			#checked
+		set(ST_JPEG_IMPLIB "libjpeg.dll.a")		#checked
+		set(ST_JPEG_SHARED "libjpeg-8.dll")		#checked
 	elseif(APPLE)
 		set(ST_JPEG_STATIC "libjpeg.a")
 		set(ST_JPEG_SHARED "libjpeg.8.dylib")
@@ -47,40 +47,32 @@ else() # Local build
 
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	add_library(jpeg SHARED IMPORTED)
-	add_library(jpeg-static STATIC IMPORTED)
-
-	set_property(
-		TARGET jpeg jpeg-static APPEND PROPERTY IMPORTED_CONFIGURATIONS $<CONFIG>
-	)
-	
-	# Shared properties
-	set_target_properties(jpeg PROPERTIES
-		MAP_IMPORTED_CONFIG_DEBUG Release
-		MAP_IMPORTED_CONFIG_MINSIZEREL Release
-		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_SHARED}"
-		# Ignored on non-WIN32 platforms
-		IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_JPEG_IMPLIB}" 
-	)
-	
-	# Static properties
-	set_target_properties(jpeg-static PROPERTIES
-		MAP_IMPORTED_CONFIG_DEBUG Release
-		MAP_IMPORTED_CONFIG_MINSIZEREL Release
-		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_STATIC}"
-	)
-	
-	add_dependencies(jpeg jpeg-extern)
-	add_dependencies(jpeg-static jpeg-extern)
-	
-	# Select the correct build type; this should switch the target,
-	# if the user changes build type (e.g. -DBUILD_SHARED_LIBS=OFF)
-	if(STATIC_BUILD)
-		set(LIB_JPEG jpeg-static)
-	else()
+	if(${BUILD_SHARED_LIBS})
+		add_library(jpeg SHARED IMPORTED)
+		set_target_properties(jpeg PROPERTIES
+			IMPORTED_CONFIGURATIONS $<CONFIG>
+			MAP_IMPORTED_CONFIG_DEBUG Release
+			MAP_IMPORTED_CONFIG_MINSIZEREL Release
+			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
+			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_SHARED}"
+			# Ignored on non-WIN32 platforms
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_JPEG_IMPLIB}" 
+		)
+		add_dependencies(jpeg jpeg-extern)
 		set(LIB_JPEG jpeg)
+	else() # STATIC	
+		add_library(jpeg-static STATIC IMPORTED)
+		set_target_properties(jpeg-static PROPERTIES
+			IMPORTED_CONFIGURATIONS $<CONFIG>
+			MAP_IMPORTED_CONFIG_DEBUG Release
+			MAP_IMPORTED_CONFIG_MINSIZEREL Release
+			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
+			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_STATIC}"
+		)
+		add_dependencies(jpeg-static jpeg-extern)
+		set(LIB_JPEG jpeg-static)
 	endif()
 
 endif()
