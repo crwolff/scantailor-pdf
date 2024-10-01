@@ -220,7 +220,7 @@ set(HAVE_DEPENDENCIES TRUE)
 # needed include directories to the ALL_EXTERN_INC_DIRS variable.
 
 # All downloaded external dependencies are stored in ./extern-src
-set(DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/extern-src")
+set(DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/extern-pkg")
 
 
 set(LIB_SSL "")

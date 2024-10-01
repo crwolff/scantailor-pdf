@@ -50,7 +50,7 @@ else() # Local build, only static
 		set(OPENSSL_BUILD_COMMAND mingw32-make ${JX})
 		set(OPENSSL_INSTALL_COMMAND mingw32-make install)
 	else()
-		set(OPENSSL_CONFIGURE_COMMAND perl ${OPENSSL_SOURCE_DIR}/Configure)
+		set(OPENSSL_CONFIGURE_COMMAND ${OPENSSL_SOURCE_DIR}/Configure)
 		set(OPENSSL_BUILD_COMMAND make ${JX})
 		set(OPENSSL_INSTALL_COMMAND make install)
 	endif()
@@ -96,12 +96,13 @@ else() # Local build, only static
 		MAP_IMPORTED_CONFIG_DEBUG Release
 		MAP_IMPORTED_CONFIG_MINSIZEREL Release
 		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/openssl
 	)
 	set_target_properties(openssl PROPERTIES
-		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_SSL_STATIC}"
+		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/../lib64/${ST_SSL_STATIC}"
 	)
 	set_target_properties(crypto PROPERTIES
-		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_CRYP_STATIC}"
+		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/../lib64/${ST_CRYP_STATIC}"
 	)
 	
 	add_dependencies(openssl openssl-extern)

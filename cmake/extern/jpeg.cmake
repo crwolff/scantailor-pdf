@@ -18,7 +18,7 @@ else() # Local build
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
-			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
+			-DCMAKE_BUILD_TYPE=Release
 			-DENABLE_SHARED=${SHARED_BOOL}
 			-DENABLE_STATIC=${STATIC_BOOL}
 			-DWITH_TURBOJPEG=OFF
@@ -47,32 +47,29 @@ else() # Local build
 
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	if(${BUILD_SHARED_LIBS})
-		add_library(jpeg SHARED IMPORTED)
+	add_library(jpeg ${LIB_TYPE} IMPORTED)
+	add_library(JPEG::JPEG ALIAS jpeg)
+	set_target_properties(jpeg PROPERTIES
+		IMPORTED_CONFIGURATIONS $<CONFIG>
+		MAP_IMPORTED_CONFIG_DEBUG Release
+		MAP_IMPORTED_CONFIG_MINSIZEREL Release
+		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
+	)
+	
+	if(BUILD_SHARED_LIBS)
 		set_target_properties(jpeg PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_DEBUG Release
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_SHARED}"
 			# Ignored on non-WIN32 platforms
-			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_JPEG_IMPLIB}" 
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_JPEG_IMPLIB}"
 		)
-		add_dependencies(jpeg jpeg-extern)
-		set(LIB_JPEG jpeg)
 	else() # STATIC	
-		add_library(jpeg-static STATIC IMPORTED)
-		set_target_properties(jpeg-static PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_DEBUG Release
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
+		set_target_properties(jpeg PROPERTIES
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_STATIC}"
 		)
-		add_dependencies(jpeg-static jpeg-extern)
-		set(LIB_JPEG jpeg-static)
 	endif()
+
+	add_dependencies(jpeg jpeg-extern)
+	set(LIB_JPEG jpeg)
 
 endif()

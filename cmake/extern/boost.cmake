@@ -4,6 +4,16 @@
 # Suppress a warning
 set(Boost_NO_WARN_NEW_VERSIONS 1)
 
+if(POLICY CMP0167)
+	# Use BoostConfig.cmake (since 1.70) from boost itself instead of the FindBoost package from cmake
+	cmake_policy(SET CMP0167 NEW)
+endif()
+if(POLICY CMP0144)
+	# Use BOOST_ROOT Variable
+	cmake_policy(SET CMP0144 NEW)
+endif()
+
+
 if(NOT WIN32 AND NOT STATIC_BUILD)
 
 	find_package(Boost REQUIRED COMPONENTS test_exec_monitor unit_test_framework)

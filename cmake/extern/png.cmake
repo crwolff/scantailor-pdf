@@ -18,12 +18,12 @@ else() # Local build
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
-			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
+			-DCMAKE_BUILD_TYPE=Release
+			-DSKIP_INSTALL_EXECUTABLES=ON
+			-DSKIP_INSTALL_PROGRAMS=ON
+			-DPNG_TESTS=OFF
 			-DPNG_STATIC=${STATIC_BOOL}
 			-DPNG_SHARED=${SHARED_BOOL}
-			-DSKIP_INSTALL_EXECUTABLES=ON
-			-DSKIP_INSTALL_PROGRAMS=ON 
-			-DPNG_TESTS=OFF
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 		DEPENDS ${LIB_ZLIB} ${LIB_LZMA}
 	)
@@ -48,33 +48,30 @@ else() # Local build
 
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	if(${BUILD_SHARED_LIBS})
-		add_library(png SHARED IMPORTED)
+	add_library(png ${LIB_TYPE} IMPORTED)
+	add_library(PNG::PNG ALIAS png)
+	set_target_properties(png PROPERTIES
+		IMPORTED_CONFIGURATIONS $<CONFIG>
+		MAP_IMPORTED_CONFIG_DEBUG Release
+		MAP_IMPORTED_CONFIG_MINSIZEREL Release
+		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
+	)
+	target_link_libraries(png INTERFACE ${LIB_ZLIB} ${LIB_LZMA})
+
+	if(BUILD_SHARED_LIBS)
 		set_target_properties(png PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_DEBUG Release
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_PNG_SHARED}"
 			# Ignored on non-WIN32 platforms
-			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PNG_IMPLIB}" 
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PNG_IMPLIB}"
 		)
-		add_dependencies(png png-extern)
-		target_link_libraries(png INTERFACE ${LIB_ZLIB} ${LIB_LZMA})
-		set(LIB_PNG png)
 	else()
-		add_library(png-static STATIC IMPORTED)
-		set_target_properties(png-static PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
+		set_target_properties(png PROPERTIES
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_PNG_STATIC}"
 		)
-		add_dependencies(png-static png-extern)
-		target_link_libraries(png-static INTERFACE ${LIB_ZLIB} ${LIB_LZMA})
-		set(LIB_PNG png-static)
 	endif()
+
+	add_dependencies(png png-extern)
+	set(LIB_PNG png)
 
 endif()

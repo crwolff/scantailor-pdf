@@ -671,7 +671,7 @@ typedef struct _FILE_ID_INFO {
     FILE_ID_128 FileId;
 } FILE_ID_INFO, *PFILE_ID_INFO;
 
-#endif // if defined (Q_CC_MINGW) && WINVER < 0x0602 && _WIN32_WINNT < _WIN32_WINNT_WIN8
+#endif // if defined (Q_CC_MINGW) && WINVER < 0x0602
 
 // File ID for Windows up to version 7 and FAT32 drives
 static inline QByteArray fileId(HANDLE handle)
@@ -1449,7 +1449,7 @@ QFileSystemEntry QFileSystemEngine::currentPath()
     if (size != 0) {
         if (size > PATH_MAX) {
             wchar_t *newCurrentName = new wchar_t[size];
-            if (::GetCurrentDirectory(PATH_MAX, newCurrentName) != 0)
+            if (::GetCurrentDirectory(size, newCurrentName) != 0)
                 ret = QString::fromWCharArray(newCurrentName, size);
             delete [] newCurrentName;
         } else {

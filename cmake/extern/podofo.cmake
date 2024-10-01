@@ -18,6 +18,13 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	
 else() # Local build
 	
+	set(DISABLE_FIND_PACKAGE)
+	if(WIN32)
+		set(DISABLE_FIND_PACKAGE -DCMAKE_DISABLE_FIND_PACKAGE_Libidn=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Fontconfig=TRUE)
+	else()
+		set(DISABLE_FIND_PACKAGE -DCMAKE_DISABLE_FIND_PACKAGE_Libidn=TRUE)
+	endif()
+
 	ExternalProject_Add(
 		podofo-extern
 		PREFIX ${EXTERN}
@@ -27,12 +34,12 @@ else() # Local build
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
-			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
+			-DCMAKE_BUILD_TYPE=Release
 			-DPODOFO_BUILD_LIB_ONLY=ON
-			-DPODOFO_BUILD_SHARED=${SHARED_BOOL}
 			-DPODOFO_BUILD_STATIC=${STATIC_BOOL}
+			${DISABLE_FIND_PACKAGE}
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		DEPENDS ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} openssl-extern-static
+		DEPENDS ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL}
 	)
 
 	
@@ -56,37 +63,29 @@ else() # Local build
 	
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	if(${BUILD_SHARED_LIBS})
-		add_library(podofo SHARED IMPORTED)
+	add_library(podofo ${LIB_TYPE} IMPORTED)
+	set_target_properties(podofo PROPERTIES
+		IMPORTED_CONFIGURATIONS $<CONFIG>
+		MAP_IMPORTED_CONFIG_DEBUG Release
+		MAP_IMPORTED_CONFIG_MINSIZEREL Release
+		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/podofo
+	)
+	target_link_libraries(podofo INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL})
+
+	if(BUILD_SHARED_LIBS)
 		set_target_properties(podofo PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_DEBUG Release
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/podofo
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_PODOFO_SHARED}"
 			# Ignored on non-WIN32 platforms
-			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PODOFO_IMPLIB}" 
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PODOFO_IMPLIB}"
 		)
-		add_dependencies(podofo podofo-extern)
-		target_link_libraries(podofo INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL})
-		set(LIB_PODOFO podofo)
 	else()
-		add_library(podofo-static STATIC IMPORTED)
-		set_target_properties(podofo-static PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_DEBUG Release
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/podofo
+		set_target_properties(podofo PROPERTIES
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_PODOFO_STATIC}"
 		)
-		add_dependencies(podofo-static podofo-extern)
-		target_link_libraries(podofo-static INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL})
-		set(LIB_PODOFO podofo-static)
 	endif()
-	
-#	list(APPEND ALL_EXTERN_INC_DIRS ${EXTERN_INC_DIR}/podofo)
+
+	add_dependencies(podofo podofo-extern)
+	set(LIB_PODOFO podofo)
 
 endif()
-

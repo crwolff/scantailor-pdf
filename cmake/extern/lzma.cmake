@@ -12,7 +12,6 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 else() # Local build
 	
 	set(LZMA-EXTERN lzma-extern)
-	set(LZMA_SOURCE_DIR ${EXTERN}/src/${LZMA-EXTERN})
 	
 	ExternalProject_Add(
 		${LZMA-EXTERN}
@@ -20,11 +19,10 @@ else() # Local build
 		URL_HASH SHA256=a9db3bb3d64e248a0fae963f8fb6ba851a26ba1822e504dc0efd18a80c626caf
 		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		PREFIX ${EXTERN}
-		SOURCE_DIR ${LZMA_SOURCE_DIR}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
-			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
+			-DCMAKE_BUILD_TYPE=Release
 			-DBUILD_SHARED_LIBS=${SHARED_BOOL}
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)
@@ -51,6 +49,7 @@ else() # Local build
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	add_library(lzma ${LIB_TYPE} IMPORTED)
+	add_library(liblzma::liblzma ALIAS lzma)
 	set_target_properties(lzma PROPERTIES
 		IMPORTED_CONFIGURATIONS $<CONFIG>
 		MAP_IMPORTED_CONFIG_DEBUG Release
@@ -59,7 +58,7 @@ else() # Local build
 		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
 	)
 
-	if(${BUILD_SHARED_LIBS})
+	if(BUILD_SHARED_LIBS)
 		set_target_properties(lzma PROPERTIES
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_LZMA_SHARED}"
 			# Ignored on non-WIN32 platforms

@@ -11,7 +11,6 @@ else() # Local build
 	
 	# Download, unpack, build, and install freetype in local prefix
 	set(FREETYPE-EXTERN freetype-extern)
-	set(FREETYPE_SOURCE_DIR ${EXTERN}/src/${FREETYPE-EXTERN})
 
 	ExternalProject_Add(
 		${FREETYPE-EXTERN}
@@ -19,11 +18,10 @@ else() # Local build
 		URL_HASH SHA256=0550350666d427c74daeb85d5ac7bb353acba5f76956395995311a9c6f063289
 		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		PREFIX ${EXTERN}
-		SOURCE_DIR ${FREETYPE_SOURCE_DIR}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
-			-DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
+			-DCMAKE_BUILD_TYPE=Release
 			-DFT_DISABLE_BZIP2=TRUE
 			-DFT_DISABLE_BROTLI=TRUE
 			-DFT_DISABLE_HARFBUZZ=TRUE
@@ -53,34 +51,30 @@ else() # Local build
 	
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	if(${BUILD_SHARED_LIBS})
-		add_library(freetype SHARED IMPORTED)
+	add_library(freetype ${LIB_TYPE} IMPORTED)
+	add_library(Freetype::Freetype ALIAS freetype)
+	set_target_properties(freetype PROPERTIES
+		IMPORTED_CONFIGURATIONS $<CONFIG>
+		MAP_IMPORTED_CONFIG_DEBUG Release
+		MAP_IMPORTED_CONFIG_MINSIZEREL Release
+		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		INTERFACE_INCLUDE_DIRECTORIES "${EXTERN_INC_DIR}/freetype2;${EXTERN_INC_DIR}/freetype2/freetype"
+	)
+	target_link_libraries(freetype INTERFACE ${LIB_ZLIB} ${LIB_PNG})
+
+	if(BUILD_SHARED_LIBS)
 		set_target_properties(freetype PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_DEBUG Release
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/freetype2
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_FREETYPE_SHARED}"
 			# Ignored on non-WIN32 platforms
-			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_FREETYPE_IMPLIB}" 
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_FREETYPE_IMPLIB}"
 		)
-		add_dependencies(freetype ${FREETYPE-EXTERN})
-		target_link_libraries(freetype INTERFACE ${LIB_ZLIB} ${LIB_PNG})
-		set(LIB_FREETYPE freetype)
 	else()
-		add_library(freetype-static STATIC IMPORTED)	
-		set_target_properties(freetype-static PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_DEBUG Release
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/freetype2
+		set_target_properties(freetype PROPERTIES
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_FREETYPE_STATIC}"
 		)
-		add_dependencies(freetype-static ${FREETYPE-EXTERN})
-		target_link_libraries(freetype-static INTERFACE ${LIB_ZLIB} ${LIB_PNG})
-		set(LIB_FREETYPE freetype-static)
 	endif()
+	
+	add_dependencies(freetype ${FREETYPE-EXTERN})
+	set(LIB_FREETYPE freetype)
 
 endif()

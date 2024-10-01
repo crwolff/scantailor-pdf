@@ -102,7 +102,7 @@ else() # Local build
 			URL_HASH SHA256=e5f941fecf694ecba97c550b45b0634e552166cc6c815bcfdc481edd62796ba1
 			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			# Qt bug with MinGW: https://bugreports.qt.io/browse/QTBUG-94031
-			# PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
+			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
 			BUILD_COMMAND ${QT5_MAKE}
 			INSTALL_COMMAND ${QT5_MAKE} install
@@ -110,7 +110,7 @@ else() # Local build
 			DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_FREETYPE}
 		)
 		
-		if(MINGW AND NOT STATIC_BUILD)
+		if(MINGW AND BUILD_SHARED_LIBS)
 			ExternalProject_Add_Step(
 				qt5-base-extern custom-patch
 				DEPENDEES configure

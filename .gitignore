@@ -28,6 +28,6 @@ scantailor.exe
 
 # Some folders
 build*
-extern-src
+extern-pkg
 !BUILDING.md
 .vscode

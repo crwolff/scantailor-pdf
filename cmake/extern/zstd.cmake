@@ -21,7 +21,7 @@ else() # Local build
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
-         -DCMAKE_BUILD_TYPE=Release   # Only build release type for external libs
+         -DCMAKE_BUILD_TYPE=Release
 			-DZSTD_BUILD_STATIC=${STATIC_BOOL}
 			-DZSTD_BUILD_SHARED=${SHARED_BOOL}
 			-DZSTD_BUILD_PROGRAMS=OFF
@@ -50,32 +50,29 @@ else() # Local build
 
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	if(${BUILD_SHARED_LIBS})
-		add_library(zstd SHARED IMPORTED)
+	add_library(zstd ${LIB_TYPE} IMPORTED)
+	add_library(ZSTD::ZSTD ALIAS zstd)
+	set_target_properties(zstd PROPERTIES
+		IMPORTED_CONFIGURATIONS $<CONFIG>
+		MAP_IMPORTED_CONFIG_DEBUG Release
+		MAP_IMPORTED_CONFIG_MINSIZEREL Release
+		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
+	)
+
+	if(BUILD_SHARED_LIBS)
 		set_target_properties(zstd PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_DEBUG Release
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZSTD_SHARED}"
 			# Ignored on non-WIN32 platforms
-			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_ZSTD_IMPLIB}" 
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_ZSTD_IMPLIB}"
 		)
-		add_dependencies(zstd zstd-extern)
-		set(LIB_ZSTD zstd)
 	else()
-		add_library(zstd-static STATIC IMPORTED)
-		set_target_properties(zstd-static PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_DEBUG Release
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
+		set_target_properties(zstd PROPERTIES
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZSTD_STATIC}"
 		)
-		add_dependencies(zstd-static zstd-extern)
-		set(LIB_ZSTD zstd-static)
 	endif()
+
+	add_dependencies(zstd zstd-extern)
+	set(LIB_ZSTD zstd)
 
 endif()
