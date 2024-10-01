@@ -62,7 +62,7 @@ set(
 
 source_group(Sources FILES ${sources})
 
-if(NOT STATIC_BUILD)
+if(BUILD_SHARED_LIBS)
 	add_definitions(-DSHARED_IMAGEPROC)
 	add_definitions(-DBUILDING_IMAGEPROC)
 endif()
@@ -71,7 +71,7 @@ add_library(imageproc ${LIB_TYPE} ${sources})
 target_link_libraries(imageproc foundation Qt5::Core Qt5::Gui)
 target_include_directories(imageproc INTERFACE ${EIGEN3_INCLUDE_DIR})
 
-if(NOT STATIC_BUILD)
+if(BUILD_SHARED_LIBS)
 	# We want the DLL located where executables can find it.
 	set_target_properties(
 		imageproc PROPERTIES

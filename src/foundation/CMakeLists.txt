@@ -45,7 +45,7 @@ set(
 )
 source_group("Sources" FILES ${sources})
 
-if(NOT STATIC_BUILD)
+if(BUILD_SHARED_LIBS)
 	add_definitions(-DSHARED_FOUNDATION)
 	add_definitions(-DBUILDING_FOUNDATION)
 endif()
@@ -54,7 +54,7 @@ add_library(foundation ${LIB_TYPE} ${sources})
 target_link_libraries(foundation Qt5::Gui Qt5::Core Qt5::Xml)
 target_include_directories(foundation PUBLIC ${Boost_INCLUDE_DIRS})
 
-if(NOT STATIC_BUILD)
+if(BUILD_SHARED_LIBS)
 	# We want the DLL located where executables can find it.
 	set_target_properties(
 		foundation PROPERTIES

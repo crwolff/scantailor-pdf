@@ -40,7 +40,7 @@ set(
 )
 source_group("Sources\\Differentiation Framework" FILES ${ADIFF_SOURCES})
 
-if(NOT STATIC_BUILD)
+if(BUILD_SHARED_LIBS)
 	add_definitions(-DSHARED_MATH)
 	add_definitions(-DBUILDING_MATH)
 endif()
@@ -55,7 +55,7 @@ set_target_properties(
 	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>
 )
 
-if(NOT STATIC_BUILD)
+if(BUILD_SHARED_LIBS)
 	install(TARGETS math DESTINATION lib/scantailor)
 endif()
 

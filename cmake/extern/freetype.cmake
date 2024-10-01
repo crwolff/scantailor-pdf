@@ -9,11 +9,8 @@ if(NOT WIN32 AND NOT STATIC_BUILD)
 	
 else() # Local build
 	
-	# Download, unpack, build, and install freetype in local prefix
-	set(FREETYPE-EXTERN freetype-extern)
-
 	ExternalProject_Add(
-		${FREETYPE-EXTERN}
+		freetype-extern
 		URL https://download.savannah.gnu.org/releases/freetype/freetype-2.13.3.tar.xz
 		URL_HASH SHA256=0550350666d427c74daeb85d5ac7bb353acba5f76956395995311a9c6f063289
 		DOWNLOAD_DIR ${DOWNLOAD_DIR}
@@ -23,11 +20,12 @@ else() # Local build
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
 			-DCMAKE_BUILD_TYPE=Release
 			-DFT_DISABLE_BZIP2=TRUE
+			-DFT_DISABLE_PNG=TRUE
 			-DFT_DISABLE_BROTLI=TRUE
 			-DFT_DISABLE_HARFBUZZ=TRUE
 			-DBUILD_SHARED_LIBS=${SHARED_BOOL}
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		DEPENDS ${LIB_ZLIB} ${LIB_PNG}
+		DEPENDS ${LIB_ZLIB}
 	)
 	
 	
@@ -60,7 +58,7 @@ else() # Local build
 		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
 		INTERFACE_INCLUDE_DIRECTORIES "${EXTERN_INC_DIR}/freetype2;${EXTERN_INC_DIR}/freetype2/freetype"
 	)
-	target_link_libraries(freetype INTERFACE ${LIB_ZLIB} ${LIB_PNG})
+	target_link_libraries(freetype INTERFACE ${LIB_ZLIB})
 
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(freetype PROPERTIES
@@ -68,13 +66,13 @@ else() # Local build
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_FREETYPE_IMPLIB}"
 		)
-	else()
+	else() # Static
 		set_target_properties(freetype PROPERTIES
 			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_FREETYPE_STATIC}"
 		)
 	endif()
 	
-	add_dependencies(freetype ${FREETYPE-EXTERN})
+	add_dependencies(freetype freetype-extern)
 	set(LIB_FREETYPE freetype)
 
 endif()
