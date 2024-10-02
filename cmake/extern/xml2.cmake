@@ -49,6 +49,13 @@ else() # Local build
 	endif()
 	
 	
+	# podofo under msvc can't find libxml2s.lib; give a hint.
+	if(MSVC AND NOT BUILD_SHARED_LIBS)
+		set(LIBXML2_LIBRARIES ${EXTERN_LIB_DIR}/${ST_XML2_STATIC})
+		set(LIBXML2_LIBRARIES ${EXTERN_LIB_DIR}/${ST_XML2_STATIC})
+	endif()
+	
+	
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	add_library(xml2 ${LIB_TYPE} IMPORTED)

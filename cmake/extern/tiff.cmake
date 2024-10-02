@@ -40,7 +40,7 @@ else() # Local build
 
 	# TODO: Filenames for other platforms and dynamic library
 	if(MSVC)
-		set(ST_TIFF_STATIC "tiff.lib")
+		set(ST_TIFF_STATIC "tiff.lib")	#checked
 		set(ST_TIFF_IMPLIB "tiff.lib")	#checked
 		set(ST_TIFF_SHARED "tiff.dll")	#checked
 	elseif(MINGW)

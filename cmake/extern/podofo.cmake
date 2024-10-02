@@ -46,10 +46,10 @@ else() # Local build
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
 		set(ST_PODOFO_STATIC "podofo-static.lib")
-		set(ST_PODOFO_IMPLIB "podofo.lib")
-		set(ST_PODOFO_SHARED "podofo.dll")
+		set(ST_PODOFO_IMPLIB "podofo.lib")			#checked
+		set(ST_PODOFO_SHARED "podofo.dll")			#checked
 	elseif(MINGW)
-		set(ST_PODOFO_STATIC "libpodofo.a")
+		set(ST_PODOFO_STATIC "libpodofo.a")			#checked
 		set(ST_PODOFO_IMPLIB "libpodofo.dll.a")
 		set(ST_PODOFO_SHARED "libpodofo.dll")
 	elseif(APPLE)

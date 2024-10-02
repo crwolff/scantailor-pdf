@@ -34,7 +34,7 @@ else() # Local build
 		set(HAVE_DEPENDENCIES FALSE)
 		
 		set(QT5_STATIC_OPTIONS "")
-		if (STATIC_BUILD)
+		if (NOT BUILD_SHARED_LIBS)
 			set(QT5_STATIC_OPTIONS -static -static-runtime)
 		endif()
 

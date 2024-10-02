@@ -29,9 +29,9 @@ else() # Local build
 
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_JPEG_STATIC "jpeg-static.lib")
-		set(ST_JPEG_IMPLIB "jpeg.lib")
-		set(ST_JPEG_SHARED "jpeg8.dll")
+		set(ST_JPEG_STATIC "jpeg-static.lib")	#checked
+		set(ST_JPEG_IMPLIB "jpeg.lib")			#checked
+		set(ST_JPEG_SHARED "jpeg8.dll")			#checked
 	elseif(MINGW)
 		set(ST_JPEG_STATIC "libjpeg.a")			#checked
 		set(ST_JPEG_IMPLIB "libjpeg.dll.a")		#checked

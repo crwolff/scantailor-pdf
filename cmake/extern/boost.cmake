@@ -25,7 +25,7 @@ else() # Local static build
 	
 	# Instead of manually searching for the library files, we let find_package() do it.
 	# Set search directory hint
-	if(EXISTS ${EXTERN}/lib/cmake/Boost-1.78.0)
+	if(EXISTS ${EXTERN}/lib/cmake/Boost-1.86.0)
 
 		set(BOOST_ROOT ${EXTERN})
 		find_package(Boost REQUIRED COMPONENTS test_exec_monitor unit_test_framework)	

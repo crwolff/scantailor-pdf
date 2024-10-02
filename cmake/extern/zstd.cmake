@@ -32,9 +32,9 @@ else() # Local build
 
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_ZSTD_STATIC "zstd_static.lib")
-		set(ST_ZSTD_IMPLIB "zstd.lib")
-		set(ST_ZSTD_SHARED "zstd.dll")
+		set(ST_ZSTD_STATIC "zstd_static.lib")	#checked
+		set(ST_ZSTD_IMPLIB "zstd.lib")			#checked
+		set(ST_ZSTD_SHARED "zstd.dll")			#checked
 	elseif(MINGW)
 		set(ST_ZSTD_STATIC "libzstd.a")			#checked
 		set(ST_ZSTD_IMPLIB "libzstd.dll.a")		#checked

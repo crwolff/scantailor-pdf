@@ -29,8 +29,12 @@ The following options can be turned on the command line with `-D[OPTION]=ON` or 
 
 ### Windows
 
+If the build of the external dependencies fails repeatedly while making boost, it may be because boost makes certain commands too long for the windows command line. Either move the build directory further up or disable the `MAX_PATH` with a registry modification (see [here]{https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry#enable-long-paths-in-windows-10-version-1607-and-later})
+
 #### Visual Studio
 
+	cmake {source_directory}
+	cmake --build . --config Release
 
 #### MinGW
 

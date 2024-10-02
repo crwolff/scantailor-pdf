@@ -24,6 +24,7 @@ else() # Local build, only static
 		
 		# Append custom perl
 		list(APPEND ST_PERL_PATH "d:/devel/perl-5.32p/perl/bin/")
+		list(APPEND ST_PERL_PATH "d:/devel/perl5.38/perl/bin/")
 		
 		find_program(PERL_EXECUTABLE
 			NAMES perl
@@ -65,6 +66,8 @@ else() # Local build, only static
 			${OPENSSL_CONFIGURE_COMMAND}
 			--prefix=<INSTALL_DIR>
 			--openssldir=<INSTALL_DIR>/SSL
+			--libdir=lib
+			--release
 			no-apps
 			no-shared
 			no-tests

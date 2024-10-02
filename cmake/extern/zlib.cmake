@@ -42,6 +42,18 @@ else() # Local build
 	endif()
 	
 	
+	# zlib installs both shared and static libs. If building static,
+	# we need to remove the shared lib, so they don't get picket up by other packages
+	if(NOT BUILD_SHARED_LIBS)
+		ExternalProject_Add_Step(
+			zlib-extern remove-shared
+			DEPENDEES install
+			COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_BIN_DIR}/${ST_ZLIB_SHARED}
+			COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
+		)
+	endif()
+	
+	
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	add_library(zlib ${LIB_TYPE} IMPORTED)

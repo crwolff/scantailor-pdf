@@ -20,20 +20,20 @@ else() # Local build
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
 			-DCMAKE_BUILD_TYPE=Release
 			-DFT_DISABLE_BZIP2=TRUE
-			-DFT_DISABLE_PNG=TRUE
+#			-DFT_DISABLE_PNG=TRUE
 			-DFT_DISABLE_BROTLI=TRUE
 			-DFT_DISABLE_HARFBUZZ=TRUE
 			-DBUILD_SHARED_LIBS=${SHARED_BOOL}
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		DEPENDS ${LIB_ZLIB}
+		DEPENDS ${LIB_ZLIB} ${LIB_PNG}
 	)
 	
 	
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_FREETYPE_STATIC "freetype-static.lib")
-		set(ST_FREETYPE_IMPLIB "freetype.lib")
-		set(ST_FREETYPE_SHARED "freetype.dll")
+		set(ST_FREETYPE_STATIC "freetype.lib")			#checked
+		set(ST_FREETYPE_IMPLIB "freetype.lib")			#checked
+		set(ST_FREETYPE_SHARED "freetype.dll")			#checked
 	elseif(MINGW) # Checked!
 		set(ST_FREETYPE_STATIC "libfreetype.a")		#checked
 		set(ST_FREETYPE_IMPLIB "libfreetype.dll.a")
@@ -58,7 +58,7 @@ else() # Local build
 		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
 		INTERFACE_INCLUDE_DIRECTORIES "${EXTERN_INC_DIR}/freetype2;${EXTERN_INC_DIR}/freetype2/freetype"
 	)
-	target_link_libraries(freetype INTERFACE ${LIB_ZLIB})
+	target_link_libraries(freetype INTERFACE ${LIB_ZLIB} ${LIB_PNG})
 
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(freetype PROPERTIES

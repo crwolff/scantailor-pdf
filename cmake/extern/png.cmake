@@ -31,9 +31,9 @@ else() # Local build
 		
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_PNG_STATIC "png-static.lib")
-		set(ST_PNG_IMPLIB "png.lib")
-		set(ST_PNG_SHARED "png.dll")
+		set(ST_PNG_STATIC "libpng16_static.lib")	#checked
+		set(ST_PNG_IMPLIB "libpng16.lib")			#checked
+		set(ST_PNG_SHARED "libpng16.dll")			#checked
 	elseif(MINGW)
 		set(ST_PNG_STATIC "libpng.a")			#checked
 		set(ST_PNG_IMPLIB "libpng.dll.a")

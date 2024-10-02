@@ -29,9 +29,9 @@ else() # Local build
 
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_OPENJP_STATIC "libopenjp2-static.lib")
-		set(ST_OPENJP_IMPLIB "libopenjp2.lib")
-		set(ST_OPENJP_SHARED "libopenjp2.dll")
+		set(ST_OPENJP_STATIC "openjp2.lib")		#checked
+		set(ST_OPENJP_IMPLIB "openjp2.lib")		#checked
+		set(ST_OPENJP_SHARED "openjp2.dll")		#checked
 	elseif(MINGW)
 		set(ST_OPENJP_STATIC "libopenjp2.a")		#checked
 		set(ST_OPENJP_IMPLIB "libopenjp2.dll.a")
