@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(Qt5 COMPONENTS Core Gui Widgets Xml Network LinguistTools REQUIRED)
 	if(ENABLE_OPENGL)
@@ -19,7 +19,7 @@ else() # Local build
 			find_package(Qt5 COMPONENTS OpenGL REQUIRED)
 		endif()
 		# For a static build, we have to add more dependencies manually
-		if(STATIC_BUILD)
+		if(NOT BUILD_SHARED_LIBS)
 			target_link_libraries(Qt5::Gui INTERFACE ${LIB_PNG} "${EXTERN}/lib/libqtharfbuzz.a")
 			target_link_libraries(Qt5::Core INTERFACE "${EXTERN}/lib/libqtpcre2.a")
 		endif()
@@ -33,11 +33,11 @@ else() # Local build
 		
 		set(HAVE_DEPENDENCIES FALSE)
 		
+		
 		set(QT5_STATIC_OPTIONS "")
 		if (NOT BUILD_SHARED_LIBS)
 			set(QT5_STATIC_OPTIONS -static -static-runtime)
 		endif()
-
 
 		# Find number of available threads for multithreaded compilation of QT5
 		include(ProcessorCount)
@@ -80,13 +80,14 @@ else() # Local build
 		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 			set(QT5_PLATFORM win32-icc)
 		elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-			find_program(JOM NAMES jom)
-			if(JOM)
-				set(QT5_MAKE ${JOM})
-			else()
-				set(QT5_MAKE nmake)
-			endif()
+			set(QT5_MAKE nmake)
 			set(QT5_PLATFORM win32-msvc)
+		endif()
+		
+		# Configure QT5 to use multiple processors when using nmake
+		set(MP "")
+		if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
+			set(MP "-mp")	# Appended to the QT5 configure step
 		endif()
 		
 		if(NOT QT5_PLATFORM)

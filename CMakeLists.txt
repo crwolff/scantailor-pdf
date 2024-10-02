@@ -168,7 +168,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 #==================================================================#
 
 set(EXTERN ${CMAKE_CURRENT_BINARY_DIR}/extern)
-if(STATIC_BUILD)
+if(NOT BUILD_SHARED_LIBS)
 	message(STATUS "External dependencies will be stored in ${EXTERN}")
 endif()
 
@@ -186,17 +186,6 @@ set(CMAKE_PREFIX_PATH ${EXTERN})
 
 # Location of patches for building external libraries
 set(EXTERN_PATCH_DIR ${CMAKE_SOURCE_DIR}/extern-patches)
-
-# Multiprocessor options for quicker compilation of various libraries
-set(MP "")	# Configure QT5 to use multiple processors when using nmake
-if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
-	set(MP "-mp")	# Appended to the QT5 configure step
-# elseif(${CMAKE_GENERATOR} STREQUAL "Ninja")
-	# if(POLICY CMP0048)
-		# # Prevent warnings about byproducts and phony targets for Ninja generator
-		# cmake_policy(SET CMP0058 OLD)
-	# endif()
-endif()
 
 # List of include directories for all external libraries
 list(APPEND ALL_EXTERN_INC_DIRS ${EXTERN_INC_DIR})
@@ -307,7 +296,7 @@ endif(UNIX)
 # Other includes and options
 set(EXTRA_LIBS "")
 
-if(MINGW AND STATIC_BUILD)
+if(MINGW AND NOT BUILD_SHARED_LIBS)
 	list(APPEND EXTRA_LIBS winmm imm32 ws2_32 ole32 oleaut32 uuid gdi32 comdlg32 winspool)
 endif()
 
@@ -366,7 +355,7 @@ set(
 include(CPack)
 
 
-if(WIN32 AND NOT STATIC_BUILD)
+if(WIN32 AND BUILD_SHARED_LIBS)
 	
 	## Copy all needed DLLs to the staging dir.
 	# Our external libraries
@@ -402,6 +391,6 @@ if(WIN32 AND NOT STATIC_BUILD)
 	
 	# Installer for Windows.  Must go last.
 	add_subdirectory(src/packaging/windows)
-endif(WIN32 AND NOT STATIC_BUILD)
+endif(WIN32 AND BUILD_SHARED_LIBS)
 
 endif(HAVE_DEPENDENCIES)

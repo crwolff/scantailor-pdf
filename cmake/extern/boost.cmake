@@ -14,7 +14,7 @@ if(POLICY CMP0144)
 endif()
 
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(Boost REQUIRED COMPONENTS test_exec_monitor unit_test_framework)
 	

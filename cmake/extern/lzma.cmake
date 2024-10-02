@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(LibLZMA)		# This only finds shared libs
 	if(LIBLZMA_FOUND)
@@ -23,6 +23,7 @@ else() # Local build
 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
 			-DCMAKE_BUILD_TYPE=Release
+			-DENABLE_NLS=OFF
 			-DBUILD_SHARED_LIBS=${SHARED_BOOL}
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)
@@ -49,7 +50,6 @@ else() # Local build
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	add_library(lzma ${LIB_TYPE} IMPORTED)
-	add_library(liblzma::liblzma ALIAS lzma)
 	set_target_properties(lzma PROPERTIES
 		IMPORTED_CONFIGURATIONS $<CONFIG>
 		MAP_IMPORTED_CONFIG_DEBUG Release

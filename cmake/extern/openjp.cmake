@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: ©2022-4 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(OpenJPEG REQUIRED)		# This only finds shared libs
 	include_directories(${OPENJPEG_INCLUDE_DIRS})

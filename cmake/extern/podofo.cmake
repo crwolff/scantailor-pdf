@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	# There is no FindPoDoFo module, so we need to do it manually
 	find_path(PODOFO_INCLUDE_DIR podofo/podofo.h)
@@ -39,7 +39,7 @@ else() # Local build
 			-DPODOFO_BUILD_STATIC=${STATIC_BOOL}
 			${DISABLE_FIND_PACKAGE}
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		DEPENDS ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL}
+		DEPENDS ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_LZMA}
 	)
 
 	
@@ -71,7 +71,7 @@ else() # Local build
 		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
 		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/podofo
 	)
-	target_link_libraries(podofo INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL})
+	target_link_libraries(podofo INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_LZMA})
 
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(podofo PROPERTIES

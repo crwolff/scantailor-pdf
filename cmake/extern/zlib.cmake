@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(ZLIB REQUIRED)		# This only finds shared libs
 	set(LIB_ZLIB ZLIB::ZLIB)
@@ -50,6 +50,8 @@ else() # Local build
 			DEPENDEES install
 			COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_BIN_DIR}/${ST_ZLIB_SHARED}
 			COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
+			# copy the static lib over the shared lib name so it gets picked up by qt5
+			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC} ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
 		)
 	endif()
 	
@@ -57,7 +59,6 @@ else() # Local build
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	add_library(zlib ${LIB_TYPE} IMPORTED)
-	add_library(ZLIB::ZLIB ALIAS zlib)
 	set_target_properties(zlib PROPERTIES
 		IMPORTED_CONFIGURATIONS $<CONFIG>
 		MAP_IMPORTED_CONFIG_DEBUG Release

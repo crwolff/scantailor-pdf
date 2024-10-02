@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(zstd)		# This only finds shared libs
 	if(ZSTD_FOUND)
@@ -51,7 +51,6 @@ else() # Local build
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	add_library(zstd ${LIB_TYPE} IMPORTED)
-	add_library(ZSTD::ZSTD ALIAS zstd)
 	set_target_properties(zstd PROPERTIES
 		IMPORTED_CONFIGURATIONS $<CONFIG>
 		MAP_IMPORTED_CONFIG_DEBUG Release

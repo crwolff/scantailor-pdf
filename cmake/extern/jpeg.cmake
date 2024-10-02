@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(JPEG REQUIRED)		# This only finds shared libs
 	set(LIB_JPEG JPEG::JPEG)
@@ -48,7 +48,6 @@ else() # Local build
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	add_library(jpeg ${LIB_TYPE} IMPORTED)
-	add_library(JPEG::JPEG ALIAS jpeg)
 	set_target_properties(jpeg PROPERTIES
 		IMPORTED_CONFIGURATIONS $<CONFIG>
 		MAP_IMPORTED_CONFIG_DEBUG Release

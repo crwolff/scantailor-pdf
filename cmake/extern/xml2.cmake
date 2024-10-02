@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(LibXml2 REQUIRED)		# This only finds shared libs
 	set(LIB_XML2 LibXml2::LibXml2)

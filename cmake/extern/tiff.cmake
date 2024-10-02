@@ -1,18 +1,16 @@
 # SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(TIFF REQUIRED)		# This only finds shared libs
 	set(LIB_TIFF TIFF::TIFF)
 	list(APPEND ALL_EXTERN_INC_DIRS ${TIFF_INCLUDE_DIRS})
 	
 else() # Local build
-	
-	set(TIFF-EXTERN tiff-extern)
-	
+		
 	ExternalProject_Add(
-		${TIFF-EXTERN}
+		tiff-extern
 		URL https://download.osgeo.org/libtiff/tiff-4.7.0.tar.xz
 		URL_HASH SHA256=273a0a73b1f0bed640afee4a5df0337357ced5b53d3d5d1c405b936501f71017
 		DOWNLOAD_DIR ${DOWNLOAD_DIR}
@@ -37,6 +35,15 @@ else() # Local build
 		DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_ZSTD} ${LIB_LZMA}
 	)
 
+	
+	# Tiff sets some weird targets as linking dependencies; replace with our own
+	if(MINGW AND NOT BUILD_SHARED_LIBS)
+		ExternalProject_Add_Step(
+			tiff-extern after-install-patch
+			DEPENDEES install
+			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/tiff/TiffTargets.cmake ${EXTERN}/lib/cmake/tiff/TiffTargets.cmake
+		)
+	endif()
 
 	# TODO: Filenames for other platforms and dynamic library
 	if(MSVC)
@@ -59,7 +66,6 @@ else() # Local build
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	add_library(tiff ${LIB_TYPE} IMPORTED)
-	add_library(TIFF::TIFF ALIAS tiff)		# So our own libtiff can be found by other libs
 	set_target_properties(tiff PROPERTIES
 		IMPORTED_CONFIGURATIONS $<CONFIG>
 		MAP_IMPORTED_CONFIG_DEBUG Release
@@ -81,7 +87,7 @@ else() # Local build
 		)
 	endif()
 
-	add_dependencies(tiff ${TIFF-EXTERN})
+	add_dependencies(tiff tiff-extern)
 	set(LIB_TIFF tiff)
 
 endif()
