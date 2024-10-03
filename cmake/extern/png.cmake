@@ -46,6 +46,16 @@ else() # Local build
 		set(ST_PNG_SHARED "libpng.so")
 	endif()
 
+	# Copy static lib to shared name so qt5 can pick up our png under msvc
+	if(NOT BUILD_SHARED_LIBS AND MSVC)
+		ExternalProject_Add_Step(
+			png-extern install-copy
+			DEPENDEES install
+			# copy the static lib over the shared lib name so it gets picked up by qt5
+			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_LIB_DIR}/${ST_PNG_STATIC} ${EXTERN_LIB_DIR}/${ST_PNG_IMPLIB}
+		)
+	endif()
+
 
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
