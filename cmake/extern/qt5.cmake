@@ -35,8 +35,10 @@ else() # Local build
 		
 		
 		set(QT5_STATIC_OPTIONS "")
-		if (NOT BUILD_SHARED_LIBS)
+		if (NOT BUILD_SHARED_LIBS AND WIN32)
 			set(QT5_STATIC_OPTIONS -static -static-runtime)
+		elseif(NOT BUILD_SHARED_LIBS)
+			set(QT5_STATIC_OPTIONS -static)
 		endif()
 
 		# Find number of available threads for multithreaded compilation of QT5
