@@ -85,7 +85,7 @@ else() # Local build, only static
 		set(ST_CRYP_STATIC "libcrypto.lib")	#checked
 	else()
 		set(ST_SSL_STATIC "libssl.a")
-		set(ST_CRYP_IMPLIB "libcrypto.a")
+		set(ST_CRYP_STATIC "libcrypto.a")
 	endif()
 	
 	
