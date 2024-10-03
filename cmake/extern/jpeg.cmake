@@ -44,15 +44,6 @@ else() # Local build
 		set(ST_JPEG_SHARED "libjpeg.so.8")
 	endif()
 
-	# Copy static lib to shared name so qt5 can pick up our jpeg under msvc
-	if(NOT BUILD_SHARED_LIBS AND MSVC)
-		ExternalProject_Add_Step(
-			jpeg-extern install-copy
-			DEPENDEES install
-			# copy the static lib over the shared lib name so it gets picked up by qt5
-			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_LIB_DIR}/${ST_JPEG_STATIC} ${EXTERN_LIB_DIR}/${ST_JPEG_IMPLIB}
-		)
-	endif()
 
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.

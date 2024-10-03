@@ -43,15 +43,13 @@ else() # Local build
 	
 	
 	# zlib installs both shared and static libs. If building static,
-	# we need to remove the shared lib, so they don't get picket up by other packages
+	# we need to remove the shared lib, so they don't get picked up by other packages
 	if(NOT BUILD_SHARED_LIBS)
 		ExternalProject_Add_Step(
 			zlib-extern remove-shared
 			DEPENDEES install
 			COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_BIN_DIR}/${ST_ZLIB_SHARED}
 			COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
-			# copy the static lib over the shared lib name so it gets picked up by qt5
-			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC} ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
 		)
 	endif()
 	

@@ -106,7 +106,7 @@ else() # Local build
 			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			# Qt bug with MinGW: https://bugreports.qt.io/browse/QTBUG-94031
 			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
-			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -L ${EXTERN_LIB_DIR} -I ${EXTERN_INC_DIR}
+			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -I ${EXTERN_INC_DIR} -L ${EXTERN_LIB_DIR} -L ${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC} -L ${EXTERN_LIB_DIR}/${ST_JPEG_STATIC} -L ${EXTERN_LIB_DIR}/${ST_PNG_STATIC} -L ${EXTERN_LIB_DIR}/${ST_FREETYPE_STATIC} -recheck-all
 			BUILD_COMMAND ${QT5_MAKE}
 			INSTALL_COMMAND ${QT5_MAKE} install
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
