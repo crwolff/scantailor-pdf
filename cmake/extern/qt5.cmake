@@ -33,14 +33,15 @@ else() # Local build
 		
 		set(HAVE_DEPENDENCIES FALSE)
 		
+		# Depending on the environment and config, we need to set certain qt5 config options
+		set(QT5_EXTRA_OPTS)
 		
-		set(QT5_STATIC_OPTIONS "")
-		if (NOT BUILD_SHARED_LIBS AND MINGW)
-			# -static-runtime is only valid for Windows, but we don't want it for MSVC
-			# because starting with Win 10, the runtimes are included.
-			set(QT5_STATIC_OPTIONS -static -static-runtime)
-		elseif(NOT BUILD_SHARED_LIBS)
-			set(QT5_STATIC_OPTIONS -static)
+		# if (NOT BUILD_SHARED_LIBS AND MINGW)
+			# # -static-runtime is only valid for Windows, but we don't want it for MSVC
+			# # because starting with Win 10, the runtimes are included.
+			# set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -static -static-runtime)
+		if(NOT BUILD_SHARED_LIBS)
+			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -static)
 		endif()
 
 		# Find number of available threads for multithreaded compilation of QT5
@@ -52,8 +53,8 @@ else() # Local build
 		endif()
 
 		# Setting the right mkspecs; this does not cover all… by far… and might not be correct…
-		set(QT5_MAKE "")
-		set(QT5_PLATFORM "")
+		set(QT5_MAKE)
+		set(QT5_PLATFORM)
 		if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 			if (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
 				set(QT5_MAKE nmake)
@@ -88,17 +89,21 @@ else() # Local build
 			set(QT5_PLATFORM win32-msvc)
 		endif()
 		
-		# Configure QT5 to use multiple processors when using nmake
-		set(MP "")
 		if(MSVC)
+			# Configure QT5 to use multiple processors when using nmake
 			if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
-				set(MP "-mp")	# Appended to the QT5 configure step
+				set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -mp)	# Appended to the QT5 configure step
 			else()
 				# Use jom if available
 				find_program(JOM NAMES jom)
 				if(JOM)
 					set(QT5_MAKE ${JOM})
 				endif()
+			endif()
+			
+			if(BUILD_SHARED_LIBS)
+				# Workaround bug https://bugreports.qt.io/browse/QTBUG-110066
+				# set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -no-feature-vkgen)
 			endif()
 		endif()
 		
@@ -116,7 +121,7 @@ else() # Local build
 			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			# Qt bug with MinGW: https://bugreports.qt.io/browse/QTBUG-94031
 			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
-			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -I ${EXTERN_INC_DIR} -L ${EXTERN_LIB_DIR}
+			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${QT5_EXTRA_OPTS} -I ${EXTERN_INC_DIR} -L ${EXTERN_LIB_DIR} -recheck-all
 			BUILD_COMMAND ${QT5_MAKE}
 			INSTALL_COMMAND ${QT5_MAKE} install
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
