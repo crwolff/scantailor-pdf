@@ -37,7 +37,8 @@ else() # Local build
 
 	
 	# Tiff sets some weird targets as linking dependencies; replace with our own
-	if(MINGW AND NOT BUILD_SHARED_LIBS)
+	# for all Windows builds
+	if(WIN32 AND NOT BUILD_SHARED_LIBS)
 		ExternalProject_Add_Step(
 			tiff-extern after-install-patch
 			DEPENDEES install
