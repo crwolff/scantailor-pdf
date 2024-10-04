@@ -50,8 +50,8 @@ else() # Local build
 		set(ST_PODOFO_IMPLIB "podofo.lib")				#checked
 		set(ST_PODOFO_SHARED "podofo.dll")				#checked
 	elseif(MINGW)
-		set(ST_PODOFO_STATIC "libpodofo.a")			#checked
-		set(ST_PODOFO_PRIVATE "podofo_private.a")	#checked
+		set(ST_PODOFO_STATIC "libpodofo.a")				#checked
+		set(ST_PODOFO_PRIVATE "libpodofo_private.a")	#checked
 		set(ST_PODOFO_IMPLIB "libpodofo.dll.a")
 		set(ST_PODOFO_SHARED "libpodofo.dll")
 	elseif(APPLE)
