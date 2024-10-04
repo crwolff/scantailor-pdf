@@ -45,6 +45,16 @@ else() # Local build
 	endif()
 
 
+	# Hardlink static lib to shared name so qt5 can pick up our jpeg under msvc
+	if(NOT BUILD_SHARED_LIBS AND MSVC)
+		ExternalProject_Add_Step(
+			jpeg-extern qt5-compat-install
+			DEPENDEES install
+			COMMAND ${CMAKE_COMMAND} -E create_hardlink ${EXTERN_LIB_DIR}/${ST_JPEG_STATIC} ${EXTERN_LIB_DIR}/${ST_JPEG_IMPLIB}
+		)
+	endif()
+	
+
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
 	add_library(jpeg ${LIB_TYPE} IMPORTED)
@@ -58,13 +68,13 @@ else() # Local build
 	
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(jpeg PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_SHARED}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_JPEG_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_JPEG_IMPLIB}"
 		)
 	else() # STATIC	
 		set_target_properties(jpeg PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_JPEG_STATIC}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_JPEG_STATIC}"
 		)
 	endif()
 

@@ -45,11 +45,13 @@ else() # Local build
 	
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_PODOFO_STATIC "podofo-static.lib")
-		set(ST_PODOFO_IMPLIB "podofo.lib")			#checked
-		set(ST_PODOFO_SHARED "podofo.dll")			#checked
+		set(ST_PODOFO_STATIC "podofo.lib")				#checked
+		set(ST_PODOFO_PRIVATE "podofo_private.lib")	#checked
+		set(ST_PODOFO_IMPLIB "podofo.lib")				#checked
+		set(ST_PODOFO_SHARED "podofo.dll")				#checked
 	elseif(MINGW)
 		set(ST_PODOFO_STATIC "libpodofo.a")			#checked
+		set(ST_PODOFO_PRIVATE "podofo_private.a")	#checked
 		set(ST_PODOFO_IMPLIB "libpodofo.dll.a")
 		set(ST_PODOFO_SHARED "libpodofo.dll")
 	elseif(APPLE)
@@ -75,13 +77,14 @@ else() # Local build
 
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(podofo PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_PODOFO_SHARED}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_PODOFO_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PODOFO_IMPLIB}"
 		)
 	else()
 		set_target_properties(podofo PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_PODOFO_STATIC}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_PODOFO_STATIC}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_PODOFO_PRIVATE}"
 		)
 	endif()
 

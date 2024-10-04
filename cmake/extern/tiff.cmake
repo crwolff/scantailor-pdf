@@ -78,13 +78,13 @@ else() # Local build
 	
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(tiff PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_TIFF_SHARED}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_TIFF_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_TIFF_IMPLIB}"
 		)
 	else()
 		set_target_properties(tiff PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_TIFF_STATIC}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_TIFF_STATIC}"
 		)
 	endif()
 

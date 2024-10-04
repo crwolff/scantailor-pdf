@@ -47,18 +47,6 @@ set(ST_PERL_PATH "")
 # is too big to find system static libraries across all supported platforms and
 # compilers. Currently only works on WIN32.
 option(BUILD_SHARED_LIBS "Build a shared version of Scan Tailor PDF." ON)
-set(STATIC_BOOL OFF)
-set(SHARED_BOOL ON)
-set(LIB_TYPE SHARED)
-if(NOT BUILD_SHARED_LIBS)
-	set(STATIC_BOOL ON)
-	set(SHARED_BOOL OFF)
-	set(LIB_TYPE STATIC)
-	if (MINGW)
-		# Even link against static libgcc and libstdc++ on Windows since these are not available by default.
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
-	endif()
-endif()
 
 # We usually only build linguist and windeployqt because we need it for the translations.
 # Turn this on, if you wish to build all qt tools (assistant, designer, etc.).
@@ -68,13 +56,33 @@ option(BUILD_QT_TOOLS "Build and install all QT tools, including assistant, desi
 # Must go before generating config.h, as ENABLE_CRASH_REPORTER
 # goes in there.
 if(MSVC)
-	option(ENABLE_CRASH_REPORTER "Enable crash reporter (only for official builds)" ON)
+	option(ENABLE_CRASH_REPORTER "Enable crash reporter (only for official builds)" OFF)
 endif(MSVC)
 
 # Currently broken…
 #option(BUILD_CLI "Build the command line Scan Tailor PDF executable." OFF)
 
 
+#================ Reflect above options in settings ===============#
+
+## BUILD_SHARED_LIBS: static and shared builds
+set(STATIC_BOOL OFF)
+set(SHARED_BOOL ON)
+set(LIB_TYPE SHARED)
+
+# Settings for static build
+if(NOT BUILD_SHARED_LIBS)
+	set(STATIC_BOOL ON)
+	set(SHARED_BOOL OFF)
+	set(LIB_TYPE STATIC)
+	if (MINGW)
+		# Even link against static libgcc and libstdc++ on Windows since these are not available by default.
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+	# elseif(MSVC)
+		# # Link against static C and C++ runtimes
+		# add_compile_options(/MT)
+	endif()
+endif()
 
 #======================= Compiler flags ===========================#
 
@@ -168,7 +176,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 #==================================================================#
 
 set(EXTERN ${CMAKE_CURRENT_BINARY_DIR}/extern)
-if(NOT BUILD_SHARED_LIBS)
+if(NOT BUILD_SHARED_LIBS AND NOT HAVE_DEPENDENCIES)
 	message(STATUS "External dependencies will be stored in ${EXTERN}")
 endif()
 

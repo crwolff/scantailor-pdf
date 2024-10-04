@@ -51,6 +51,14 @@ else() # Local build
 			COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_BIN_DIR}/${ST_ZLIB_SHARED}
 			COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
 		)
+		if(MSVC)
+			# hardlink the static lib to the shared lib name so it gets picked up by qt5 for msvc
+			ExternalProject_Add_Step(
+				zlib-extern qt5-compat-install
+				DEPENDEES remove-shared
+				COMMAND ${CMAKE_COMMAND} -E create_hardlink ${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC} ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
+			)
+		endif()
 	endif()
 	
 	
@@ -67,13 +75,13 @@ else() # Local build
 
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(zlib PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZLIB_SHARED}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_ZLIB_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}"
 		)
 	else()
 		set_target_properties(zlib PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC}"
 		)
 	endif()
 

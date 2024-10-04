@@ -60,13 +60,13 @@ else() # Local build
 
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(freetype PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_FREETYPE_SHARED}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_FREETYPE_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_FREETYPE_IMPLIB}"
 		)
 	else() # Static
 		set_target_properties(freetype PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_FREETYPE_STATIC}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_FREETYPE_STATIC}"
 		)
 	endif()
 	

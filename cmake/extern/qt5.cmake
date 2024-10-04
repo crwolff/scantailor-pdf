@@ -19,7 +19,7 @@ else() # Local build
 			find_package(Qt5 COMPONENTS OpenGL REQUIRED)
 		endif()
 		# For a static build, we have to add more dependencies manually
-		if(NOT BUILD_SHARED_LIBS)
+		if(NOT BUILD_SHARED_LIBS AND MINGW)
 			target_link_libraries(Qt5::Gui INTERFACE ${LIB_PNG} "${EXTERN}/lib/libqtharfbuzz.a")
 			target_link_libraries(Qt5::Core INTERFACE "${EXTERN}/lib/libqtpcre2.a")
 		endif()
@@ -35,7 +35,9 @@ else() # Local build
 		
 		
 		set(QT5_STATIC_OPTIONS "")
-		if (NOT BUILD_SHARED_LIBS AND WIN32)
+		if (NOT BUILD_SHARED_LIBS AND MINGW)
+			# -static-runtime is only valid for Windows, but we don't want it for MSVC
+			# because starting with Win 10, the runtimes are included.
 			set(QT5_STATIC_OPTIONS -static -static-runtime)
 		elseif(NOT BUILD_SHARED_LIBS)
 			set(QT5_STATIC_OPTIONS -static)
@@ -88,8 +90,16 @@ else() # Local build
 		
 		# Configure QT5 to use multiple processors when using nmake
 		set(MP "")
-		if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
-			set(MP "-mp")	# Appended to the QT5 configure step
+		if(MSVC)
+			if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
+				set(MP "-mp")	# Appended to the QT5 configure step
+			else()
+				# Use jom if available
+				find_program(JOM NAMES jom)
+				if(JOM)
+					set(QT5_MAKE ${JOM})
+				endif()
+			endif()
 		endif()
 		
 		if(NOT QT5_PLATFORM)
@@ -106,7 +116,7 @@ else() # Local build
 			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			# Qt bug with MinGW: https://bugreports.qt.io/browse/QTBUG-94031
 			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
-			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -I ${EXTERN_INC_DIR} -L ${EXTERN_LIB_DIR} -L ${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC} -L ${EXTERN_LIB_DIR}/${ST_JPEG_STATIC} -L ${EXTERN_LIB_DIR}/${ST_PNG_STATIC} -L ${EXTERN_LIB_DIR}/${ST_FREETYPE_STATIC} -recheck-all
+			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release ${QT5_STATIC_OPTIONS} -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${MP} -I ${EXTERN_INC_DIR} -L ${EXTERN_LIB_DIR}
 			BUILD_COMMAND ${QT5_MAKE}
 			INSTALL_COMMAND ${QT5_MAKE} install
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation

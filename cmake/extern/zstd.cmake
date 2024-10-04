@@ -61,13 +61,13 @@ else() # Local build
 
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(zstd PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZSTD_SHARED}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_ZSTD_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_ZSTD_IMPLIB}"
 		)
 	else()
 		set_target_properties(zstd PROPERTIES
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZSTD_STATIC}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_ZSTD_STATIC}"
 		)
 	endif()
 

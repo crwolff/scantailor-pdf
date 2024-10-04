@@ -21,7 +21,9 @@ if(NOT WIN32 AND BUILD_SHARED_LIBS)
 else() # Local static build
 	
 	set(Boost_USE_STATIC_LIBS ON)
-	set(Boost_USE_STATIC_RUNTIME ON)
+	if(NOT BUILD_SHARED_LIBS AND MINGW)
+		set(Boost_USE_STATIC_RUNTIME ON)
+	endif()
 	
 	# Instead of manually searching for the library files, we let find_package() do it.
 	# Set search directory hint
@@ -55,7 +57,12 @@ else() # Local static build
 		if(UNIX)
 			set(BOOST_BOOTSTRAP "./bootstrap.sh")
 		endif()
-				
+		
+		set(BOOST_STATIC_RUNTIME)
+		if(NOT BUILD_SHARED_LIBS AND MINGW)
+			set(BOOST_STATIC_RUNTIME runtime-link=static)
+		endif()
+		
 		ExternalProject_Add(
 			boost-extern
 			PREFIX ${EXTERN}
@@ -81,7 +88,7 @@ else() # Local static build
 		ExternalProject_Add_Step(boost-extern b2
 			DEPENDEES bootstrap
 			DEPENDERS install
-			COMMAND ./b2 --with-test toolset=${BOOST_TOOLSET} threading=multi link=static runtime-link=static variant=release ${BOOST_64BIT_FLAGS} --build-dir=<BINARY_DIR> --stagedir=${EXTERN}
+			COMMAND ./b2 --with-test toolset=${BOOST_TOOLSET} threading=multi link=static ${BOOST_STATIC_RUNTIME} variant=release ${BOOST_64BIT_FLAGS} --build-dir=<BINARY_DIR> --stagedir=${EXTERN}
 			WORKING_DIRECTORY <SOURCE_DIR>
 		)
 

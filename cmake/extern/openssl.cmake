@@ -102,10 +102,10 @@ else() # Local build, only static
 		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/openssl
 	)
 	set_target_properties(openssl PROPERTIES
-		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_SSL_STATIC}"
+		IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_SSL_STATIC}"
 	)
 	set_target_properties(crypto PROPERTIES
-		IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_CRYP_STATIC}"
+		IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_CRYP_STATIC}"
 	)
 	
 	add_dependencies(openssl openssl-extern)
