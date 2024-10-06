@@ -323,7 +323,7 @@ endif()
 #========================== Scantailor ============================#
 #==================================================================#
 
-if(HAVE_DEPENDENCIES) # Check that we have found/built Qt5
+if(HAVE_DEPENDENCIES) # Check that we have found/built Qt5 and boost.
 # We have to do this because we might have to build Qt5 on first cmake run.
 
 # Prepare config.h

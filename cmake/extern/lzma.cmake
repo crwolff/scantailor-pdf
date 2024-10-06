@@ -36,7 +36,7 @@ else() # Local build
 		set(ST_LZMA_SHARED "liblzma.dll")	#checked
 	elseif(MINGW)
 		set(ST_LZMA_STATIC "liblzma.a")			#checked
-		set(ST_LZMA_IMPLIB "libliblzma.dll.a")	#checked
+		set(ST_LZMA_IMPLIB "liblzma.dll.a")	#checked
 		set(ST_LZMA_SHARED "liblzma.dll")		#checked
 	elseif(APPLE)
 		set(ST_LZMA_STATIC "liblzma.a")

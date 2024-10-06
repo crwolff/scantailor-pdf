@@ -36,8 +36,8 @@ else() # Local build
 		set(ST_PNG_SHARED "libpng16.dll")			#checked
 	elseif(MINGW)
 		set(ST_PNG_STATIC "libpng.a")			#checked
-		set(ST_PNG_IMPLIB "libpng.dll.a")
-		set(ST_PNG_SHARED "libpng16.dll")
+		set(ST_PNG_IMPLIB "libpng16.dll.a")	#checked
+		set(ST_PNG_SHARED "libpng16.dll")	#checked
 	elseif(APPLE)
 		set(ST_PNG_STATIC "libpng.a")
 		set(ST_PNG_SHARED "libpng.dylib")

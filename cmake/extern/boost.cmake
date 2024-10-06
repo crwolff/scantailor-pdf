@@ -31,7 +31,7 @@ else() # Local static build
 
 		set(BOOST_ROOT ${EXTERN})
 		find_package(Boost REQUIRED COMPONENTS test_exec_monitor unit_test_framework)	
-	
+		
 	else() # Boost has not been built yet. Configure for build.
 	
 		message(STATUS "Boost has not been fully built yet. "

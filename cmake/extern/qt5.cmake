@@ -128,16 +128,16 @@ else() # Local build
 			DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_FREETYPE}
 		)
 		
-		if(MINGW AND BUILD_SHARED_LIBS)
-			ExternalProject_Add_Step(
-				qt5-base-extern custom-patch
-				DEPENDEES configure
-				DEPENDERS build
-				# Copy some libs into qt5 build bin dir; it seems to be missing for moc, etc. for the shared mingw build.
-				COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_BIN_DIR}/libzlib1.dll <BINARY_DIR>/bin/libzlib1.dll
-				COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_BIN_DIR}/libzstd.dll <BINARY_DIR>/bin/libzstd.dll
-			)
-		endif()
+		# if(MINGW AND BUILD_SHARED_LIBS)
+			# ExternalProject_Add_Step(
+				# qt5-base-extern custom-patch
+				# DEPENDEES configure
+				# DEPENDERS build
+				# # Copy some libs into qt5 build bin dir; it seems to be missing for moc, etc. for the shared mingw build.
+				# COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_BIN_DIR}/libzlib1.dll <BINARY_DIR>/bin/libzlib1.dll
+				# COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_BIN_DIR}/libzstd.dll <BINARY_DIR>/bin/libzstd.dll
+			# )
+		# endif()
 		
 		ExternalProject_Add(
 			qt-tools

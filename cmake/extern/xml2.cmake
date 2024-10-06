@@ -71,11 +71,11 @@ else() # Local build
 		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/libxml2/libxml
 	)
 
-	if(BUILD_SHARED_LIBS})
+	if(BUILD_SHARED_LIBS)
 		set_target_properties(xml2 PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_XML2_SHARED}"
 			# Ignored on non-WIN32 platforms
-			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_XML2_IMPLIB}"
+			 IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_XML2_IMPLIB}"
 		)
 	else()
 		set_target_properties(xml2 PROPERTIES

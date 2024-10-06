@@ -56,6 +56,11 @@ else() # Local build, only static
 		set(OPENSSL_INSTALL_COMMAND make install)
 	endif()
 
+	set(ssl-static)
+	if(NOT BUILD_SHARED_LIBS)
+		set(ssl-static no-shared)
+	endif()
+
 	ExternalProject_Add(
 		openssl-extern
 		PREFIX ${EXTERN}
@@ -69,7 +74,7 @@ else() # Local build, only static
 			--libdir=lib
 			--release
 			no-apps
-			no-shared
+			${ssl-static}
 			no-tests
 			no-docs
 		BUILD_COMMAND ${OPENSSL_BUILD_COMMAND}
@@ -81,18 +86,36 @@ else() # Local build, only static
 	
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_SSL_STATIC "libssl.lib")		#checked
-		set(ST_CRYP_STATIC "libcrypto.lib")	#checked
+		set(ST_SSL_STATIC "libssl.lib")			#checked
+		set(ST_SSL_IMPLIB "libssl.lib")
+		set(ST_SSL_SHARED "libssl.dll")
+		set(ST_CRYP_STATIC "libcrypto.lib")		#checked
+		set(ST_CRYP_IMPLIB "libcrypto.lib")
+		set(ST_CRYP_SHARED "libcrypto.lib")
+	elseif(MINGW)
+		set(ST_SSL_STATIC "libssl.a")					#checked
+		set(ST_SSL_IMPLIB "libssl.dll.a")			#checked
+		set(ST_SSL_SHARED "libssl-3-x64.dll")		#checked
+		set(ST_CRYP_STATIC "libcrypto.lib")			#checked
+		set(ST_CRYP_IMPLIB "libcrypto.dll.a")		#checked
+		set(ST_CRYP_SHARED "libcrypto-3-x64.dll")	#checked
+	elseif(APPLE)
+		set(ST_SSL_STATIC "libssl.a")
+		set(ST_SSL_SHARED "libssl.dylib")
+		set(ST_CRYP_STATIC "libcrypto.lib")
+		set(ST_CRYP_SHARED "libcrypto.dylib")
 	else()
 		set(ST_SSL_STATIC "libssl.a")
+		set(ST_SSL_SHARED "libssl.so")
 		set(ST_CRYP_STATIC "libcrypto.a")
+		set(ST_CRYP_SHARED "libcrypto.so")
 	endif()
 	
 	
 	# We can't use the external target directly (utility target), so 
 	# create a new target and depend it on the external target.
-	add_library(openssl STATIC IMPORTED)
-	add_library(crypto STATIC IMPORTED)
+	add_library(openssl ${LIB_TYPE} IMPORTED)
+	add_library(crypto ${LIB_TYPE} IMPORTED)
 	
 	set_target_properties(openssl crypto PROPERTIES
 		IMPORTED_CONFIGURATIONS $<CONFIG>
@@ -101,12 +124,26 @@ else() # Local build, only static
 		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
 		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/openssl
 	)
-	set_target_properties(openssl PROPERTIES
-		IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_SSL_STATIC}"
-	)
-	set_target_properties(crypto PROPERTIES
-		IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_CRYP_STATIC}"
-	)
+	
+	if(BUILD_SHARED_LIBS)
+		set_target_properties(openssl PROPERTIES
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_SSL_SHARED}"
+			# Ignored on non-WIN32 platforms
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PNG_IMPLIB}"
+		)
+		set_target_properties(crypto PROPERTIES
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_CRYP_SHARED}"
+			# Ignored on non-WIN32 platforms
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PNG_IMPLIB}"
+		)
+	else()
+		set_target_properties(openssl PROPERTIES
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_SSL_STATIC}"
+		)
+		set_target_properties(crypto PROPERTIES
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_CRYP_STATIC}"
+		)
+	endif()
 	
 	add_dependencies(openssl openssl-extern)
 	add_dependencies(crypto openssl-extern)
