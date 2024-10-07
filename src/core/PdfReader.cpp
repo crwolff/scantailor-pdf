@@ -1,7 +1,6 @@
 /*
     Scan Tailor - Interactive post-processing tool for scanned pages.
-    Copyright (C) 2008-2017 Joseph Artsimovich <joseph.artsimovich@gmail.com>
-		Copyright (C) 2017 Daniel Just
+		Copyright (C) 2017-2024 Daniel Just
 		
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -87,43 +86,20 @@ PdfReader::readImage(QIODevice& device, int const page_num)
 	PdfMemDocument pdfDoc;
 	pdfDoc.Load(buffer.constData());
 
+	// get page
+	auto& pPage = pdfDoc.GetPages().GetPageAt(page_num);
+
 	// stores the image to extract; only the largest one on the page is chosen
 	PdfObject * pdfImage = nullptr;
 	QSize dimensions(0, 0);
 	qint64 width = 0;
 	qint64 height = 0;
-
-	for (auto obj : pdfDoc.GetObjects())
+	
+	// go through all resources on the page and extract dimensions of each image
+	for (auto pXObjects : pPage.GetResources()->GetResourceIterator("XObject"))
 	{
-		if (obj->IsDictionary())
-		{
-			PdfObject* pObjTypePage = obj->GetDictionary().GetKey("Type");
-
-			if (pObjTypePage && pObjTypePage->IsName() && (pObjTypePage->getName() == "Page"))
-			{
-				PdfObject* pObjType = obj->GetDictionary().GetKey("Type");
-				PdfObject* pObjSubType = obj->GetDictionary().GetKey("Subtype");
-
-				if ((pObjType && pObjType->IsName() && (pObjType->GetName() == "XObject")) ||
-					(pObjSubType && pObjSubType->IsName() && (pObjSubType->GetName() == "Image")))
-				{
-					width = obj->GetDictionary().FindKey("Width")->GetNumber();
-					height = obj->GetDictionary().FindKey("Height")->GetNumber();
-
-					if (dimensions.width() < width && dimensions.height() < height) {
-						dimensions.setWidth(width);
-						dimensions.setHeight(height);
-					}
-				}
-			}
-		}
-	}
-
-
-	// go through all references and extract dimensions of each image
-	for (auto pObj : pPage.GetResources().GetObject())
-	{
-		if (pObj.isDictionary()) {
+		PdfObject * obj = pXObjects.second;
+		if (obj->IsDictionary()) {
 			PdfObject* pObjType = obj->GetDictionary().GetKey("Type");
 			PdfObject* pObjSubType = obj->GetDictionary().GetKey("Subtype");
 
@@ -134,17 +110,15 @@ PdfReader::readImage(QIODevice& device, int const page_num)
 				width = obj->GetDictionary().FindKey("Width")->GetNumber();
 				height = obj->GetDictionary().FindKey("Height")->GetNumber();
 
-				// Replace image, if it bigger than previous image
+				// Save/replce image, if it bigger than previous image
 				if (dimensions.width() < width && dimensions.height() < height) {
 					dimensions.setWidth(width);
 					dimensions.setHeight(height);
-					pdfImage = pObj;
+					pdfImage = obj;
 				}
 			}
 		}
 	}
-
-
 
 	QImage image;
 
@@ -152,7 +126,7 @@ PdfReader::readImage(QIODevice& device, int const page_num)
 	if (pdfImage && dimensions.width() >= 1000 && dimensions.height() >= 1000) {
 		// We'll just try to get the binary stream into a QIODevice and send it through ImageLoader::load
 		auto pStream = pdfImage->GetStream()->GetCopy();
-		QByteArray imageBuffer(pStream.data(); pStream.size());
+		QByteArray imageBuffer(pStream.data(), pStream.size());
 		QDataStream newImage(imageBuffer);
 
 		return ImageLoader::load(*newImage.device(), 0);
