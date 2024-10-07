@@ -54,7 +54,7 @@
 #include "imageproc/PolygonUtils.h"
 #include "imageproc/DrawOver.h"
 #include "imageproc/AffineTransform.h"
-#include <boost/shared_ptr.hpp>
+//#include <boost/shared_ptr.hpp>
 #include <QImage>
 #include <QString>
 #include <QObject>
@@ -547,7 +547,7 @@ Task::UiUpdater::updateUI(FilterUiInterface* ui)
 
     alt_image_ptr.reset(getAlternativeImage());
     if (alt_image_ptr) {
-        image_view->setAlternativeImage(alt_image_ptr, shared_ptr<QPixmap>(), m_ptrAccelOps);
+        image_view->setAlternativeImage(alt_image_ptr, std::shared_ptr<QPixmap>(), m_ptrAccelOps);
         alt_downscaled_pixmap_ptr = image_view->getAlternativePixmap();
     }
 

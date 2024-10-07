@@ -260,8 +260,6 @@ HoughTransform<T, Angle>::HoughTransform(
 ,	m_spatialOrigin(0.5 * spatial_size.width(), 0.5 * spatial_size.height())
 ,	m_distanceStep(distance_step)
 {
-	using namespace std;
-
 	double const max_distance = sqrt(
 		m_spatialOrigin.x() * m_spatialOrigin.x() +
 		m_spatialOrigin.y() * m_spatialOrigin.y()

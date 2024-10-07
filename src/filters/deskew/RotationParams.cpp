@@ -48,7 +48,6 @@ RotationParams::invalidate()
 void
 RotationParams::setCompensationAngleDeg(double angle_deg)
 {
-	using namespace std;
 
 	if (isfinite(angle_deg))
 	{

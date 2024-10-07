@@ -126,11 +126,9 @@ template<typename T, typename SubClass>
 void
 PriorityQueue<T, SubClass>::pushDestructive(T& obj)
 {
-	using namespace std;
-
 	size_t const idx = m_index.size();
 	m_index.push_back(T());
-	swap(m_index.back(), obj);
+	std::swap(m_index.back(), obj);
 	subClass()->setIndex(m_index.back(), idx);
 	bubbleUp(idx);
 }
@@ -139,11 +137,9 @@ template<typename T, typename SubClass>
 void
 PriorityQueue<T, SubClass>::pop()
 {
-	using namespace std;
-
 	assert(!empty());
 
-	swap(m_index.front(), m_index.back());
+	std::swap(m_index.front(), m_index.back());
 	subClass()->setIndex(m_index.front(), 0);
 
 	m_index.pop_back();
@@ -156,12 +152,10 @@ template<typename T, typename SubClass>
 void
 PriorityQueue<T, SubClass>::retrieveFront(T& obj)
 {
-	using namespace std;
-
 	assert(!empty());
 
-	swap(m_index.front(), obj);
-	swap(m_index.front(), m_index.back());
+	std::swap(m_index.front(), obj);
+	std::swap(m_index.front(), m_index.back());
 	subClass()->setIndex(m_index.front(), 0);
 
 	m_index.pop_back();
@@ -174,9 +168,7 @@ template<typename T, typename SubClass>
 void
 PriorityQueue<T, SubClass>::erase(size_t const idx)
 {
-	using namespace std;
-
-	swap(m_index[idx], m_index.back());
+	std::swap(m_index[idx], m_index.back());
 	subClass()->setIndex(m_index[idx], idx);
 
 	m_index.pop_back();
@@ -194,8 +186,6 @@ template<typename T, typename SubClass>
 size_t
 PriorityQueue<T, SubClass>::bubbleUp(size_t idx)
 {
-	using namespace std;
-
 	// Iteratively swap the element with its parent,
 	// if it's greater than the parent.
 
@@ -206,7 +196,7 @@ PriorityQueue<T, SubClass>::bubbleUp(size_t idx)
 		if (!subClass()->higherThan(m_index[idx], m_index[parent_idx])) {
 			break;
 		}
-		swap(m_index[idx], m_index[parent_idx]);
+		std::swap(m_index[idx], m_index[parent_idx]);
 		subClass()->setIndex(m_index[idx], idx);
 		subClass()->setIndex(m_index[parent_idx], parent_idx);
 		idx = parent_idx;
@@ -219,8 +209,6 @@ template<typename T, typename SubClass>
 size_t
 PriorityQueue<T, SubClass>::bubbleDown(size_t idx)
 {
-	using namespace std;
-
 	size_t const len = m_index.size();
 	assert(idx < len);
 
@@ -241,7 +229,7 @@ PriorityQueue<T, SubClass>::bubbleDown(size_t idx)
 		}
         
 		if (subClass()->higherThan(m_index[best_child], m_index[idx])) {
-			swap(m_index[idx], m_index[best_child]);
+			std::swap(m_index[idx], m_index[best_child]);
 			subClass()->setIndex(m_index[idx], idx);
 			subClass()->setIndex(m_index[best_child], best_child);
             idx = best_child;
