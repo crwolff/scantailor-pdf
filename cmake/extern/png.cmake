@@ -71,7 +71,7 @@ else() # Local build
 
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(png PROPERTIES
-			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_PNG_SHARED}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_BIN_DIR}/${ST_PNG_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PNG_IMPLIB}"
 		)

@@ -127,12 +127,12 @@ else() # Local build, only static
 	
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(openssl PROPERTIES
-			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_SSL_SHARED}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_BIN_DIR}/${ST_SSL_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PNG_IMPLIB}"
 		)
 		set_target_properties(crypto PROPERTIES
-			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_CRYP_SHARED}"
+			IMPORTED_LOCATION_RELEASE "${EXTERN_BIN_DIR}/${ST_CRYP_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PNG_IMPLIB}"
 		)
