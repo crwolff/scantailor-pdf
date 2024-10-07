@@ -27,12 +27,10 @@ ToLineProjector::ToLineProjector(QLineF const& line)
 	m_vec(line.p2() - line.p1()),
 	m_mat(m_vec)
 {
-	using namespace std;
-
 	// At*A*x = At*b
 	double const AtA = m_mat.dot(m_mat);
 
-	if (abs(AtA) > numeric_limits<double>::epsilon()) {
+	if (abs(AtA) > std::numeric_limits<double>::epsilon()) {
 		// x = (At*A)-1 * At
 		m_mat /= AtA;
 	} else {

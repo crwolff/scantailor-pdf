@@ -17,15 +17,15 @@ set(
 source_group("Sources" FILES ${sources})
 TRANSLATION_SOURCES(scantailor ${sources})
 
-if(NOT BUILD_STATIC)
+if(BUILD_SHARED_LIBS)
 	add_definitions(-DSHARED_ACCELERATION)
 	add_definitions(-DBUILDING_ACCELERATION)
 endif()
 
-add_library(acceleration ${MAYBE_STATIC} ${sources})
+add_library(acceleration ${LIB_TYPE} ${sources})
 target_link_libraries(acceleration dewarping imageproc Qt5::Core Qt5::Gui)
 
-if(NOT STATIC_BUILD)
+if(BUILD_SHARED_LIBS)
 	# We want the DLL located where executables can find it.
 	set_target_properties(
 		acceleration PROPERTIES

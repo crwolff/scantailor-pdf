@@ -11,6 +11,12 @@ if(POLICY CMP0048)
 	cmake_policy(SET CMP0048 NEW)
 endif()
 
+if(POLICY CMP0135)
+	# ExternalProject_Add() download timestamp handling changed in 3.24
+	# https://cmake.org/cmake/help/latest/policy/CMP0135.html
+	cmake_policy(SET CMP0135 NEW)
+endif()
+
 
 project("Scan Tailor PDF")
 
@@ -21,6 +27,7 @@ include(CheckIncludeFile)
 include(CheckIncludeFileCXX)
 include(TestCXXAcceptsFlag)
 include(CMakeDependentOption)
+include(FetchContent)
 include(cmake/FindPthreads.cmake)
 include(cmake/SetDefaultBuildType.cmake)
 include(cmake/SetDefaultGccFlags.cmake)
@@ -35,37 +42,47 @@ include(cmake/LibToDLL.cmake)
 # Most Find*.cmake modules only find dynamic libraries. So the maintenance effort
 # is too big to find system static libraries across all supported platforms and
 # compilers. Currently only works on WIN32.
-option(STATIC_BUILD "Statically link all libraries." OFF)
-
-if(STATIC_BUILD)
-	set(MAYBE_STATIC "STATIC")
-	set(STATIC_BOOL "ON")	# For Options in ExternalProject_add()
-	set(SHARED_BOOL "OFF")	# For Options in ExternalProject_add()
-	if (MINGW)
-		# Even link against static libgcc and libstdc++ on Windows since these are not available by default.
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
-	endif()
-else()
-	set(MAYBE_STATIC "SHARED")
-	set(STATIC_BOOL "OFF")
-	set(SHARED_BOOL "ON")
-endif()
+option(BUILD_SHARED_LIBS "Build a shared version of Scan Tailor PDF." ON)
 
 # We usually only build linguist and windeployqt because we need it for the translations.
 # Turn this on, if you wish to build all qt tools (assistant, designer, etc.).
 option(BUILD_QT_TOOLS "Build and install all QT tools, including assistant, designer, etc.)." OFF)
 
+# Folder where the perl executable is located.
+# Use this with -DST_PERL_PATH=[perlpath] if you get an error that Perl cannot be found.
+set(ST_PERL_PATH)
+
 # Crash reporter, only Windows + MSVC supported for now.
 # Must go before generating config.h, as ENABLE_CRASH_REPORTER
 # goes in there.
 if(MSVC)
-	option(ENABLE_CRASH_REPORTER "Enable crash reporter (only for official builds)" ON)
+	option(ENABLE_CRASH_REPORTER "Enable crash reporter (only for official builds)" OFF)
 endif(MSVC)
 
 # Currently broken…
 #option(BUILD_CLI "Build the command line Scan Tailor PDF executable." OFF)
 
 
+#================ Reflect above options in settings ===============#
+
+## BUILD_SHARED_LIBS: static and shared builds
+set(STATIC_BOOL OFF)
+set(SHARED_BOOL ON)
+set(LIB_TYPE SHARED)
+
+# Settings for static build
+if(NOT BUILD_SHARED_LIBS)
+	set(STATIC_BOOL ON)
+	set(SHARED_BOOL OFF)
+	set(LIB_TYPE STATIC)
+	if (MINGW)
+		# Even link against static libgcc and libstdc++ on Windows since these are not available by default.
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+	# elseif(MSVC)
+		# # Link against static C and C++ runtimes
+		# add_compile_options(/MT)
+	endif()
+endif()
 
 #======================= Compiler flags ===========================#
 
@@ -159,7 +176,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 #==================================================================#
 
 set(EXTERN ${CMAKE_CURRENT_BINARY_DIR}/extern)
-if(STATIC_BUILD)
+if(NOT BUILD_SHARED_LIBS AND NOT HAVE_DEPENDENCIES)
 	message(STATUS "External dependencies will be stored in ${EXTERN}")
 endif()
 
@@ -178,19 +195,16 @@ set(CMAKE_PREFIX_PATH ${EXTERN})
 # Location of patches for building external libraries
 set(EXTERN_PATCH_DIR ${CMAKE_SOURCE_DIR}/extern-patches)
 
-# Multiprocessor options for quicker compilation of various libraries
-set(MP "")	# Configure QT5 to use multiple processors when using nmake
-if(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
-	set(MP "-mp")	# Appended to the QT5 configure step
-# elseif(${CMAKE_GENERATOR} STREQUAL "Ninja")
-	# if(POLICY CMP0048)
-		# # Prevent warnings about byproducts and phony targets for Ninja generator
-		# cmake_policy(SET CMP0058 OLD)
-	# endif()
-endif()
-
 # List of include directories for all external libraries
 list(APPEND ALL_EXTERN_INC_DIRS ${EXTERN_INC_DIR})
+
+# ExternalProjects with a build command need to append the .vcxproj to the target
+# so they can be build with msbuild. Define it here and use in the extern cmake files.
+# The variable is empty for non MSVC builds.
+set(vcxproj "")
+if(MSVC)
+	set(vcxproj ".vcxproj")
+endif()
 
 # Assume we have all dependencies. If a dependency is not found below,
 # this variable is set to false and cmake won't configure the actual
@@ -200,7 +214,16 @@ set(HAVE_DEPENDENCIES TRUE)
 # External library targets
 # The following cmake files will search for and/or download and build
 # all external dependencies. They set all LIB_* variables and add all
-# needed include directories to the ALL_EXTERN_INC_DIRS variable. 
+# needed include directories to the ALL_EXTERN_INC_DIRS variable.
+
+# All downloaded external dependencies are stored in ./extern-src
+set(DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/extern-pkg")
+
+
+set(LIB_SSL "")
+set(LIB_CRYP "")
+include(cmake/extern/openssl.cmake)
+
 set(LIB_ZLIB "")
 include(cmake/extern/zlib.cmake)
 
@@ -224,6 +247,9 @@ include(cmake/extern/openjp.cmake)
 
 set(LIB_FREETYPE "")
 include(cmake/extern/freetype.cmake)
+
+set(LIB_XML2 "")
+include(cmake/extern/xml2.cmake)
 
 set(LIB_PODOFO "")
 include(cmake/extern/podofo.cmake)
@@ -278,12 +304,12 @@ endif(UNIX)
 # Other includes and options
 set(EXTRA_LIBS "")
 
-if(MINGW AND STATIC_BUILD)
+if(MINGW AND NOT BUILD_SHARED_LIBS)
 	list(APPEND EXTRA_LIBS winmm imm32 ws2_32 ole32 oleaut32 uuid gdi32 comdlg32 winspool)
 endif()
 
 list(APPEND EXTRA_LIBS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_TIFF}
-	${LIB_ZSTD} ${LIB_LZMA} ${LIB_OPENJP} ${LIB_PODOFO}
+	${LIB_ZSTD} ${LIB_LZMA} ${LIB_OPENJP} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_PODOFO}
 )
 
 set(MAYBE_QT_OPENGL_MODULE "")
@@ -297,7 +323,7 @@ endif()
 #========================== Scantailor ============================#
 #==================================================================#
 
-if(HAVE_DEPENDENCIES) # Check that we have found/built Qt5
+if(HAVE_DEPENDENCIES) # Check that we have found/built Qt5 and boost.
 # We have to do this because we might have to build Qt5 on first cmake run.
 
 # Prepare config.h
@@ -337,7 +363,7 @@ set(
 include(CPack)
 
 
-if(WIN32 AND NOT STATIC_BUILD)
+if(WIN32 AND BUILD_SHARED_LIBS)
 	
 	## Copy all needed DLLs to the staging dir.
 	# Our external libraries
@@ -373,6 +399,6 @@ if(WIN32 AND NOT STATIC_BUILD)
 	
 	# Installer for Windows.  Must go last.
 	add_subdirectory(src/packaging/windows)
-endif(WIN32 AND NOT STATIC_BUILD)
+endif(WIN32 AND BUILD_SHARED_LIBS)
 
 endif(HAVE_DEPENDENCIES)

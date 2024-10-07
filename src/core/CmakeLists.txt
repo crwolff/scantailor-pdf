@@ -60,8 +60,6 @@ set(
 	PageSequence.cpp PageSequence.h
 	PageView.h
 	PayloadEvent.h
-	PdfMetadataLoader.cpp PdfMetadataLoader.h
-	PdfReader.cpp PdfReader.h
 	PixmapRenderer.cpp PixmapRenderer.h
 	PngMetadataLoader.cpp PngMetadataLoader.h
 	ProcessingIndicationWidget.cpp ProcessingIndicationWidget.h
@@ -91,10 +89,18 @@ set(
 	${common_ui_files}
 )
 
+#PoDoFo requires some C++17 standards
+set(pdf_sources
+	PdfMetadataLoader.cpp PdfMetadataLoader.h
+	PdfReader.cpp PdfReader.h
+	)
+add_library(stpdf STATIC ${pdf_sources})
+target_link_libraries(stpdf Qt5::Core Qt5::Widgets)
+target_compile_features(stpdf PUBLIC cxx_std_17)
+
 add_library(stcore STATIC ${common_sources} ${common_ui_sources})
-target_link_libraries(stcore acceleration deskew Qt5::Widgets Qt5::Xml ${MAYBE_QT_OPENGL_MODULE})
-target_include_directories(stcore PUBLIC ${Boost_INCLUDE_DIRS})
-add_dependencies(stcore toplevel_ui_sources)
+target_link_libraries(stcore stpdf acceleration deskew Qt5::Widgets Qt5::Xml ${LIB_OPENJP} ${LIB_TIFF} ${MAYBE_QT_OPENGL_MODULE})
+add_dependencies(stcore stpdf toplevel_ui_sources)
 
 # Some includes need to be added manually in new build system
 target_include_directories(stcore AFTER PUBLIC ${ALL_EXTERN_INC_DIRS})

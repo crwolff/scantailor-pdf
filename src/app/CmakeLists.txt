@@ -76,7 +76,7 @@ set_target_properties(
 )
 
 ## Copy all needed DLLs to the staging dir.
-if(WIN32 AND NOT STATIC_BUILD)
+if(WIN32 AND BUILD_SHARED_LIBS)
 	# Our external libraries
 	set(RUNTIME_DEPS $<TARGET_RUNTIME_DLLS:scantailor>)
 	# Remove archive lib files from list

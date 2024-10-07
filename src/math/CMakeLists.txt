@@ -40,12 +40,12 @@ set(
 )
 source_group("Sources\\Differentiation Framework" FILES ${ADIFF_SOURCES})
 
-if(NOT STATIC_BUILD)
+if(BUILD_SHARED_LIBS)
 	add_definitions(-DSHARED_MATH)
 	add_definitions(-DBUILDING_MATH)
 endif()
 
-add_library(math ${MAYBE_STATIC} ${GENERIC_SOURCES} ${SPFIT_SOURCES} ${ADIFF_SOURCES})
+add_library(math ${LIB_TYPE} ${GENERIC_SOURCES} ${SPFIT_SOURCES} ${ADIFF_SOURCES})
 target_link_libraries(math foundation Qt5::Core)
 target_include_directories(math INTERFACE ${EIGEN3_INCLUDE_DIR})
 
@@ -55,7 +55,7 @@ set_target_properties(
 	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>
 )
 
-if(NOT STATIC_BUILD)
+if(BUILD_SHARED_LIBS)
 	install(TARGETS math DESTINATION lib/scantailor)
 endif()
 

@@ -430,7 +430,6 @@ template<size_t N, typename T>
 T
 VecNT<N, T>::norm() const
 {
-	using namespace std;
 	return sqrt(squaredNorm());
 }
 
@@ -438,13 +437,10 @@ template<size_t N, typename T>
 void
 VecNT<N, T>::normalize()
 {
-	using namespace std;
-
 	T const sqnorm = squaredNorm();
 	if (sqnorm <= std::numeric_limits<T>::epsilon()) {
 		fill(T());
 	} else {
-		using namespace std;
 		*this /= sqrt(sqnorm);
 	}
 }

@@ -44,8 +44,6 @@ class BackgroundExecutor;
 class ImagePresentation;
 class AcceleratableOperations;
 
-using namespace std;
-
 /**
  * \brief The base class for widgets that display and manipulate images.
  *
@@ -241,10 +239,10 @@ public:
 
 	static BackgroundExecutor& backgroundExecutor();
 
-    void setAlternativeImage(shared_ptr<QImage> image, shared_ptr<QPixmap> pixmap,
+   void setAlternativeImage(std::shared_ptr<QImage> image, std::shared_ptr<QPixmap> pixmap,
 		std::shared_ptr<AcceleratableOperations> const& accel_ops);
 
-    shared_ptr<QPixmap> getAlternativePixmap() const { return m_alternativePixmap; }
+   std::shared_ptr<QPixmap> getAlternativePixmap() const { return m_alternativePixmap; }
 
 protected:
 	virtual void paintEvent(QPaintEvent* event);
@@ -340,7 +338,7 @@ private:
 	 */
 	QImage m_image;
 	
-    shared_ptr<QImage> m_alternativeImage;
+    std::shared_ptr<QImage> m_alternativeImage;
 	
 	/**
 	 * This timer is used for delaying the construction of
@@ -354,7 +352,7 @@ private:
 	 */
 	QPixmap m_pixmap;
 	
-    shared_ptr<QPixmap> m_alternativePixmap;
+    std::shared_ptr<QPixmap> m_alternativePixmap;
 	
 	/**
 	 * The high quality, pre-transformed version of m_pixmap.

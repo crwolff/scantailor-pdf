@@ -2,23 +2,37 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 
-if(NOT WIN32 AND NOT STATIC_BUILD)
+if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(ZLIB REQUIRED)		# This only finds shared libs
 	set(LIB_ZLIB ZLIB::ZLIB)
 	list(APPEND ALL_EXTERN_INC_DIRS ${ZLIB_INCLUDE_DIRS})
 	
-else() # Local build, both shared and static
+else() # Local build
 
+	ExternalProject_Add(
+		zlib-extern
+		PREFIX ${EXTERN}
+		URL https://www.zlib.net/zlib-1.3.1.tar.xz
+		URL_HASH SHA256=38ef96b8dfe510d42707d9c781877914792541133e1870841463bfa73f883e32
+		DOWNLOAD_DIR ${DOWNLOAD_DIR}
+		CMAKE_ARGS
+			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
+			-DCMAKE_BUILD_TYPE=Release
+		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
+	)	
+	
+	
 	# TODO: Check that these filenames are correct.
 	if(MSVC)
-		set(ST_ZLIB_STATIC "zlibstatic.lib")
-		set(ST_ZLIB_SHARED "zlib.lib")
-		set(ST_ZLIB_DLL "zlib.dll")
+		set(ST_ZLIB_STATIC "zlibstatic.lib")	#checked
+		set(ST_ZLIB_IMPLIB "zlib.lib")		 	#checked
+		set(ST_ZLIB_SHARED "zlib.dll")			#checked
 	elseif(MINGW)
-		set(ST_ZLIB_STATIC "libzlibstatic.a")
-		set(ST_ZLIB_SHARED "libzlib.dll.a")
-		set(ST_ZLIB_DLL "libzlib1.dll")
+		set(ST_ZLIB_STATIC "libzlibstatic.a")	#checked
+		set(ST_ZLIB_IMPLIB "libzlib.dll.a")		#checked
+		set(ST_ZLIB_SHARED "libzlib.dll")		#checked
 	elseif(APPLE)
 		set(ST_ZLIB_STATIC "libz.a")
 		set(ST_ZLIB_SHARED "libz.dylib")
@@ -26,66 +40,51 @@ else() # Local build, both shared and static
 		set(ST_ZLIB_STATIC "libz.a")
 		set(ST_ZLIB_SHARED "libz.so")
 	endif()
-
-	if(STATIC_BUILD)
-		ExternalProject_Add(
-			zlib-extern
-			PREFIX ${EXTERN}
-			URL https://www.zlib.net/zlib-1.2.12.tar.gz
-			URL_HASH SHA256=91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9
-			CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DBUILD_SHARED_LIBS=OFF
-			# Uses multiple threads if [mingw32-]make or ninja is used
-			BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} zlibstatic
-			# We copy the lib to the EXTERN bin dir.
-			INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different <BINARY_DIR>/${ST_ZLIB_STATIC} ${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC}
-			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		)	
-	else()
-		ExternalProject_Add(
-			zlib-extern
-			PREFIX ${EXTERN}
-			URL https://www.zlib.net/zlib-1.2.12.tar.gz
-			URL_HASH SHA256=91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9
-			CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERN} -DBUILD_SHARED_LIBS=ON
-			# Uses multiple threads if [mingw32-]make or ninja is used
-			BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} zlib
-			# We copy the dll to the main project build dir and the rest to the EXTERN dirs.
-			INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_if_different <BINARY_DIR>/${ST_ZLIB_DLL} ${EXTERN_BIN_DIR}/${ST_ZLIB_DLL}
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different <BINARY_DIR>/${ST_ZLIB_SHARED} ${EXTERN_LIB_DIR}/${ST_ZLIB_SHARED}
-			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		)	
-	endif()
 	
-	# Install files common for shared and static build
-	ExternalProject_Add_Step(
-		zlib-extern zlib-install
-		DEPENDEES install
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different <BINARY_DIR>/zconf.h ${EXTERN_INC_DIR}/zconf.h
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different <SOURCE_DIR>/zlib.h ${EXTERN_INC_DIR}/zlib.h
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different <BINARY_DIR>/zlib.pc ${EXTERN}/share/pkgconfig/zlib.pc
-	)
 	
-	# We can't use the external target directly (utility target), so 
-	# create a new target and depend it on the external target.
-	if(STATIC_BUILD)
-		add_library(zlib STATIC IMPORTED)
-		set_property(TARGET zlib PROPERTY
-			IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC}"
+	# zlib installs both shared and static libs. If building static,
+	# we need to remove the shared lib, so they don't get picked up by other packages
+	if(NOT BUILD_SHARED_LIBS)
+		ExternalProject_Add_Step(
+			zlib-extern remove-shared
+			DEPENDEES install
+			COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_BIN_DIR}/${ST_ZLIB_SHARED}
+			COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
 		)
-	else() # Shared
-		add_library(zlib SHARED IMPORTED)
-		if(WIN32)
-			set_target_properties(zlib PROPERTIES
-				IMPORTED_LOCATION "${EXTERN_BIN_DIR}/${ST_ZLIB_DLL}"
-				IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_ZLIB_SHARED}"
-			)
-		else() # *nix
-			set_property(TARGET zlib
-				PROPERTY IMPORTED_LOCATION "${EXTERN_LIB_DIR}/${ST_ZLIB_SHARED}"
+		if(MSVC)
+			# hardlink the static lib to the shared lib name so it gets picked up by qt5 for msvc
+			ExternalProject_Add_Step(
+				zlib-extern qt5-compat-install
+				DEPENDEES remove-shared
+				COMMAND ${CMAKE_COMMAND} -E create_hardlink ${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC} ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
 			)
 		endif()
 	endif()
 	
+	
+	# We can't use the external target directly (utility target), so 
+	# create a new target and depend it on the external target.
+	add_library(zlib ${LIB_TYPE} IMPORTED)
+	set_target_properties(zlib PROPERTIES
+		IMPORTED_CONFIGURATIONS $<CONFIG>
+		MAP_IMPORTED_CONFIG_DEBUG Release
+		MAP_IMPORTED_CONFIG_MINSIZEREL Release
+		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
+	)
+
+	if(BUILD_SHARED_LIBS)
+		set_target_properties(zlib PROPERTIES
+			IMPORTED_LOCATION_RELEASE "${EXTERN_BIN_DIR}/${ST_ZLIB_SHARED}"
+			# Ignored on non-WIN32 platforms
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}"
+		)
+	else()
+		set_target_properties(zlib PROPERTIES
+			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC}"
+		)
+	endif()
+
 	add_dependencies(zlib zlib-extern)
 	set(LIB_ZLIB zlib)
 

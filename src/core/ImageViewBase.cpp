@@ -1131,7 +1131,7 @@ ImageViewBase::backgroundExecutor()
 }
 
 void
-ImageViewBase::setAlternativeImage(shared_ptr<QImage> image, shared_ptr<QPixmap> pixmap, std::shared_ptr<AcceleratableOperations> const& accel_ops)
+ImageViewBase::setAlternativeImage(std::shared_ptr<QImage> image, std::shared_ptr<QPixmap> pixmap, std::shared_ptr<AcceleratableOperations> const& accel_ops)
 {
     m_alternativeImage = image;
     if (m_alternativeImage) {
