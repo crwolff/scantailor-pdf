@@ -63,6 +63,11 @@ else() # Local static build
 			set(BOOST_STATIC_RUNTIME runtime-link=static)
 		endif()
 		
+		set(BOOST_MSVC_SHARED)
+		if(MSVC AND BUILD_SHARED_LIBS)
+		 set(BOOST_MSVC_SHARED variant=debug)
+		endif()
+		
 		ExternalProject_Add(
 			boost-extern
 			PREFIX ${EXTERN}
@@ -88,7 +93,7 @@ else() # Local static build
 		ExternalProject_Add_Step(boost-extern b2
 			DEPENDEES bootstrap
 			DEPENDERS install
-			COMMAND ./b2 --with-test toolset=${BOOST_TOOLSET} threading=multi link=static ${BOOST_STATIC_RUNTIME} variant=release ${BOOST_64BIT_FLAGS} --build-dir=<BINARY_DIR> --stagedir=${EXTERN}
+			COMMAND ./b2 --with-test toolset=${BOOST_TOOLSET} threading=multi link=static ${BOOST_STATIC_RUNTIME} variant=release ${BOOST_MSVC_SHARED} ${BOOST_64BIT_FLAGS} --layout=tagged --build-dir=<BINARY_DIR> --stagedir=${EXTERN}
 			WORKING_DIRECTORY <SOURCE_DIR>
 		)
 
