@@ -16,20 +16,20 @@ else() # Local build, only static
 			ActivePerl_CurrentVersion
 			"[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActivePerl;CurrentVersion]"
 			NAME)
-		set(ST_PERL_PATH ${ST_PERL_PATH}
+		set(ST_PERL_PATH
+			${ST_PERL_PATH}
 			"C:/Perl/bin"
 			"C:/Strawberry/perl/bin"
 			[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActivePerl\\${ActivePerl_CurrentVersion}]/bin
 		)
 		
-		# Append custom perl
-		list(APPEND ST_PERL_PATH "d:/devel/perl-5.32p/perl/bin/")
-		list(APPEND ST_PERL_PATH "d:/devel/perl5.38/perl/bin/")
-		
 		find_program(PERL_EXECUTABLE
 			NAMES perl
 			PATHS ${ST_PERL_PATH}
+			REQUIRED
 		)
+	else()
+		set(PERL_EXECUTABLE perl)
 	endif()
 	
 	

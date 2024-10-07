@@ -24,6 +24,7 @@ The following options can be turned on the command line with `-D[OPTION]=ON` or 
 
 - `BUILD_SHARED_LIBS` [ON]: If turned off, creates a static build of Scan Tailor PDF. Only Windows in combination with MinGW is currently supported.
 - `BUILD_QT_TOOLS` [OFF]: Build all QT Tools (Assistant, Designer, windeployqt etc.) and not just Linguist, which is required to compile the translations for Scan Tailor PDF.
+- `ST_PERL_PATH` []: Only unsed under Windows with MSVC. Absolute path to where the perl executable is located. If you do not have perl in your `PATH` environment, set this.
 - `BUILD_INSTALLER` [OFF]: Option to build the installer. Only works under Windows.
 - `CMAKE_BUILD_TYPE` [Release]: Set release type. Other options include `MinSizeRel`, `RelWithDebInfo`, and `Debug`. 
 

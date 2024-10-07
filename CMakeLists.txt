@@ -38,10 +38,6 @@ include(cmake/LibToDLL.cmake)
 
 #===================== User cmake options =========================#
 
-# Folder where the perl executable is located.
-# Use this with -DST_PERL_PATH=[perlpath] if you get an error that Perl cannot be found.
-set(ST_PERL_PATH "")
-
 # This will always build the project supplied external dependencies, including QT.
 # Most Find*.cmake modules only find dynamic libraries. So the maintenance effort
 # is too big to find system static libraries across all supported platforms and
@@ -51,6 +47,10 @@ option(BUILD_SHARED_LIBS "Build a shared version of Scan Tailor PDF." ON)
 # We usually only build linguist and windeployqt because we need it for the translations.
 # Turn this on, if you wish to build all qt tools (assistant, designer, etc.).
 option(BUILD_QT_TOOLS "Build and install all QT tools, including assistant, designer, etc.)." OFF)
+
+# Folder where the perl executable is located.
+# Use this with -DST_PERL_PATH=[perlpath] if you get an error that Perl cannot be found.
+set(ST_PERL_PATH)
 
 # Crash reporter, only Windows + MSVC supported for now.
 # Must go before generating config.h, as ENABLE_CRASH_REPORTER
