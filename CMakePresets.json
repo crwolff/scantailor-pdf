@@ -1,0 +1,105 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "ninja",
+		"hidden": true,
+      "generator": "Ninja"
+    },
+	 {
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+	 {
+      "name": "debug",
+		"hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+	 {
+      "name": "static",
+		"hidden": true,
+      "cacheVariables": {
+        "BUILD_SHARED_LIBS": "OFF"
+      }
+    },
+	 {
+      "name": "shared",
+		"hidden": true,
+		"cacheVariables": {
+        "BUILD_SHARED_LIBS": "ON"
+      }
+    },
+	 {
+      "name": "windows",
+		"hidden": true,
+		"condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+	 {
+      "name": "clang64-static-release-ninja",
+		"inherits": ["static", "release", "ninja"],
+      "displayName": "Clang64, static, release, Ninja",
+      "description": "MinGW64 Clang",
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "msvc-static-debug-ninja",
+		"inherits": ["static", "ninja", "debug", "windows"],
+      "displayName": "MSVC x64 Debug using Ninja",
+      "description": "Sets Ninja generator, compilers, x64 architecture, build and install directory, debug build type",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": [ "Windows" ],
+			 "intelliSenseMode": "windows-msvc-x64"
+        }
+      }
+    },
+    {
+      "name": "msvc-static-multi-ninja",
+      "inherits": ["static"],
+      "displayName": "Ninja Multi-Config",
+      "description": "Default build using Ninja Multi-Config generator",
+      "generator": "Ninja Multi-Config",
+		"binaryDir": "${sourceDir}/build/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "msvc-static-release",
+		"displayName" : "MSVC release",
+      "configurePreset": "msvc-static-multi-ninja",
+		"configuration": "Release"
+    },
+	 {
+      "name": "msvc-static-debug",
+		"displayName" : "MSVC debug",
+      "configurePreset": "msvc-static-multi-ninja",
+		"configuration": "Debug"
+    }
+  ]
+}

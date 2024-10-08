@@ -19,6 +19,7 @@ resources/resources.qrc.depends
 spfit_tests
 update_translations_crashreporter.pro
 update_translations_scantailor.pro
+CMakeUserPresets.json
 
 # The finished program
 scantailor
