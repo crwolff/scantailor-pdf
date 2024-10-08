@@ -95,7 +95,7 @@ set(pdf_sources
 	PdfReader.cpp PdfReader.h
 	)
 add_library(stpdf STATIC ${pdf_sources})
-target_link_libraries(stpdf Qt5::Core Qt5::Widgets)
+target_link_libraries(stpdf Qt5::Core Qt5::Widgets ${LIB_PODOFO})
 target_compile_features(stpdf PUBLIC cxx_std_17)
 
 add_library(stcore STATIC ${common_sources} ${common_ui_sources})
