@@ -49,7 +49,7 @@ void
 RotationParams::setCompensationAngleDeg(double angle_deg)
 {
 
-	if (isfinite(angle_deg))
+	if (std::isfinite(angle_deg))
 	{
 		m_compensationAngleDeg = angle_deg;
 		m_isValid = true;
