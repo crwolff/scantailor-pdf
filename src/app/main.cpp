@@ -23,7 +23,7 @@
 #include "TiffMetadataLoader.h"
 #include "JpegMetadataLoader.h"
 #include "JP2MetadataLoader.h"
-#include "PdfMetadataLoader.h"
+#include "pdf/PdfMetadataLoader.h"
 #include <boost/range/adaptor/reversed.hpp>
 #include <QMetaType>
 #include <QtPlugin>

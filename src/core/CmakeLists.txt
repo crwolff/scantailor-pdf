@@ -89,10 +89,10 @@ set(
 	${common_ui_files}
 )
 
-#PoDoFo requires some C++17 standards
+# PoDoFo requires some C++17 standards, so create a new target
 set(pdf_sources
-	PdfMetadataLoader.cpp PdfMetadataLoader.h
-	PdfReader.cpp PdfReader.h
+	pdf/PdfMetadataLoader.cpp pdf/PdfMetadataLoader.h
+	pdf/PdfReader.cpp pdf/PdfReader.h
 	)
 add_library(stpdf STATIC ${pdf_sources})
 target_link_libraries(stpdf Qt5::Core Qt5::Widgets ${LIB_PODOFO})

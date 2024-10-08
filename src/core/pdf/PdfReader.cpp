@@ -17,8 +17,8 @@
 */
 
 #include "PdfReader.h"
-#include "ImageMetadata.h"
-#include "ImageLoader.h"
+#include "../ImageMetadata.h"
+#include "../ImageLoader.h"
 #include <QIODevice>
 #include <QImage>
 #include <QFile>

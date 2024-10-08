@@ -19,7 +19,7 @@
 #include "ImageLoader.h"
 #include "TiffReader.h"
 #include "JP2Reader.h"
-#include "PdfReader.h"
+#include "pdf/PdfReader.h"
 #include "ImageId.h"
 #include <QImage>
 #include <QImageReader>
