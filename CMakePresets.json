@@ -8,59 +8,73 @@
   "configurePresets": [
     {
       "name": "ninja",
-		"hidden": true,
+      "hidden": true,
       "generator": "Ninja"
     },
-	 {
+    {
       "name": "release",
       "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
-	 {
+    {
       "name": "debug",
-		"hidden": true,
+      "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
-	 {
+    {
       "name": "static",
-		"hidden": true,
+      "hidden": true,
       "cacheVariables": {
         "BUILD_SHARED_LIBS": "OFF"
       }
     },
-	 {
+    {
       "name": "shared",
-		"hidden": true,
-		"cacheVariables": {
+      "hidden": true,
+      "cacheVariables": {
         "BUILD_SHARED_LIBS": "ON"
       }
     },
-	 {
+    {
       "name": "windows",
-		"hidden": true,
-		"condition": {
+      "hidden": true,
+      "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       }
     },
-	 {
-      "name": "clang64-static-release-ninja",
-		"inherits": ["static", "release", "ninja"],
-      "displayName": "Clang64, static, release, Ninja",
-      "description": "MinGW64 Clang",
+    {
+      "name": "static-release",
+      "inherits": ["static", "release"],
+      "displayName": "Static, release",
+      "description": "Static, release config using the default build environment",
       "binaryDir": "${sourceDir}/build/${presetName}"
     },
     {
-      "name": "msvc-static-debug-ninja",
-		"inherits": ["static", "ninja", "debug", "windows"],
+      "name": "shared-release",
+      "inherits": ["shared", "release"],
+      "displayName": "Shared, release",
+      "description": "Shared, release config using the default build environment",
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "shared-debug",
+      "inherits": ["shared", "debug"],
+      "displayName": "Shared, debug",
+      "description": "Shared, debug config using the default build environment",
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "msvc-shared-debug-ninja",
+      "inherits": ["shared", "ninja", "debug", "windows"],
       "displayName": "MSVC x64 Debug using Ninja",
       "description": "Sets Ninja generator, compilers, x64 architecture, build and install directory, debug build type",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "binaryDir": "${sourceDir}/build/msvc/shared/debug",
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -78,10 +92,22 @@
     {
       "name": "msvc-static-multi-ninja",
       "inherits": ["static"],
-      "displayName": "Ninja Multi-Config",
-      "description": "Default build using Ninja Multi-Config generator",
+      "displayName": "MSVC static Ninja Multi-Config",
+      "description": "MSVC shared Ninja using Multi-Config generator",
       "generator": "Ninja Multi-Config",
-		"binaryDir": "${sourceDir}/build/${presetName}",
+      "binaryDir": "${sourceDir}/build/msvc-multi/static",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      }
+    },
+    {
+      "name": "msvc-shared-multi-ninja",
+      "inherits": ["shared"],
+      "displayName": "MSVC shared Ninja Multi-Config",
+      "description": "MSVC shated Ninja using Multi-Config generator",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/msvc-multi/shared",
       "architecture": {
         "value": "x64",
         "strategy": "external"
@@ -91,15 +117,27 @@
   "buildPresets": [
     {
       "name": "msvc-static-release",
-		"displayName" : "MSVC release",
+      "displayName" : "Release",
       "configurePreset": "msvc-static-multi-ninja",
-		"configuration": "Release"
+      "configuration": "Release"
     },
-	 {
+    {
       "name": "msvc-static-debug",
-		"displayName" : "MSVC debug",
+      "displayName" : "Debug",
       "configurePreset": "msvc-static-multi-ninja",
-		"configuration": "Debug"
+      "configuration": "Debug"
+    },
+    {
+      "name": "msvc-shared-release",
+      "displayName" : "Release",
+      "configurePreset": "msvc-shared-multi-ninja",
+      "configuration": "Release"
+    },
+    {
+      "name": "msvc-shared-debug",
+      "displayName" : "Debug",
+      "configurePreset": "msvc-shared-multi-ninja",
+      "configuration": "Debug"
     }
   ]
 }
