@@ -96,13 +96,13 @@ else() # Local build, only static
 		set(ST_SSL_STATIC "libssl.a")					#checked
 		set(ST_SSL_IMPLIB "libssl.dll.a")			#checked
 		set(ST_SSL_SHARED "libssl-3-x64.dll")		#checked
-		set(ST_CRYP_STATIC "libcrypto.lib")			#checked
+		set(ST_CRYP_STATIC "libcrypto.a")			#checked
 		set(ST_CRYP_IMPLIB "libcrypto.dll.a")		#checked
 		set(ST_CRYP_SHARED "libcrypto-3-x64.dll")	#checked
 	elseif(APPLE)
 		set(ST_SSL_STATIC "libssl.a")
 		set(ST_SSL_SHARED "libssl.dylib")
-		set(ST_CRYP_STATIC "libcrypto.lib")
+		set(ST_CRYP_STATIC "libcrypto.a")
 		set(ST_CRYP_SHARED "libcrypto.dylib")
 	else()
 		set(ST_SSL_STATIC "libssl.a")
