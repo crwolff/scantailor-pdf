@@ -20,7 +20,6 @@ else() # Local build
 		endif()
 		# For a static build, we have to add more dependencies manually
 		if(NOT BUILD_SHARED_LIBS AND MINGW)
-			target_link_libraries(Qt5::Gui INTERFACE ${LIB_PNG} "${EXTERN}/lib/libqtharfbuzz.a")
 			target_link_libraries(Qt5::Core INTERFACE "${EXTERN}/lib/libqtpcre2.a")
 		endif()
 		# Now, use the QT5::* targets.
@@ -36,11 +35,11 @@ else() # Local build
 		# Depending on the environment and config, we need to set certain qt5 config options
 		set(QT5_EXTRA_OPTS)
 		
-		# if (NOT BUILD_SHARED_LIBS AND MINGW)
-			# # -static-runtime is only valid for Windows, but we don't want it for MSVC
-			# # because starting with Win 10, the runtimes are included.
-			# set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -static -static-runtime)
-		if(NOT BUILD_SHARED_LIBS)
+		if (NOT BUILD_SHARED_LIBS AND MINGW)
+			# -static-runtime is only valid for Windows, but we don't want it for MSVC
+			# because starting with Win 10, the runtimes are included.
+			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -static -static-runtime)
+		elseif(NOT BUILD_SHARED_LIBS)
 			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -static)
 		endif()
 
@@ -100,11 +99,6 @@ else() # Local build
 					set(QT5_MAKE ${JOM})
 				endif()
 			endif()
-			
-			if(BUILD_SHARED_LIBS)
-				# Workaround bug https://bugreports.qt.io/browse/QTBUG-110066
-				# set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -no-feature-vkgen)
-			endif()
 		endif()
 		
 		if(NOT QT5_PLATFORM)
@@ -121,13 +115,26 @@ else() # Local build
 			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			# Qt bug with MinGW: https://bugreports.qt.io/browse/QTBUG-94031
 			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/corelib/io/qfilesystemengine_win.cpp <SOURCE_DIR>/src/corelib/io/qfilesystemengine_win.cpp
-			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-openssl -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${QT5_EXTRA_OPTS} -I ${EXTERN_INC_DIR} -L ${EXTERN_LIB_DIR}
+			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-libmd4c -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-harfbuzz -no-openssl -no-vulkan -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${QT5_EXTRA_OPTS} -I ${EXTERN_INC_DIR} -L ${EXTERN_LIB_DIR}
 			BUILD_COMMAND ${QT5_MAKE}
 			INSTALL_COMMAND ${QT5_MAKE} install
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
-			DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_FREETYPE}
+			DEPENDS ${LIB_ZLIB} ${LIB_ZSTD} ${LIB_JPEG} ${LIB_PNG} ${LIB_FREETYPE}
 		)
 		
+		# Fix msvc shared build failing on missing zlib and zstd for rcc in build/bin dir
+		if(MSVC AND BUILD_SHARED_LIBS)
+			get_target_property(ZLIB_DLL_LOC ${LIB_ZLIB} IMPORTED_LOCATION_RELEASE)
+			get_target_property(ZSTD_DLL_LOC ${LIB_ZSTD} IMPORTED_LOCATION_RELEASE)
+			ExternalProject_Add_Step(
+				qt5-base-extern post-patch
+				DEPENDEES patch
+				DEPENDERS build
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZLIB_DLL_LOC} <BINARY_DIR>/bin
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZSTD_DLL_LOC} <BINARY_DIR>/bin
+			)
+		endif()
+
 		ExternalProject_Add(
 			qt-tools
 			PREFIX ${EXTERN}
