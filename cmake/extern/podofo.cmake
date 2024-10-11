@@ -39,7 +39,7 @@ else() # Local build
 			-DPODOFO_BUILD_STATIC=${STATIC_BOOL}
 			${DISABLE_FIND_PACKAGE}
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		DEPENDS ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_LZMA}
+		DEPENDS ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_LZMA}
 	)
 
 	
@@ -73,19 +73,35 @@ else() # Local build
 		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
 		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/podofo
 	)
-	target_link_libraries(podofo INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_LZMA})
-
+	target_link_libraries(podofo INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_LZMA})
+	
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(podofo PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_BIN_DIR}/${ST_PODOFO_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PODOFO_IMPLIB}"
-		)
+			)
 	else()
 		set_target_properties(podofo PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_PODOFO_STATIC}"
+		)
+		target_compile_definitions(podofo INTERFACE PODOFO_STATIC)
+		
+		# For static we also need the private lib
+		add_library(podofo-private ${LIB_TYPE} IMPORTED)
+		set_target_properties(podofo-private PROPERTIES
+			IMPORTED_CONFIGURATIONS $<CONFIG>
+			MAP_IMPORTED_CONFIG_DEBUG Release
+			MAP_IMPORTED_CONFIG_MINSIZEREL Release
+			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/podofo
+		)
+		set_target_properties(podofo-private PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_PODOFO_PRIVATE}"
 		)
+		target_link_libraries(podofo-private INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_LZMA})
+		target_compile_definitions(podofo-private INTERFACE PODOFO_STATIC)
+		add_dependencies(podofo-private podofo-extern)
 	endif()
 
 	add_dependencies(podofo podofo-extern)
