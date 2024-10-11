@@ -95,7 +95,7 @@ set(
 	"${CMAKE_SOURCE_DIR}/cmake/default_cxxflags.cmake"
 )
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 ST_SET_DEFAULT_BUILD_TYPE(Release)
 if(CMAKE_COMPILER_IS_GNUCC)
@@ -307,10 +307,6 @@ set(EXTRA_LIBS "")
 if(MINGW AND NOT BUILD_SHARED_LIBS)
 	list(APPEND EXTRA_LIBS winmm imm32 ws2_32 ole32 oleaut32 uuid gdi32 comdlg32 winspool)
 endif()
-
-list(APPEND EXTRA_LIBS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_PNG} ${LIB_TIFF}
-	${LIB_ZSTD} ${LIB_LZMA} ${LIB_OPENJP} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_PODOFO}
-)
 
 set(MAYBE_QT_OPENGL_MODULE "")
 if(ENABLE_OPENGL)
