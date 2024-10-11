@@ -66,6 +66,7 @@ else() # Local build
 		set_target_properties(openjp2 PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_OPENJP_STATIC}"
 		)
+		target_compile_definitions(openjp2 INTERFACE OPJ_STATIC)
 	endif()
 
 	add_dependencies(openjp2 openjp2-extern)
