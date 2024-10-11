@@ -95,7 +95,7 @@ set(pdf_sources
 	pdf/PdfReader.cpp pdf/PdfReader.h
 	)
 add_library(stpdf STATIC ${pdf_sources})
-target_link_libraries(stpdf Qt5::Core Qt5::Widgets ${LIB_PODOFO} ${LIB_PODOFO_PRIV})
+target_link_libraries(stpdf Qt5::Core Qt5::Widgets ${LIB_PODOFO})
 
 add_library(stcore STATIC ${common_sources} ${common_ui_sources})
 target_link_libraries(stcore stpdf acceleration deskew Qt5::Widgets Qt5::Xml ${LIB_OPENJP} ${LIB_TIFF} ${MAYBE_QT_OPENGL_MODULE})

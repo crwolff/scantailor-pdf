@@ -75,13 +75,20 @@ else() # Local build
 	)
 	target_link_libraries(podofo INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_LZMA})
 	
+	if(WIN32)
+		target_link_libraries(podofo INTERFACE kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32 ole32 oleaut32 uuid ws2_32 Crypt32)
+	endif()
+	
+	
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(podofo PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_BIN_DIR}/${ST_PODOFO_SHARED}"
 			# Ignored on non-WIN32 platforms
 			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PODOFO_IMPLIB}"
 			)
-	else()
+
+	else() # Static
+
 		set_target_properties(podofo PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_PODOFO_STATIC}"
 		)
@@ -100,8 +107,14 @@ else() # Local build
 			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_PODOFO_PRIVATE}"
 		)
 		target_link_libraries(podofo-private INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_LZMA})
+		if(WIN32)
+			target_link_libraries(podofo-private INTERFACE kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32 ole32 oleaut32 uuid ws2_32 Crypt32)
+		endif()
+
 		target_compile_definitions(podofo-private INTERFACE PODOFO_STATIC)
+		target_link_libraries(podofo INTERFACE podofo-private)
 		add_dependencies(podofo-private podofo-extern)
+	
 	endif()
 
 	add_dependencies(podofo podofo-extern)

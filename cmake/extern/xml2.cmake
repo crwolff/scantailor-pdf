@@ -70,6 +70,10 @@ else() # Local build
 		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
 		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/libxml2/libxml
 	)
+	
+	if(WIN32)
+		target_link_libraries(xml2 INTERFACE Bcrypt)
+	endif()
 
 	if(BUILD_SHARED_LIBS)
 		set_target_properties(xml2 PROPERTIES
