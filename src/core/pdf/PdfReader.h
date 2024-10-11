@@ -22,7 +22,7 @@
 
 #include "../ImageMetadataLoader.h"
 #include "VirtualFunction.h"
-#include "podofo/podofo.h"
+#include "podofo.h"
 
 #include <unordered_map>
 

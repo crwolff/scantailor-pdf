@@ -28,9 +28,8 @@ ImageMetadataLoader::Status
 PdfReader::readMetadata(QIODevice& device,
 	VirtualFunction1<void, ImageMetadata const&>& out)
 {
-	QByteArray buffer(device.readAll());
 	PdfMemDocument pdfDoc;
-	pdfDoc.Load(buffer.constData());
+	pdfDoc.LoadFromBuffer(device.readAll());
 
 	QSize dimensions(0, 0);
 	qint64 width = 0;
@@ -82,10 +81,8 @@ bool PdfReader::seemsLikePdf(QIODevice & device)
 QImage
 PdfReader::readImage(QIODevice& device, int const page_num)
 {
-	QByteArray buffer(device.readAll());
 	PdfMemDocument pdfDoc;
-	pdfDoc.Load(buffer.constData());
-
+	pdfDoc.LoadFromBuffer(device.readAll());
 	// get page
 	auto& pPage = pdfDoc.GetPages().GetPageAt(page_num);
 
