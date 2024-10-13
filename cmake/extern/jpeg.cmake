@@ -23,6 +23,10 @@ else() # Local build
 			-DENABLE_STATIC=${STATIC_BOOL}
 			-DWITH_TURBOJPEG=OFF
 			-DWITH_JPEG8=ON
+		BUILD_COMMAND
+			${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+		INSTALL_COMMAND
+			${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)
 

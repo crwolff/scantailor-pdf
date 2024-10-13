@@ -31,6 +31,10 @@ else() # Local build
 			-DCMAKE_DISABLE_FIND_PACKAGE_Deflate=TRUE
 			-DCMAKE_DISABLE_FIND_PACKAGE_JBIG=TRUE
 			-DCMAKE_DISABLE_FIND_PACKAGE_LERC=TRUE
+		BUILD_COMMAND
+			${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+		INSTALL_COMMAND
+			${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 		DEPENDS ${LIB_ZLIB} ${LIB_JPEG} ${LIB_ZSTD} ${LIB_LZMA}
 	)

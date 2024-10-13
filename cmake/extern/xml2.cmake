@@ -27,6 +27,10 @@ else() # Local build
 			-DLIBXML2_WITH_PROGRAMS=OFF
 			-DLIBXML2_WITH_PYTHON=OFF
 			-DLIBXML2_WITH_TESTS=OFF
+		BUILD_COMMAND
+			${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+		INSTALL_COMMAND
+			${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)
 

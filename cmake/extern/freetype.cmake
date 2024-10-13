@@ -23,6 +23,10 @@ else() # Local build
 			-DFT_DISABLE_BROTLI=TRUE
 			-DFT_DISABLE_HARFBUZZ=TRUE
 			-DBUILD_SHARED_LIBS=${SHARED_BOOL}
+		BUILD_COMMAND
+			${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+		INSTALL_COMMAND
+			${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 		DEPENDS ${LIB_ZLIB} ${LIB_PNG}
 	)

@@ -38,6 +38,10 @@ else() # Local build
 			-DPODOFO_BUILD_LIB_ONLY=ON
 			-DPODOFO_BUILD_STATIC=${STATIC_BOOL}
 			${DISABLE_FIND_PACKAGE}
+		BUILD_COMMAND
+			${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+		INSTALL_COMMAND
+			${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 		DEPENDS ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_LZMA}
 	)

@@ -20,6 +20,10 @@ else() # Local build
 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
 			-DCMAKE_BUILD_TYPE=Release
+		BUILD_COMMAND
+			${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+		INSTALL_COMMAND
+			${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)	
 	

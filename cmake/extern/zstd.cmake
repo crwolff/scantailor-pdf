@@ -26,6 +26,10 @@ else() # Local build
 			-DZSTD_BUILD_SHARED=${SHARED_BOOL}
 			-DZSTD_BUILD_PROGRAMS=OFF
 			-DZSTD_BUILD_TESTS=OFF
+		BUILD_COMMAND
+			${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+		INSTALL_COMMAND
+			${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
 		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 	)
 
