@@ -76,7 +76,7 @@ else() # Local build
 	)
 	
 	if(WIN32)
-		target_link_libraries(xml2 INTERFACE Bcrypt)
+		target_link_libraries(xml2 INTERFACE Bcrypt ws2_32)
 	endif()
 
 	if(BUILD_SHARED_LIBS)
@@ -88,6 +88,9 @@ else() # Local build
 	else()
 		set_target_properties(xml2 PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_XML2_STATIC}"
+			IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C;RC"
+			INTERFACE_COMPILE_DEFINITIONS "LIBXML_STATIC"
+			RELEASE_POSTFIX s
 		)
 	endif()
 
