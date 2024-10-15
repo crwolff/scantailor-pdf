@@ -8,13 +8,15 @@ if(NOT WIN32 AND BUILD_SHARED_LIBS)
 	list(APPEND ALL_EXTERN_INC_DIRS ${TIFF_INCLUDE_DIRS})
 	
 else() # Local build
-		
+
 	ExternalProject_Add(
 		tiff-extern
 		URL https://download.osgeo.org/libtiff/tiff-4.7.0.tar.xz
 		URL_HASH SHA256=273a0a73b1f0bed640afee4a5df0337357ced5b53d3d5d1c405b936501f71017
 		DOWNLOAD_DIR ${DOWNLOAD_DIR}
 		PREFIX ${EXTERN}
+		# Fix MSVC static linking ot lzma
+		PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/tiff/libtiff/CMakeLists.txt <SOURCE_DIR>/libtiff
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
@@ -49,6 +51,7 @@ else() # Local build
 			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/tiff/TiffTargets.cmake ${EXTERN}/lib/cmake/tiff/TiffTargets.cmake
 		)
 	endif()
+
 
 	# TODO: Filenames for other platforms and dynamic library
 	if(MSVC)
@@ -89,10 +92,12 @@ else() # Local build
 	else()
 		set_target_properties(tiff PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_TIFF_STATIC}"
+			IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C;RC"
 		)
 	endif()
 
 	add_dependencies(tiff tiff-extern)
 	set(LIB_TIFF tiff)
+	add_library(TIFF::TIFF ALIAS tiff)
 
 endif()

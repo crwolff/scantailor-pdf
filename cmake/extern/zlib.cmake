@@ -91,5 +91,6 @@ else() # Local build
 
 	add_dependencies(zlib zlib-extern)
 	set(LIB_ZLIB zlib)
+	add_library(ZLIB::ZLIB ALIAS zlib)
 
 endif()

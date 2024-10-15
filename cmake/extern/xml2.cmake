@@ -10,10 +10,8 @@ if(NOT WIN32 AND BUILD_SHARED_LIBS)
 	
 else() # Local build
 	
-	set(XML2-EXTERN xml2-extern)
-		
 	ExternalProject_Add(
-		${XML2-EXTERN}
+		xml2-extern
 		URL https://download.gnome.org/sources/libxml2/2.13/libxml2-2.13.4.tar.xz
 		URL_HASH SHA256=65d042e1c8010243e617efb02afda20b85c2160acdbfbcb5b26b80cec6515650
 		PREFIX ${EXTERN}
@@ -83,18 +81,17 @@ else() # Local build
 		set_target_properties(xml2 PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_BIN_DIR}/${ST_XML2_SHARED}"
 			# Ignored on non-WIN32 platforms
-			 IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_XML2_IMPLIB}"
+			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_XML2_IMPLIB}"
 		)
 	else()
 		set_target_properties(xml2 PROPERTIES
 			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_XML2_STATIC}"
-			IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C;RC"
 			INTERFACE_COMPILE_DEFINITIONS "LIBXML_STATIC"
-			RELEASE_POSTFIX s
 		)
 	endif()
 
-	add_dependencies(xml2 ${XML2-EXTERN})
+	add_dependencies(xml2 xml2-extern)
 	set(LIB_XML2 xml2)
+	add_library(LibXml2::LibXml2 ALIAS xml2)
 
 endif()

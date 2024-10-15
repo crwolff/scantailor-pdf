@@ -76,5 +76,6 @@ else() # Local build
 	
 	add_dependencies(freetype freetype-extern)
 	set(LIB_FREETYPE freetype)
+	add_library(Freetype::Freetype ALIAS freetype)
 
 endif()

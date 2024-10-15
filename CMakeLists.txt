@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21.0)
+cmake_minimum_required(VERSION 3.24.0)
 
 if(POLICY CMP0003)
 	# Allow linking with full library path instead of -L/path -llibrary
@@ -206,10 +206,6 @@ if(MSVC)
 	set(vcxproj ".vcxproj")
 endif()
 
-# Assume we have all dependencies. If a dependency is not found below,
-# this variable is set to false and cmake won't configure the actual
-# Scan Tailor build.
-set(HAVE_DEPENDENCIES TRUE)
 
 # External library targets
 # The following cmake files will search for and/or download and build
@@ -219,6 +215,10 @@ set(HAVE_DEPENDENCIES TRUE)
 # All downloaded external dependencies are stored in ./extern-src
 set(DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/extern-pkg")
 
+# Assume we have all dependencies. If a dependency is not found below,
+# this variable is set to false and cmake won't configure the actual
+# Scan Tailor build.
+set(HAVE_DEPENDENCIES TRUE)
 
 set(LIB_SSL "")
 set(LIB_CRYP "")
@@ -251,7 +251,6 @@ include(cmake/extern/freetype.cmake)
 set(LIB_XML2 "")
 include(cmake/extern/xml2.cmake)
 
-set(LIB_PODOFO "")
 include(cmake/extern/podofo.cmake)
 
 # OpenCL is currently only supported on Windows with MSVC or MinGW

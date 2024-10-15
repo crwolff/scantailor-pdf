@@ -17,111 +17,64 @@ if(NOT WIN32 AND BUILD_SHARED_LIBS)
 	set(LIB_PODOFO podofo)
 	
 else() # Local build
-	
-	set(DISABLE_FIND_PACKAGE)
-	if(WIN32)
-		set(DISABLE_FIND_PACKAGE -DCMAKE_DISABLE_FIND_PACKAGE_Libidn=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Fontconfig=TRUE)
-	else()
-		set(DISABLE_FIND_PACKAGE -DCMAKE_DISABLE_FIND_PACKAGE_Libidn=TRUE)
-	endif()
 
-	ExternalProject_Add(
-		podofo-extern
-		PREFIX ${EXTERN}
-		URL https://github.com/podofo/podofo/archive/refs/tags/0.10.4.tar.gz
-		URL_HASH SHA256=6b1b13cdfb2ba5e8bbc549df507023dd4873bc946211bc6942183b8496986904
-		DOWNLOAD_DIR ${DOWNLOAD_DIR}
-		CMAKE_ARGS
-			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
-			-DCMAKE_BUILD_TYPE=Release
-			-DPODOFO_BUILD_LIB_ONLY=ON
-			-DPODOFO_BUILD_STATIC=${STATIC_BOOL}
-			${DISABLE_FIND_PACKAGE}
-		BUILD_COMMAND
-			${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
-		INSTALL_COMMAND
-			${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
-		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-		DEPENDS ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_LZMA}
+	# Check if we built the package already
+	find_package(podofo
+		NO_MODULE				# Don't use installed modules for the search
+		NO_DEFAULT_PATH		# Only search in ${EXTERN}
+		HINTS ${EXTERN}
+		PATH_SUFFIXES lib share
+		QUIET
 	)
 
-	
-	# TODO: Check that these filenames are correct.
-	if(MSVC)
-		set(ST_PODOFO_STATIC "podofo.lib")				#checked
-		set(ST_PODOFO_PRIVATE "podofo_private.lib")	#checked
-		set(ST_PODOFO_IMPLIB "podofo.lib")				#checked
-		set(ST_PODOFO_SHARED "podofo.dll")				#checked
-	elseif(MINGW)
-		set(ST_PODOFO_STATIC "libpodofo.a")				#checked
-		set(ST_PODOFO_PRIVATE "libpodofo_private.a")	#checked
-		set(ST_PODOFO_IMPLIB "libpodofo.dll.a")
-		set(ST_PODOFO_SHARED "libpodofo.dll")
-	elseif(APPLE)
-		set(ST_PODOFO_STATIC "libpodofo.a")
-		set(ST_PODOFO_SHARED "libpodofo.dylib")
-	else() # *nix and the rest
-		set(ST_PODOFO_STATIC "libpodofo.a")
-		set(ST_PODOFO_SHARED "libpodofo.so")
-	endif()
-	
-	
-	# We can't use the external target directly (utility target), so 
-	# create a new target and depend it on the external target.
-	add_library(podofo ${LIB_TYPE} IMPORTED)
-	set_target_properties(podofo PROPERTIES
-		IMPORTED_CONFIGURATIONS $<CONFIG>
-		MAP_IMPORTED_CONFIG_DEBUG Release
-		MAP_IMPORTED_CONFIG_MINSIZEREL Release
-		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/podofo
-	)
-	target_link_libraries(podofo INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_LZMA})
-	
-	if(WIN32)
-		target_link_libraries(podofo INTERFACE kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32 ole32 oleaut32 uuid ws2_32 Crypt32)
-	endif()
-	
-	
-	if(BUILD_SHARED_LIBS)
-		set_target_properties(podofo PROPERTIES
-			IMPORTED_LOCATION_RELEASE "${EXTERN_BIN_DIR}/${ST_PODOFO_SHARED}"
-			# Ignored on non-WIN32 platforms
-			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_PODOFO_IMPLIB}"
-			)
-
-	else() # Static
-
-		set_target_properties(podofo PROPERTIES
-			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_PODOFO_STATIC}"
-		)
-		target_compile_definitions(podofo INTERFACE PODOFO_STATIC)
+	if(podofo_FOUND)
 		
-		# For static we also need the private lib
-		add_library(podofo-private ${LIB_TYPE} IMPORTED)
-		set_target_properties(podofo-private PROPERTIES
-			IMPORTED_CONFIGURATIONS $<CONFIG>
-			MAP_IMPORTED_CONFIG_DEBUG Release
-			MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-			INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/podofo
-		)
-		set_target_properties(podofo-private PROPERTIES
-			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_PODOFO_PRIVATE}"
-		)
-		target_link_libraries(podofo-private INTERFACE ${LIB_ZLIB} ${LIB_PNG} ${LIB_TIFF} ${LIB_FREETYPE} ${LIB_XML2} ${LIB_SSL} ${LIB_CRYP} ${LIB_LZMA})
+		if(BUILD_SHARED_LIBS)
+			add_library(podofo ALIAS podofo::podofo)
+		else()
+			add_library(podofo ALIAS podofo_static)
+			target_link_libraries(podofo_static INTERFACE OpenSSL::Crypto)
+			set_target_properties(podofo_static podofo_private PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/podofo
+				INTERFACE_COMPILE_DEFINITIONS "PODOFO_STATIC"
+			)
+		endif()
+		message(STATUS "Found PoDoFo in ${podofo_DIR}")
+
+
+	else() # PoDoFo has not been built yet. Configure for build.
+	
+		set(HAVE_DEPENDENCIES FALSE)
+
+		set(DISABLE_FIND_PACKAGE)
 		if(WIN32)
-			target_link_libraries(podofo-private INTERFACE kernel32 user32 gdi32 winspool comdlg32 advapi32 shell32 ole32 oleaut32 uuid ws2_32 Crypt32)
+			set(DISABLE_FIND_PACKAGE -DCMAKE_DISABLE_FIND_PACKAGE_Libidn=TRUE -DCMAKE_DISABLE_FIND_PACKAGE_Fontconfig=TRUE)
+		else()
+			set(DISABLE_FIND_PACKAGE -DCMAKE_DISABLE_FIND_PACKAGE_Libidn=TRUE)
 		endif()
 
-		target_compile_definitions(podofo-private INTERFACE PODOFO_STATIC)
-		target_link_libraries(podofo INTERFACE podofo-private)
-		add_dependencies(podofo-private podofo-extern)
-	
+		ExternalProject_Add(
+			podofo-extern
+			PREFIX ${EXTERN}
+			URL https://github.com/podofo/podofo/archive/refs/tags/0.10.4.tar.gz
+			URL_HASH SHA256=6b1b13cdfb2ba5e8bbc549df507023dd4873bc946211bc6942183b8496986904
+			DOWNLOAD_DIR ${DOWNLOAD_DIR}
+			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/podofo/CMakeLists.txt <SOURCE_DIR>
+			CMAKE_ARGS
+				-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+				-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
+				-DCMAKE_BUILD_TYPE=Release
+				-DPODOFO_BUILD_LIB_ONLY=ON
+				-DPODOFO_BUILD_STATIC=${STATIC_BOOL}
+				${DISABLE_FIND_PACKAGE}
+				-DCOMPILE_DEFINITIONS=LIBXML_STATIC
+			BUILD_COMMAND
+				${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+			INSTALL_COMMAND
+				${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
+			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
+			DEPENDS zlib_extern png-extern tiff-extern freetype-extern xml2-extern lzma-extern openssl-extern
+		)
+
 	endif()
-
-	add_dependencies(podofo podofo-extern)
-	set(LIB_PODOFO podofo)
-
 endif()

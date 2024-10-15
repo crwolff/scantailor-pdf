@@ -150,5 +150,7 @@ else() # Local build, only static
 	
 	set(LIB_SSL openssl)
 	set(LIB_CRYP crypto)
-
+	add_library(OpenSSL::SSL ALIAS openssl)
+	add_library(OpenSSL::Crypto ALIAS crypto)
+	
 endif()

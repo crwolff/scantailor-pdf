@@ -84,5 +84,6 @@ else() # Local build
 
 	add_dependencies(jpeg jpeg-extern)
 	set(LIB_JPEG jpeg)
+	add_library(JPEG::JPEG ALIAS jpeg)
 
 endif()

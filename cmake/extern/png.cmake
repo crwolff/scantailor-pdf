@@ -87,5 +87,6 @@ else() # Local build
 
 	add_dependencies(png png-extern)
 	set(LIB_PNG png)
+	add_library(PNG::PNG ALIAS png)
 
 endif()
