@@ -10,25 +10,31 @@ if(NOT WIN32 AND BUILD_SHARED_LIBS)
 	# Now, use the QT5::* targets.
 	
 else() # Local build
-			
-	if(EXISTS ${EXTERN}/lib/cmake/Qt5LinguistTools)
-		# Tell find_package() where to find Qt5
-		set(Qt5_DIR "${EXTERN}") #/src/qt5-base-extern-build/lib/cmake/Qt5")
-		find_package(Qt5 COMPONENTS Core Gui Widgets Xml Network LinguistTools REQUIRED)
-		if(ENABLE_OPENGL)
-			find_package(Qt5 COMPONENTS OpenGL REQUIRED)
-		endif()
+
+	if(ENABLE_OPENGL)
+		set(ST_Qt5_OPENGL OpenGL)
+	endif()
+
+	find_package(Qt5 COMPONENTS Core Gui Widgets Xml Network ${ST_Qt5_OPENGL} LinguistTools
+		NO_MODULE				# Don't use installed modules for the search
+		NO_DEFAULT_PATH		# Only search in ${EXTERN}
+		HINTS ${EXTERN}
+		QUIET
+	)
+	
+	if(Qt5_FOUND)
+		
 		# For a static build, we have to add more dependencies manually
 		if(NOT BUILD_SHARED_LIBS AND MINGW)
 			target_link_libraries(Qt5::Core INTERFACE "${EXTERN}/lib/libqtpcre2.a")
 		endif()
 		# Now, use the QT5::* targets.
+
+		message(STATUS "Found Qt5 in ${Qt5_DIR}")
+		# Needed for dependency satisfaction after external project has been built
+		add_custom_target(qt5-base-extern DEPENDS Qt5::Core Qt5::Widgets Qt5::GUI Qt5::XML Qt5::Network)
 		
 	else() # Qt5 has not been built yet. Configure for build.
-		
-		message(STATUS "Qt5 has not been fully built yet. "
-							"After the first build without errors, just rerun the cmake configuration "
-							"and generation steps and it should find Qt5 and build fine.")
 		
 		set(HAVE_DEPENDENCIES FALSE)
 		
@@ -120,13 +126,13 @@ else() # Local build
 			BUILD_COMMAND ${QT5_MAKE}
 			INSTALL_COMMAND ${QT5_MAKE} install
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
-			DEPENDS ${LIB_ZLIB} ${LIB_ZSTD} ${LIB_JPEG} ${LIB_PNG} ${LIB_FREETYPE}
+			DEPENDS zlib-extern zstd-extern jpeg-extern png-extern freetype-extern
 		)
 		
 		# Fix msvc shared build failing on missing zlib and zstd for rcc in build/bin dir
 		if(MSVC AND BUILD_SHARED_LIBS)
-			get_target_property(ZLIB_DLL_LOC ${LIB_ZLIB} IMPORTED_LOCATION_RELEASE)
-			get_target_property(ZSTD_DLL_LOC ${LIB_ZSTD} IMPORTED_LOCATION_RELEASE)
+			get_target_property(ZLIB_DLL_LOC ZLIB::ZLIB IMPORTED_LOCATION_RELEASE)
+			get_target_property(ZSTD_DLL_LOC ZLIB::ZLIB IMPORTED_LOCATION_RELEASE)
 			ExternalProject_Add_Step(
 				qt5-base-extern post-patch
 				DEPENDEES patch
@@ -209,15 +215,5 @@ else() # Local build
 			)
 		endif()
 		
-		## Print a message after Qt build to remind to run cmake again
-		add_custom_command(
-			TARGET qt-tools POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan
-			" "
-			"All dependencies have been built."
-			"Please re-run cmake."
-			" "
-		)
 	endif()
-
 endif()

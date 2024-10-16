@@ -198,15 +198,6 @@ set(EXTERN_PATCH_DIR ${CMAKE_SOURCE_DIR}/extern-patches)
 # List of include directories for all external libraries
 list(APPEND ALL_EXTERN_INC_DIRS ${EXTERN_INC_DIR})
 
-# ExternalProjects with a build command need to append the .vcxproj to the target
-# so they can be build with msbuild. Define it here and use in the extern cmake files.
-# The variable is empty for non MSVC builds.
-set(vcxproj "")
-if(MSVC)
-	set(vcxproj ".vcxproj")
-endif()
-
-
 # External library targets
 # The following cmake files will search for and/or download and build
 # all external dependencies. They set all LIB_* variables and add all
@@ -220,38 +211,18 @@ set(DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/extern-pkg")
 # Scan Tailor build.
 set(HAVE_DEPENDENCIES TRUE)
 
-set(LIB_SSL "")
-set(LIB_CRYP "")
 include(cmake/extern/openssl.cmake)
-
-set(LIB_ZLIB "")
-include(cmake/extern/zlib.cmake)
-
-set(LIB_JPEG "")
-include(cmake/extern/jpeg.cmake)
-
-set(LIB_PNG "")
-include(cmake/extern/png.cmake)
-
-set(LIB_LZMA "")
 include(cmake/extern/lzma.cmake)
-
-set(LIB_ZSTD "")
+include(cmake/extern/zlib.cmake)
 include(cmake/extern/zstd.cmake)
-
-set(LIB_TIFF "")
-include(cmake/extern/tiff.cmake)
-
-set(LIB_OPENJP "")
-include(cmake/extern/openjp.cmake)
-
-set(LIB_FREETYPE "")
-include(cmake/extern/freetype.cmake)
-
-set(LIB_XML2 "")
+include(cmake/extern/jpeg.cmake)
 include(cmake/extern/xml2.cmake)
-
+include(cmake/extern/openjp.cmake)
+include(cmake/extern/png.cmake)
+include(cmake/extern/tiff.cmake)
+include(cmake/extern/freetype.cmake)
 include(cmake/extern/podofo.cmake)
+include(cmake/extern/boost.cmake)
 
 # OpenCL is currently only supported on Windows with MSVC or MinGW
 # For MSVC, you need to have an opencl SDK installed.
@@ -272,9 +243,6 @@ cmake_dependent_option(
 	ENABLE_OPENGL "OpenGL may be used for UI acceleration" ON
 	"OPENGL_FOUND" OFF
 )
-
-set(LIB_BOOST "")
-include(cmake/extern/boost.cmake)
 
 set(CMAKE_AUTOMOC ON)
 set(qt_min_version 5.3)
@@ -318,8 +286,13 @@ endif()
 #========================== Scantailor ============================#
 #==================================================================#
 
-if(HAVE_DEPENDENCIES) # Check that we have found/built Qt5 and boost.
-# We have to do this because we might have to build Qt5 on first cmake run.
+if(NOT HAVE_DEPENDENCIES) # Check that we have found all external dependencies.
+
+message(STATUS "Not all dependencies have been found/built yet. "
+					"Plase fix any cmake/build errors and rerun cmake/build.")
+
+else()
+# We have all dependencies
 
 # Prepare config.h
 if(WIN32)
@@ -396,4 +369,4 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 	add_subdirectory(src/packaging/windows)
 endif(WIN32 AND BUILD_SHARED_LIBS)
 
-endif(HAVE_DEPENDENCIES)
+endif(NOT HAVE_DEPENDENCIES)

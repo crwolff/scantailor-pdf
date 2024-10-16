@@ -3,18 +3,8 @@
 
 if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
-	# There is no FindPoDoFo module, so we need to do it manually
-	find_path(PODOFO_INCLUDE_DIR podofo/podofo.h)
-	find_library(PODOFO_LIBRARY NAMES podofo)
-	
-	if (NOT PODOFO_INCLUDE_DIR AND NOT PODOFO_LIBRARY)
-		message(FATAL_ERROR "Could not find PoDoFo library. Make sure it is installed. You may also set PODOFO_ROOT or CMAKE_PREFIX_PATH to point to the library location.")
-	endif()
-	
-	add_library(podofo SHARED IMPORTED)
-	set_property(TARGET podofo PROPERTY IMPORTED_LOCATION "${PODOFO_LIBRARY}")
-	list(APPEND ALL_EXTERN_INC_DIRS ${PODOFO_INCLUDE_DIR})
-	set(LIB_PODOFO podofo)
+	find_package(podofo REQUIRED)
+	add_library(podofo ALIAS podofo_shared)
 	
 else() # Local build
 
@@ -30,16 +20,20 @@ else() # Local build
 	if(podofo_FOUND)
 		
 		if(BUILD_SHARED_LIBS)
-			add_library(podofo ALIAS podofo::podofo)
+			add_library(podofo ALIAS podofo_shared)
 		else()
 			add_library(podofo ALIAS podofo_static)
-			target_link_libraries(podofo_static INTERFACE OpenSSL::Crypto)
 			set_target_properties(podofo_static podofo_private PROPERTIES
 				INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}/podofo
-				INTERFACE_COMPILE_DEFINITIONS "PODOFO_STATIC"
+				INTERFACE_COMPILE_DEFINITIONS PODOFO_STATIC
 			)
 		endif()
+		# Fix podofo not linking against OpenSSL::Crypto
+		target_link_libraries(podofo_static INTERFACE OpenSSL::Crypto)
+	
 		message(STATUS "Found PoDoFo in ${podofo_DIR}")
+		# Needed for dependency satisfaction after external project has been built
+		add_custom_target(podofo-extern DEPENDS podofo)
 
 
 	else() # PoDoFo has not been built yet. Configure for build.
@@ -68,12 +62,13 @@ else() # Local build
 				-DPODOFO_BUILD_STATIC=${STATIC_BOOL}
 				${DISABLE_FIND_PACKAGE}
 				-DCOMPILE_DEFINITIONS=LIBXML_STATIC
+				-DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
 			BUILD_COMMAND
 				${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
 			INSTALL_COMMAND
 				${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
 			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-			DEPENDS zlib_extern png-extern tiff-extern freetype-extern xml2-extern lzma-extern openssl-extern
+			DEPENDS zlib-extern png-extern tiff-extern freetype-extern xml2-extern lzma-extern openssl-extern
 		)
 
 	endif()

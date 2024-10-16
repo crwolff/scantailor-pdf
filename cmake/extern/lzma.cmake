@@ -5,78 +5,55 @@ if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(LibLZMA)		# This only finds shared libs
 	if(LIBLZMA_FOUND)
-		set(LIB_LZMA LibLZMA::LibLZMA)
-		list(APPEND ALL_EXTERN_INC_DIRS ${LIBLZMA_INCLUDE_DIRS})
+		# list(APPEND ALL_EXTERN_INC_DIRS ${LIBLZMA_INCLUDE_DIRS})
 	endif()
 	
 else() # Local build
 	
-	set(LZMA-EXTERN lzma-extern)
-	
-	ExternalProject_Add(
-		${LZMA-EXTERN}
-		URL https://github.com/tukaani-project/xz/releases/download/v5.6.2/xz-5.6.2.tar.xz
-		URL_HASH SHA256=a9db3bb3d64e248a0fae963f8fb6ba851a26ba1822e504dc0efd18a80c626caf
-		DOWNLOAD_DIR ${DOWNLOAD_DIR}
-		PREFIX ${EXTERN}
-		CMAKE_ARGS
-			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-			-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
-			-DCMAKE_BUILD_TYPE=Release
-			-DENABLE_NLS=OFF
-			-DBUILD_SHARED_LIBS=${SHARED_BOOL}
-		BUILD_COMMAND
-			${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
-		INSTALL_COMMAND
-			${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
-		UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
-	)
-	
-	
-	# TODO: Check that these filenames are correct.
-	if(MSVC)
-		set(ST_LZMA_STATIC "liblzma.lib")	#checked
-		set(ST_LZMA_IMPLIB "liblzma.lib")	#checked
-		set(ST_LZMA_SHARED "liblzma.dll")	#checked
-	elseif(MINGW)
-		set(ST_LZMA_STATIC "liblzma.a")			#checked
-		set(ST_LZMA_IMPLIB "liblzma.dll.a")	#checked
-		set(ST_LZMA_SHARED "liblzma.dll")		#checked
-	elseif(APPLE)
-		set(ST_LZMA_STATIC "liblzma.a")
-		set(ST_LZMA_SHARED "liblzma.dylib")
-	else() # *nix and the rest
-		set(ST_LZMA_STATIC "liblzma.a")
-		set(ST_LZMA_SHARED "liblzma.so")
-	endif()
-	
-	
-	# We can't use the external target directly (utility target), so 
-	# create a new target and depend it on the external target.
-	add_library(lzma ${LIB_TYPE} IMPORTED)
-	set_target_properties(lzma PROPERTIES
-		IMPORTED_CONFIGURATIONS $<CONFIG>
-		MAP_IMPORTED_CONFIG_DEBUG Release
-		MAP_IMPORTED_CONFIG_MINSIZEREL Release
-		MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-		INTERFACE_INCLUDE_DIRECTORIES ${EXTERN_INC_DIR}
+	# Check if we built the package already
+	find_package(LibLZMA
+		NO_MODULE				# Don't use installed modules for the search
+		NO_DEFAULT_PATH		# Only search in ${EXTERN}
+		HINTS ${EXTERN}
+		QUIET
 	)
 
-	if(BUILD_SHARED_LIBS)
-		set_target_properties(lzma PROPERTIES
-			IMPORTED_LOCATION_RELEASE "${EXTERN_BIN_DIR}/${ST_LZMA_SHARED}"
-			# Ignored on non-WIN32 platforms
-			IMPORTED_IMPLIB "${EXTERN_LIB_DIR}/${ST_LZMA_IMPLIB}"
+	if(LibLZMA_FOUND)
+
+		# Use target liblzma::liblzma
+		# Fix static linking definition
+		if(NOT BUILD_SHARED_LIBS)
+		 	set_target_properties(liblzma::liblzma PROPERTIES
+		 		INTERFACE_COMPILE_DEFINITIONS LZMA_API_STATIC
+			)
+		endif()
+
+		message(STATUS "Found LibLZMA in ${LibLZMA_DIR}")
+		# Needed for dependency satisfaction after external project has been built
+		add_custom_target(lzma-extern DEPENDS liblzma::liblzma)
+
+	else()	# LibLZMA has not been built yet. Configure for build.
+	
+		set(HAVE_DEPENDENCIES FALSE)
+		
+		ExternalProject_Add(
+			lzma-extern
+			URL https://github.com/tukaani-project/xz/releases/download/v5.6.2/xz-5.6.2.tar.xz
+			URL_HASH SHA256=a9db3bb3d64e248a0fae963f8fb6ba851a26ba1822e504dc0efd18a80c626caf
+			DOWNLOAD_DIR ${DOWNLOAD_DIR}
+			PREFIX ${EXTERN}
+			CMAKE_ARGS
+				-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+				-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
+				-DCMAKE_BUILD_TYPE=Release
+				-DENABLE_NLS=OFF
+				-DBUILD_SHARED_LIBS=${SHARED_BOOL}
+			BUILD_COMMAND
+				${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+			INSTALL_COMMAND
+				${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
+			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 		)
-	else()
-		set_target_properties(lzma PROPERTIES
-			IMPORTED_LOCATION_RELEASE "${EXTERN_LIB_DIR}/${ST_LZMA_STATIC}"
-			IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C"
-			INTERFACE_COMPILE_DEFINITIONS "LZMA_API_STATIC"
-		)
+	
 	endif()
-
-	add_dependencies(lzma ${LZMA-EXTERN})
-	set(LIB_LZMA lzma)
-
 endif()

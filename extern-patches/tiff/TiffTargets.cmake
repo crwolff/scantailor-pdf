@@ -60,7 +60,7 @@ add_library(TIFF::tiff STATIC IMPORTED)
 
 set_target_properties(TIFF::tiff PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "\$<LINK_ONLY:zlib>;\$<LINK_ONLY:jpeg>;\$<LINK_ONLY:lzma>;\$<LINK_ONLY:zstd>"#;\$<LINK_ONLY:CMath::CMath>
+  # INTERFACE_LINK_LIBRARIES "\$<LINK_ONLY:zlib>;\$<LINK_ONLY:jpeg>;\$<LINK_ONLY:lzma>;\$<LINK_ONLY:zstd>"#;\$<LINK_ONLY:CMath::CMath>
 )
 
 # Load information for each installed configuration.

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
+# SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
 # Suppress a warning
@@ -25,18 +25,24 @@ else() # Local static build
 		set(Boost_USE_STATIC_RUNTIME ON)
 	endif()
 	
-	# Instead of manually searching for the library files, we let find_package() do it.
-	# Set search directory hint
-	if(EXISTS ${EXTERN}/lib/cmake/Boost-1.86.0)
+	find_package(Boost COMPONENTS test_exec_monitor unit_test_framework
+		NO_MODULE				# Don't use installed modules for the search
+		NO_DEFAULT_PATH		# Only search in ${EXTERN}
+		HINTS ${EXTERN}
+		QUIET
+	)
 
-		set(BOOST_ROOT ${EXTERN})
-		find_package(Boost REQUIRED COMPONENTS test_exec_monitor unit_test_framework)	
+	if(Boost_FOUND)
+
+		add_definitions(-DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION)
 		
-	else() # Boost has not been built yet. Configure for build.
+		message(STATUS "Found Boost in ${Boost_DIR}:\n"
+							"         ${Boost_LIBRARIES}")
+		# Needed for dependency satisfaction after external project has been built
+		add_custom_target(boost-extern DEPENDS Boost::test_exec_monitor Boost::unit_test_framework)
+
+	else()	# Boost has not been built yet. Configure for build.
 	
-		message(STATUS "Boost has not been fully built yet. "
-							"After the first build without errors, just rerun the cmake configuration and "
-							"generation steps and it should find Boost and build fine.")
 		set(HAVE_DEPENDENCIES FALSE)
 		
 		set(BOOST_64BIT_FLAGS "")
@@ -99,7 +105,3 @@ else() # Local static build
 
 	endif()
 endif()
-
-set(LIB_BOOST Boost_LIBRARIES)
-list(APPEND ALL_EXTERN_INC_DIRS ${Boost_INCLUDE_DIR})
-add_definitions(-DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION)

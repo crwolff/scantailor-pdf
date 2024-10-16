@@ -103,7 +103,7 @@ else()
 endif()
 
 add_library(stcore STATIC ${common_sources} ${common_ui_sources})
-target_link_libraries(stcore stpdf acceleration deskew Qt5::Widgets Qt5::Xml ${LIB_OPENJP} ${LIB_TIFF} ${MAYBE_QT_OPENGL_MODULE})
+target_link_libraries(stcore stpdf acceleration deskew Qt5::Widgets Qt5::Xml openjp2 TIFF::tiff ${MAYBE_QT_OPENGL_MODULE})
 add_dependencies(stcore stpdf toplevel_ui_sources)
 
 # Some includes need to be added manually in new build system
