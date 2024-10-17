@@ -68,10 +68,12 @@ else() # Local build
 		
 		# <LINK_ONLY> dependencies cannot be found in external projects,
 		# if they don't find_package() for them. Fix it.
-		ExternalProject_Add_Step(
-			tiff-extern after-install-patch
-			DEPENDEES install
-			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/tiff/TiffTargets.cmake ${EXTERN}/lib/cmake/tiff/
-		)
+		if(NOT BUILD_SHARED_LIBS)
+			ExternalProject_Add_Step(
+				tiff-extern after-install-patch
+				DEPENDEES install
+				COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/tiff/TiffTargets.cmake ${EXTERN}/lib/cmake/tiff/
+			)
+		endif()
 	endif()
 endif()

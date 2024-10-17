@@ -18,7 +18,7 @@ else() # Local build
 	if(libjpeg-turbo_FOUND)
 
 		if(BUILD_SHARED_LIBS)
-			add_library(JPEG::JPEG ALIAS libjpeg-turbo::jpeg-shared)
+			add_library(JPEG::JPEG ALIAS libjpeg-turbo::jpeg)
 		else()
 			add_library(JPEG::JPEG ALIAS libjpeg-turbo::jpeg-static)
 		endif()

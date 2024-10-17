@@ -134,14 +134,12 @@ else() # Local build
 		
 		# Fix msvc shared build failing on missing zlib and zstd for rcc in build/bin dir
 		if(MSVC AND BUILD_SHARED_LIBS)
-			get_target_property(ZLIB_DLL_LOC ZLIB::ZLIB IMPORTED_LOCATION_RELEASE)
-			get_target_property(ZSTD_DLL_LOC ZLIB::ZLIB IMPORTED_LOCATION_RELEASE)
 			ExternalProject_Add_Step(
 				qt5-base-extern post-patch
 				DEPENDEES patch
 				DEPENDERS build
-				COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZLIB_DLL_LOC} <BINARY_DIR>/bin
-				COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZSTD_DLL_LOC} <BINARY_DIR>/bin
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different ${EXTERN_BIN_DIR}/zlib.dll <BINARY_DIR>/bin
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different ${EXTERN_BIN_DIR}/zstd.dll <BINARY_DIR>/bin
 			)
 		endif()
 
@@ -177,10 +175,10 @@ else() # Local build
 		if(MINGW)
 			find_file(mcf NAMES mcfgthread-12.dll libmcfgthread-1.dll HINTS ENV PATH)
 			if(BUILD_SHARED_LIBS)
-				find_file(libgcc NAMES libgcc_s_seh-1.dll HINTS ENV PATH)
-				find_file(libstdc NAMES libstdc++-6.dll HINTS ENV PATH)
-				# find_file(run_zlib NAMES zlib1.dll HINTS ENV PATH)
-				list(APPEND RUNTIME_FILES ${libgcc} ${libstdc} ${run_zlib} ${mcf})
+				find_file(libc NAMES libc++.dll HINTS ENV PATH)					# clang
+				find_file(libgcc NAMES libgcc_s_seh-1.dll HINTS ENV PATH)	# mingw & ucrt
+				find_file(libstdc NAMES libstdc++-6.dll HINTS ENV PATH)		# mingw & ucrt
+				list(APPEND RUNTIME_FILES ${libc} ${libgcc} ${libstdc} ${run_zlib} ${mcf})
 			endif()
 		endif()
 		
@@ -198,7 +196,7 @@ else() # Local build
 			ExternalProject_Add_Step(
 				qt-tools post-post-install
 				DEPENDEES post-install
-				# This also copies the system runtime files, but we have to copy them for windeployqt to work…
+				# This also copies the system runtime files, but we have to copy them for windeployqt above to work…
 				COMMAND ${EXTERN_BIN_DIR}/windeployqt --release --no-translations --dir ${EXTERN_BIN_DIR} ${EXTERN_BIN_DIR}/designer.exe
 			)
 		endif()

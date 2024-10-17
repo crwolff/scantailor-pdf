@@ -324,6 +324,7 @@ set(
 	"\\\\.pcs$"
 	"TODO.txt"
 	"CMakeLists.txt.user"
+	"CMakeUserPresets.json"
 	"/doxygen/"
 	"${CMAKE_BINARY_DIR}"
 	"${EXTERN}"
