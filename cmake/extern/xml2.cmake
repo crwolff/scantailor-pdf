@@ -52,13 +52,14 @@ else() # Local build
 		)
 		
 		# podofo under msvc can't find libxml2s.lib; create hardlink from static lib to shared name
-		# if(NOT BUILD_SHARED_LIBS AND MSVC)
-		# 	ExternalProject_Add_Step(
-		# 		xml2-extern podofo-compat-install
-		# 		DEPENDEES install
-		# 		# create a hardlink with the name of the shared implib
-		# 		COMMAND ${CMAKE_COMMAND} -E create_hardlink ${EXTERN_LIB_DIR}/${ST_XML2_STATIC} ${EXTERN_LIB_DIR}/${ST_XML2_IMPLIB}
-		# 	)
-		# endif()
+		if(NOT BUILD_SHARED_LIBS AND MSVC)
+			ExternalProject_Add_Step(
+				xml2-extern podofo-compat-install
+				DEPENDEES install
+				# create a hardlink with the name of the shared implib
+				COMMAND ${CMAKE_COMMAND} -E create_hardlink ${EXTERN_LIB_DIR}/libxml2s.lib ${EXTERN_LIB_DIR}/libxml2.lib
+			)
+		endif()
+
 	endif()
 endif()

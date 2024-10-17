@@ -20,8 +20,8 @@ else() # Local build
 
 		# Add alias for podofo compatibility
 		add_library(TIFF::TIFF ALIAS TIFF::tiff)
-		# Fix Tiff not linking against lzma
-		target_link_libraries(TIFF::tiff INTERFACE liblzma::liblzma)
+		# Fix Tiff not linking against lzma and zstd
+		target_link_libraries(TIFF::tiff INTERFACE liblzma::liblzma zstd)
 
 		message(STATUS "Found tiff in ${tiff_DIR}")
 		# Needed for dependency satisfaction after external project has been built
