@@ -21,6 +21,7 @@ else() # Local build
 		
 		if(BUILD_SHARED_LIBS)
 			add_library(podofo ALIAS podofo_shared)
+			target_link_libraries(podofo_shared INTERFACE OpenSSL::Crypto Freetype::Freetype)
 		else()
 			add_library(podofo ALIAS podofo_static)
 			set_target_properties(podofo_static podofo_private PROPERTIES
@@ -28,7 +29,7 @@ else() # Local build
 				INTERFACE_COMPILE_DEFINITIONS PODOFO_STATIC
 			)
 			# Fix podofo not linking against OpenSSL::Crypto
-			target_link_libraries(podofo_static INTERFACE OpenSSL::Crypto)
+			target_link_libraries(podofo_static INTERFACE OpenSSL::Crypto Freetype::Freetype)
 		endif()
 
 	
