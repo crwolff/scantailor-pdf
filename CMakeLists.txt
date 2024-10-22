@@ -223,26 +223,10 @@ include(cmake/extern/tiff.cmake)
 include(cmake/extern/freetype.cmake)
 include(cmake/extern/podofo.cmake)
 include(cmake/extern/boost.cmake)
-
-# OpenCL is currently only supported on Windows with MSVC or MinGW
-# For MSVC, you need to have an opencl SDK installed.
-if(MSVC OR MINGW)
-	set(LIB_OPENCL "")
-	include(cmake/extern/opencl.cmake)
-	cmake_dependent_option(
-		ENABLE_OPENCL "OpenCL may be used for acceleration of image processing" ON
-		"OpenCL_FOUND" OFF
-	)
-endif()
-
-set(EIGEN3_INCLUDE_DIR "")
 include(cmake/extern/eigen3.cmake)
-
-include(FindOpenGL)
-cmake_dependent_option(
-	ENABLE_OPENGL "OpenGL may be used for UI acceleration" ON
-	"OPENGL_FOUND" OFF
-)
+# For MSVC, you need to have an opencl SDK installed.
+include(cmake/extern/opencl.cmake)
+include(cmake/extern/opengl.cmake)
 
 set(CMAKE_AUTOMOC ON)
 set(qt_min_version 5.3)
@@ -269,17 +253,11 @@ endif(UNIX)
 
 
 # Other includes and options
-set(EXTRA_LIBS "")
+# set(EXTRA_LIBS "")
 
-if(MINGW AND NOT BUILD_SHARED_LIBS)
-	list(APPEND EXTRA_LIBS winmm imm32 ws2_32 ole32 oleaut32 uuid gdi32 comdlg32 winspool)
-endif()
-
-set(MAYBE_QT_OPENGL_MODULE "")
-if(ENABLE_OPENGL)
-	list(APPEND EXTRA_LIBS ${OPENGL_LIBRARIES})
-	set(MAYBE_QT_OPENGL_MODULE Qt5::OpenGL)
-endif()
+# if(MINGW AND NOT BUILD_SHARED_LIBS)
+# 	list(APPEND EXTRA_LIBS winmm imm32 ws2_32 ole32 oleaut32 uuid gdi32 comdlg32 winspool)
+# endif()
 
 
 #==================================================================#
@@ -288,8 +266,8 @@ endif()
 
 if(NOT HAVE_DEPENDENCIES) # Check that we have found all external dependencies.
 
-message(STATUS "Not all dependencies have been found/built yet. "
-					"Plase fix any cmake/build errors and rerun cmake/build.")
+	message(STATUS "Not all dependencies have been found/built yet. "
+						"Plase fix any cmake/build errors and rerun cmake/build.")
 
 else()
 # We have all dependencies

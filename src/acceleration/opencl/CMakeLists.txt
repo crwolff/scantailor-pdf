@@ -49,8 +49,8 @@ qt5_add_resources(resource_sources resources.qrc)
 source_group("Generated" FILES ${resource_sources})
 
 add_library(opencl STATIC ${host_sources} ${device_sources} ${resource_sources})
-target_link_libraries(opencl acceleration Qt5::Core Qt5::Gui ${OpenCL_LIBRARY})
-target_include_directories(opencl INTERFACE ${EIGEN3_INCLUDE_DIR})
+target_link_libraries(opencl acceleration Qt5::Core Qt5::Gui OpenCL::OpenCL)
+target_include_directories(opencl INTERFACE ${EIGEN_INCLUDE_DIRS})
 
 add_library(opencl_plugin MODULE ${plugin_sources} resources.qrc)
 target_link_libraries(opencl_plugin opencl dewarping imageproc)

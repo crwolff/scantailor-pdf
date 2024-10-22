@@ -1,10 +1,16 @@
-# SPDX-FileCopyrightText: © 2022 Daniel Just <justibus@gmail.com>
+# SPDX-FileCopyrightText: © 2022-24 Daniel Just <justibus@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-only
 
-#find_package(Eigen3 QUIET)
+find_package(Eigen QUIET)
 
-if(NOT EIGEN3_FOUND)
-		
+if(Eigen_FOUND)
+
+	message(STATUS "Found Eigen: ${EIGEN_INCLUDE_DIRS}")
+
+else()
+
+	set(HAVE_DEPENDENCIES FALSE)
+	
 	# Try to download Eigen3 and extract it so find_package() can find it if needed
 	if(NOT EXISTS " ${EXTERN}/src/eigen-3.4.0")
 		file(DOWNLOAD https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip
@@ -18,13 +24,5 @@ if(NOT EIGEN3_FOUND)
 		)
 	endif()
 	
-	set(EIGEN3_INCLUDE_DIR ${EXTERN}/src/eigen-3.4.0)
-
+	set(EIGEN_INCLUDE_DIR_HINTS ${EXTERN}/src/eigen-3.4.0 CACHE FILEPATH "Eigen include dir hint" FORCE)
 endif()
-
-# we need Eigen3 for most internal libraries, so include it generally
-include_directories(${EIGEN3_INCLUDE_DIR})
-
-
-# Once Eigen starts using C++11 alignas() feature, this can be removed.
-#ADD_DEFINITIONS(-DEIGEN_DONT_ALIGN_STATICALLY)

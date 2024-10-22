@@ -20,7 +20,7 @@ source_group("Sources" FILES ${sources})
 set(
 	libs
 	opencl dewarping imageproc math foundation
-	Qt5::Core ${OpenCL_LIBRARY}
+	Qt5::Core OpenCL::OpenCL
 	${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 	${Boost_PRG_EXECUTION_MONITOR_LIBRARY}
 )
