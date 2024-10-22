@@ -25,7 +25,7 @@ set(
 
 set(win32_resource_file "")
 if(WIN32)
-	set( rc_file "${CMAKE_SOURCE_DIR}/src/app/resources/win32/resources.rc")
+	set(rc_file "${CMAKE_SOURCE_DIR}/src/app/resources/win32/resources.rc")
 	file(GLOB win32_resources resources/win32/*.ico)
 	set_source_files_properties(
 		"${rc_file}" PROPERTIES
@@ -66,7 +66,7 @@ target_link_libraries(
 	acceleration page_layout output fix_orientation page_split
 	deskew select_content stcore dewarping zones interaction
 	imageproc math foundation
-	${EXTRA_LIBS}
+	# ${EXTRA_LIBS}
 )
 
 # We want the executable located where we copy all the DLLs.
@@ -79,9 +79,6 @@ set_target_properties(
 if(WIN32 AND BUILD_SHARED_LIBS)
 	# Our external libraries
 	set(RUNTIME_DEPS $<TARGET_RUNTIME_DLLS:scantailor>)
-	# Remove archive lib files from list
-	# TODO: DOES NOT WORK!!!!! WHY?????
-	list(FILTER RUNTIME_DEPS EXCLUDE REGEX ^.+a$)
 	
 	if(MINGW)
 		# lh-mouse's ucrt64 MinGW 
@@ -99,23 +96,27 @@ if(WIN32 AND BUILD_SHARED_LIBS)
 			list(APPEND RUNTIME_DEPS ${libunwind})
 		endif()
 	endif()
-	
-	# add_custom_command(
-		# TARGET scantailor POST_BUILD
-		# COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan
-		# " "
-		# "${RUNTIME_DEPS}"
-		# " "
-	# )
-	
+		
 	add_custom_command(TARGET scantailor POST_BUILD
-	  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RUNTIME_DEPS} $<TARGET_FILE_DIR:scantailor>
-	  COMMAND_EXPAND_LISTS
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RUNTIME_DEPS} $<TARGET_FILE_DIR:scantailor>
+		COMMAND_EXPAND_LISTS
+	)
+	add_custom_command(
+		TARGET scantailor POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan
+		"OUTPUT: "
+		"${RUNTIME_DEPS}"
+		" "
 	)
 	
-	# QT5 stuff; this also copies needed system runtime files
+	# QT5 stuff
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+   	set(qtdeploy_config --debug)
+	elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+   	set(qtdeploy_config --release)
+	endif()
 	add_custom_command(TARGET scantailor POST_BUILD
-	  COMMAND ${EXTERN_BIN_DIR}/windeployqt --no-translations --dir $<TARGET_FILE_DIR:scantailor> $<TARGET_FILE:scantailor>
+	  COMMAND ${EXTERN_BIN_DIR}/windeployqt --no-translations ${qtdeploy_config} --dir $<TARGET_FILE_DIR:scantailor> $<TARGET_FILE:scantailor>
 	)
 		
 	
