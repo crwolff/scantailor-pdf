@@ -20,7 +20,7 @@
 #define TO_VEC_H_
 
 #include "foundation_config.h"
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <QPoint>
 #include <QPointF>
 

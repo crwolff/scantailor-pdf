@@ -20,7 +20,7 @@
 #define OPENCL_RENDER_POLYNOMIAL_SURFACE_H_
 
 #include "imageproc/GrayImage.h"
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <opencl.hpp>
 
 namespace opencl

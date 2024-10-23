@@ -20,7 +20,7 @@
 #define LINEAR_FUNCTION_H_
 
 #include "math_config.h"
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <cstddef>
 
 /**

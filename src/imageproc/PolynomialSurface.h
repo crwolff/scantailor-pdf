@@ -20,7 +20,7 @@
 #define IMAGEPROC_POLYNOMIAL_SURFACE_H_
 
 #include "imageproc_config.h"
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <QSize>
 #include <stdint.h>
 

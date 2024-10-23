@@ -20,7 +20,7 @@ source_group("UI Files" FILES ${ui_files})
 qt5_wrap_ui(ui_sources ${ui_files})
 
 add_library(fix_orientation STATIC ${sources} ${ui_sources})
-target_link_libraries(fix_orientation Qt5::Widgets Qt5::Xml)
+target_link_libraries(fix_orientation Qt5::Widgets Qt5::Xml Eigen3::Eigen)
 target_include_directories(fix_orientation PUBLIC ${Boost_INCLUDE_DIRS})
 
 translation_sources(scantailor ${sources} ${ui_files})

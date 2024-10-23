@@ -51,7 +51,7 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 add_library(foundation ${LIB_TYPE} ${sources})
-target_link_libraries(foundation Qt5::Gui Qt5::Core Qt5::Xml)
+target_link_libraries(foundation Qt5::Gui Qt5::Core Qt5::Xml Eigen3::Eigen)
 target_include_directories(foundation PUBLIC ${Boost_INCLUDE_DIRS})
 
 if(BUILD_SHARED_LIBS)

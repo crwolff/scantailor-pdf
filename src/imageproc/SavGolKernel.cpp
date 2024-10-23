@@ -17,8 +17,8 @@
 */
 
 #include "SavGolKernel.h"
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Cholesky>
+#include <Eigen/Core>
+#include <Eigen/Cholesky>
 #include <QSize>
 #include <QPoint>
 #include <stdexcept>

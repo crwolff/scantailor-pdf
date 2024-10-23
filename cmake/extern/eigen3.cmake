@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 
 # Try searching for Eigen in system
-find_package(Eigen3 NO_MODULE QUIET)
+# This finds eigen in other local build trees, but sets the include path wrong for some reason.
+# find_package(Eigen3 NO_MODULE GLOBAL QUIET)
 
 if(TARGET Eigen3::Eigen)
 
-	message(STATUS "Found Eigen")
+	message(STATUS "Found Eigen: ${EIGEN3_INCLUDE_DIRS} (version ${EIGEN3_VERSION_STRING})")
 	# Use target Eigen3::Eigen to link against
 
 else()
@@ -16,12 +17,14 @@ else()
 		NO_MODULE				# Don't use installed modules for the search
 		NO_DEFAULT_PATH		# Only search in ${EXTERN}
 		HINTS ${EXTERN}
+		PATH_SUFFIXES lib share
+		GLOBAL
 		QUIET
 	)
 
 	if(TARGET Eigen3::Eigen)
 
-		message(STATUS "Found Eigen")
+		message(STATUS "Found Eigen: ${EIGEN3_INCLUDE_DIRS} (version ${EIGEN3_VERSION_STRING})")
 		# Use target Eigen3::Eigen to link against
 
 	else()
@@ -39,6 +42,9 @@ else()
 				-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 				-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
 				-DCMAKE_BUILD_TYPE=Release
+				-DEIGEN_TEST_CXX11=ON
+				-DEIGEN_BUILD_DOC=OFF
+				-DBUILD_TESTING=OFF
 			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 			DEPENDS boost-extern
 		)

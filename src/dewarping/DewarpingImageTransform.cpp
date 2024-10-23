@@ -23,8 +23,8 @@
 #include "LineBoundedByPolygon.h"
 #include "imageproc/AffineImageTransform.h"
 #include "imageproc/AffineTransformedImage.h"
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/LU>
+#include <Eigen/Core>
+#include <Eigen/LU>
 #include <QImage>
 #include <QPointF>
 #include <QRect>

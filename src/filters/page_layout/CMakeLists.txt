@@ -28,7 +28,7 @@ source_group("UI Files" FILES ${ui_files})
 qt5_wrap_ui(ui_sources ${ui_files})
 
 add_library(page_layout STATIC ${sources} ${ui_sources})
-target_link_libraries(page_layout Qt5::Widgets Qt5::Xml)
+target_link_libraries(page_layout Qt5::Widgets Qt5::Xml Eigen3::Eigen)
 target_include_directories(page_layout PUBLIC ${Boost_INCLUDE_DIRS})
 
 translation_sources(scantailor ${sources} ${ui_files})

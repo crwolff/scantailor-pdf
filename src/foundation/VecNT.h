@@ -21,7 +21,7 @@
 
 #include "foundation_config.h"
 #include "CopyableByMemcpy.h"
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <QPointF>
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <cmath>

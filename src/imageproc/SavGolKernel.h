@@ -21,8 +21,8 @@
 
 #include "imageproc_config.h"
 #include "AlignedArray.h"
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Cholesky>
+#include <Eigen/Core>
+#include <Eigen/Cholesky>
 
 class QPoint;
 class QSize;

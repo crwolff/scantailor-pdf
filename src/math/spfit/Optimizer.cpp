@@ -17,8 +17,8 @@
 */
 
 #include "Optimizer.h"
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/QR>
+#include <Eigen/Core>
+#include <Eigen/QR>
 #include <stdexcept>
 #include <algorithm>
 #include <cassert>

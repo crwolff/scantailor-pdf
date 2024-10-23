@@ -21,8 +21,8 @@
 #include "NumericTraits.h"
 #include "ToVec.h"
 #include "ToPoint.h"
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/QR>
+#include <Eigen/Core>
+#include <Eigen/QR>
 #include <QLineF>
 #include <QtGlobal>
 #include <QDebug>

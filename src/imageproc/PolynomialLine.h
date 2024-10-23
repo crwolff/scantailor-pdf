@@ -21,7 +21,7 @@
 
 #include "imageproc_config.h"
 #include "ValueConv.h"
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <limits>
 #include <cmath>
 

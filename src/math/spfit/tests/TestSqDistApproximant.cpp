@@ -19,7 +19,7 @@
 #include "SqDistApproximant.h"
 #include "ToLineProjector.h"
 #include "ToVec.h"
-#include <eigen3/Eigen/Core>
+#include <Eigen/Core>
 #include <QPointF>
 #include <QLineF>
 #include <boost/test/unit_test.hpp>
