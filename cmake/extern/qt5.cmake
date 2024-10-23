@@ -30,7 +30,7 @@ else() # Local build
 		endif()
 		# Now, use the QT5::* targets.
 
-		message(STATUS "Found Qt5 in ${Qt5_DIR}")
+		message(STATUS "Found Qt5: ${Qt5_DIR}")
 		# Needed for dependency satisfaction after external project has been built
 		add_custom_target(qt5-base-extern DEPENDS Qt5::Core Qt5::Widgets Qt5::GUI Qt5::XML Qt5::Network)
 		
@@ -47,6 +47,9 @@ else() # Local build
 			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -static -static-runtime)
 		elseif(NOT BUILD_SHARED_LIBS)
 			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -static)
+			endif()
+		if(ENABLE_OPENGL)
+			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -opengl desktop)
 		endif()
 
 		# Find number of available threads for multithreaded compilation of QT5
@@ -125,7 +128,7 @@ else() # Local build
 			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/configure.json <SOURCE_DIR>
 			# Make Qt configure find our static msvc jpeg and png lib
 			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/gui/configure.json <SOURCE_DIR>/src/gui
-			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-libmd4c -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-harfbuzz -no-openssl -no-vulkan -opengl desktop -nomake examples -nomake tests -silent -opensource -confirm-license ${QT5_EXTRA_OPTS} -I ${EXTERN_INC_DIR} -L ${EXTERN_LIB_DIR}
+			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-libmd4c -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-harfbuzz -no-openssl -no-vulkan -nomake examples -nomake tests -silent -opensource -confirm-license ${QT5_EXTRA_OPTS} -I ${EXTERN_INC_DIR} -L ${EXTERN_LIB_DIR}
 			BUILD_COMMAND ${QT5_MAKE}
 			INSTALL_COMMAND ${QT5_MAKE} install
 			UPDATE_COMMAND ""   # Don't rebuild on main project recompilation
