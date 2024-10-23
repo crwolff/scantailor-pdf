@@ -267,7 +267,7 @@ endif(UNIX)
 if(NOT HAVE_DEPENDENCIES) # Check that we have found all external dependencies.
 
 	message(STATUS "Not all dependencies have been found/built yet. "
-						"Plase fix any cmake/build errors and rerun cmake/build.")
+						"Please build and then reconfigure the project.")
 
 else()
 # We have all dependencies
@@ -304,6 +304,7 @@ set(
 	"CMakeLists.txt.user"
 	"CMakeUserPresets.json"
 	"/doxygen/"
+	"build/"
 	"${CMAKE_BINARY_DIR}"
 	"${EXTERN}"
 )
