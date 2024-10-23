@@ -20,8 +20,8 @@
 #define HOMOGRAPHIC_TRANSFORM_H_
 
 #include "math_config.h"
-#include <Eigen/Core>
-#include <Eigen/LU>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/LU>
 #include <cstddef>
 #include <cmath>
 #include <stdexcept>

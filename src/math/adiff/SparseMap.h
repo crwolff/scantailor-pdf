@@ -20,7 +20,7 @@
 #define ADIFF_SPARSITY_H_
 
 #include "math_config.h"
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include <stddef.h>
 
 namespace adiff

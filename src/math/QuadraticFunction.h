@@ -20,7 +20,7 @@
 #define QUADRATIC_FUNCTION_H_
 
 #include "math_config.h"
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include <cstddef>
 
 /**

@@ -19,7 +19,7 @@
 #include "GaussBlur.h"
 #include "GrayImage.h"
 #include "Constants.h"
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include <algorithm>
 #include <cassert>
 #include <cmath>

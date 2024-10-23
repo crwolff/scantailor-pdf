@@ -17,8 +17,8 @@
 */
 
 #include "PolynomialLine.h"
-#include <Eigen/Core>
-#include <Eigen/Cholesky>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Cholesky>
 
 using namespace Eigen;
 

@@ -68,8 +68,7 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 add_library(imageproc ${LIB_TYPE} ${sources})
-target_link_libraries(imageproc foundation Qt5::Core Qt5::Gui)
-target_include_directories(imageproc INTERFACE ${EIGEN_INCLUDE_DIRS})
+target_link_libraries(imageproc foundation Qt5::Core Qt5::Gui Eigen3::Eigen)
 
 if(BUILD_SHARED_LIBS)
 	# We want the DLL located where executables can find it.

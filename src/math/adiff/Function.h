@@ -21,7 +21,7 @@
 
 #include "math_config.h"
 #include "SparseMap.h"
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include <cstddef>
 
 namespace adiff

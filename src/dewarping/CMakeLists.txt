@@ -26,8 +26,7 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 add_library(dewarping ${LIB_TYPE} ${sources})
-target_link_libraries(dewarping imageproc math foundation Qt5::Widgets Qt5::Xml)
-target_include_directories(dewarping INTERFACE ${EIGEN_INCLUDE_DIRS})
+target_link_libraries(dewarping imageproc math foundation Qt5::Widgets Qt5::Xml Eigen3::Eigen)
 
 if(BUILD_SHARED_LIBS)
 	# We want the DLL located where executables can find it.

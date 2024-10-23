@@ -21,8 +21,8 @@
 #include "GrayImage.h"
 #include "Constants.h"
 #include "Grid.h"
-#include <Eigen/Core>
-#include <Eigen/LU>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/LU>
 #include <QSize>
 #include <QPoint>
 #include <QString>

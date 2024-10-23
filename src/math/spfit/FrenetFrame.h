@@ -20,7 +20,7 @@
 #define SPFIT_FRENET_FRAME_H_
 
 #include "math_config.h"
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 namespace spfit
 {

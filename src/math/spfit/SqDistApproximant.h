@@ -20,7 +20,7 @@
 #define SQDIST_APPROXIMANT_H_
 
 #include "math_config.h"
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include <QLineF>
 
 namespace spfit

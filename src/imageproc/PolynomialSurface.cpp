@@ -21,8 +21,8 @@
 #include "BinaryImage.h"
 #include "GrayImage.h"
 #include "Grayscale.h"
-#include <Eigen/Core>
-#include <Eigen/Cholesky>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Cholesky>
 #include <stdexcept>
 #include <algorithm>
 #include <cmath>

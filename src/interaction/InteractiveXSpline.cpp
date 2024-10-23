@@ -20,7 +20,7 @@
 #include "Proximity.h"
 #include "ToVec.h"
 #include "ToPoint.h"
-#include <Eigen/LU>
+#include <eigen3/Eigen/LU>
 #include <QCursor>
 #include <QMouseEvent>
 #include <Qt>

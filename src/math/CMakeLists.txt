@@ -46,8 +46,7 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 add_library(math ${LIB_TYPE} ${GENERIC_SOURCES} ${SPFIT_SOURCES} ${ADIFF_SOURCES})
-target_link_libraries(math foundation Qt5::Core)
-target_include_directories(math INTERFACE ${EIGEN_INCLUDE_DIRS})
+target_link_libraries(math foundation Qt5::Core Eigen3::Eigen)
 
 # We want the DLL located where executables can find it.
 set_target_properties(

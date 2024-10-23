@@ -23,7 +23,7 @@
 #include "DraggablePoint.h"
 #include "ObjectDragHandler.h"
 #include "InteractionState.h"
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include <QPointF>
 #include <QCoreApplication>
 #include <boost/function.hpp>

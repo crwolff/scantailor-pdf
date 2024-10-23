@@ -26,7 +26,7 @@
 #include "VirtualFunction.h"
 #include "LinearFunction.h"
 #include "QuadraticFunction.h"
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include <vector>
 #include <list>
 

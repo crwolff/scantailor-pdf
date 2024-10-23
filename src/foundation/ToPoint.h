@@ -20,7 +20,7 @@
 #define TO_POINT_H_
 
 #include "foundation_config.h"
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include <QPoint>
 #include <QPointF>
 
