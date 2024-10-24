@@ -41,15 +41,21 @@ else() # Local build
 		# Depending on the environment and config, we need to set certain qt5 config options
 		set(QT5_EXTRA_OPTS)
 		
+		if(ENABLE_OPENGL)
+			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -opengl desktop)
+		endif()
+
 		if (NOT BUILD_SHARED_LIBS AND MINGW)
 			# -static-runtime is only valid for Windows, but we don't want it for MSVC
-			# because starting with Win 10, the runtimes are included.
+			# because starting with Win 10, the runtimes we are using are included.
 			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -static -static-runtime)
 		elseif(NOT BUILD_SHARED_LIBS)
 			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -static)
-			endif()
-		if(ENABLE_OPENGL)
-			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -opengl desktop)
+		endif()
+
+		# MSVC bug where zstd causes corruption of qmimeprovider_database.cpp during build
+		if(BUILD_SHARED_LIBS AND MSVC)
+			set(QT5_EXTRA_OPTS ${QT5_EXTRA_OPTS} -no-zstd)
 		endif()
 
 		# Find number of available threads for multithreaded compilation of QT5
@@ -128,6 +134,8 @@ else() # Local build
 			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/configure.json <SOURCE_DIR>
 			# Make Qt configure find our static msvc jpeg and png lib
 			COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/qt5-base-extern/src/gui/configure.json <SOURCE_DIR>/src/gui
+			# Under MSVC, sometimes the <BINARY_DIR>/bin folder gets created as a file during bootstrap which prevents linking of qmake.exe
+			COMMAND ${CMAKE_COMMAND} -E make_directory <BINARY_DIR>/bin
 			CONFIGURE_COMMAND ${EXTERN}/src/qt5-base-extern/configure -platform ${QT5_PLATFORM} -debug-and-release -force-debug-info -no-ltcg -prefix ${EXTERN} -no-gif -no-libmd4c -no-dbus -system-zlib -system-libpng -system-freetype -system-libjpeg -qt-pcre -no-harfbuzz -no-openssl -no-vulkan -nomake examples -nomake tests -silent -opensource -confirm-license ${QT5_EXTRA_OPTS} -I ${EXTERN_INC_DIR} -L ${EXTERN_LIB_DIR}
 			BUILD_COMMAND ${QT5_MAKE}
 			INSTALL_COMMAND ${QT5_MAKE} install
