@@ -5,13 +5,12 @@
 if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(ZLIB REQUIRED)		# This only finds shared libs
-#	list(APPEND ALL_EXTERN_INC_DIRS ${ZLIB_INCLUDE_DIRS})
 	
 else() # Local build
 
 	# This should set the search options for zlib globally
 	set(ZLIB_USE_STATIC_LIBS ON CACHE BOOL "Make find_package find the correct build type of zlib." FORCE)
-	set(ZLIB_ROOT ${EXTERN} CACHE FILEPATH "")
+	set(ZLIB_ROOT ${EXTERN} CACHE FILEPATH "Use locally build zlib")
 	if(BUILD_SHARED_LIBS)
 		set(ZLIB_USE_STATIC_LIBS OFF CACHE BOOL "Make find_package find the correct build type of zlib." FORCE)
 	endif()
@@ -21,7 +20,7 @@ else() # Local build
 
 	if(ZLIB_FOUND)
 
-		message(STATUS "Found Zlib in ${ZLIB_LIBRARIES}")
+		message(STATUS "Found zlib: ${ZLIB_LIBRARIES} (version ${ZLIB_VERSION})")
 		# Needed for dependency satisfaction after external project has been built
 		add_custom_target(zlib-extern DEPENDS ZLIB::ZLIB)
 
