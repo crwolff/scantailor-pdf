@@ -62,22 +62,8 @@ set(
 
 source_group(Sources FILES ${sources})
 
-if(BUILD_SHARED_LIBS)
-	add_definitions(-DSHARED_IMAGEPROC)
-	add_definitions(-DBUILDING_IMAGEPROC)
-endif()
-
-add_library(imageproc ${LIB_TYPE} ${sources})
+# Always build imageproc statically; MSVC can't find some exported const symbols otherwise
+add_library(imageproc STATIC ${sources})
 target_link_libraries(imageproc foundation Qt5::Core Qt5::Gui Eigen3::Eigen)
-
-if(BUILD_SHARED_LIBS)
-	# We want the DLL located where executables can find it.
-	set_target_properties(
-		imageproc PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>
-	)
-
-	install(TARGETS imageproc DESTINATION lib/scantailor)
-endif()
 
 add_subdirectory(tests)

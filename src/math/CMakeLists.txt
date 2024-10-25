@@ -40,23 +40,8 @@ set(
 )
 source_group("Sources\\Differentiation Framework" FILES ${ADIFF_SOURCES})
 
-if(BUILD_SHARED_LIBS)
-	add_definitions(-DSHARED_MATH)
-	add_definitions(-DBUILDING_MATH)
-endif()
-
-add_library(math ${LIB_TYPE} ${GENERIC_SOURCES} ${SPFIT_SOURCES} ${ADIFF_SOURCES})
+add_library(math STATIC ${GENERIC_SOURCES} ${SPFIT_SOURCES} ${ADIFF_SOURCES})
 target_link_libraries(math foundation Qt5::Core Eigen3::Eigen)
-
-# We want the DLL located where executables can find it.
-set_target_properties(
-	math PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>
-)
-
-if(BUILD_SHARED_LIBS)
-	install(TARGETS math DESTINATION lib/scantailor)
-endif()
 
 add_subdirectory(spfit/tests)
 add_subdirectory(adiff/tests)

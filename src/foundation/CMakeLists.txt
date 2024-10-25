@@ -45,21 +45,7 @@ set(
 )
 source_group("Sources" FILES ${sources})
 
-if(BUILD_SHARED_LIBS)
-	add_definitions(-DSHARED_FOUNDATION)
-	add_definitions(-DBUILDING_FOUNDATION)
-endif()
-
-add_library(foundation ${LIB_TYPE} ${sources})
+add_library(foundation STATIC ${sources})
 target_link_libraries(foundation Qt5::Gui Qt5::Core Qt5::Xml Eigen3::Eigen)
 target_include_directories(foundation PUBLIC ${Boost_INCLUDE_DIRS})
 
-if(BUILD_SHARED_LIBS)
-	# We want the DLL located where executables can find it.
-	set_target_properties(
-		foundation PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/$<CONFIG>
-	)
-
-	install(TARGETS foundation DESTINATION lib/scantailor)
-endif()
