@@ -4,9 +4,6 @@
 if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(LibLZMA)		# This only finds shared libs
-	if(LIBLZMA_FOUND)
-		# list(APPEND ALL_EXTERN_INC_DIRS ${LIBLZMA_INCLUDE_DIRS})
-	endif()
 	
 else() # Local build
 	

@@ -36,8 +36,8 @@ MACRO(ST_SET_DEFAULT_GCC_FLAGS)
 		ENDIF()
 		
 		IF(MINGW)
-			CHECK_CXX_ACCEPTS_FLAG("-shared-libgcc -static-libstdc++" supported_)
-			IF(supported_)
+			CHECK_CXX_ACCEPTS_FLAG("-shared-libgcc -static-libstdc++" shared_supported_)
+			IF(shared_supported_)
 				# This is the configuration we want for 32-bit MinGW.
 				# Note that the default for libstdc++ recently changed
 				# from static to shared. We don't want to bundle
@@ -48,6 +48,14 @@ MACRO(ST_SET_DEFAULT_GCC_FLAGS)
 			ELSE()
 				# This configuration is used for 64-bit MinGW.
 				SET(stdlibs_shared_static_ "")
+			ENDIF()
+			
+			CHECK_CXX_ACCEPTS_FLAG("-static -static-libgcc -static-libstdc++" static_supported_)
+			IF(static_supported_)
+				SET(stdlibs_static_static_ "-static -static-libgcc -static-libstdc++" )
+			ELSE()
+				# This configuration is used for 64-bit MinGW.
+				SET(stdlibs_static_static_ "")
 			ENDIF()
 		ENDIF()	
 		
@@ -70,11 +78,17 @@ MACRO(ST_SET_DEFAULT_GCC_FLAGS)
  -ffast-math ${no_inline_dllexport_cflags_}"
 				CACHE STRING "Common C flags for all build configurations." FORCE
 			)
-			SET(
-				CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${stdlibs_shared_static_} -Wno-deprecated-declarations"
-				CACHE STRING "Common C++ flags for all build configurations." FORCE
-			)
-		
+			IF(BUILD_SHARED_LIBS)
+				SET(
+					CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${stdlibs_shared_static_} -Wno-deprecated-declarations"
+					CACHE STRING "Common C++ flags for all build configurations." FORCE
+				)
+			ELSE()
+				SET(
+					CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${stdlibs_static_static_} -Wno-deprecated-declarations"
+					CACHE STRING "Common C++ flags for all build configurations." FORCE
+				)
+			ENDIF()		
 			# Release
 			SET(
 				CMAKE_C_FLAGS_RELEASE

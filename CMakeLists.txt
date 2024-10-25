@@ -75,13 +75,6 @@ if(NOT BUILD_SHARED_LIBS)
 	set(STATIC_BOOL ON)
 	set(SHARED_BOOL OFF)
 	set(LIB_TYPE STATIC)
-	if (MINGW)
-		# Even link against static libgcc and libstdc++ on Windows since these are not available by default.
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
-	# elseif(MSVC)
-		# # Link against static C and C++ runtimes
-		# add_compile_options(/MT)
-	endif()
 endif()
 
 #======================= Compiler flags ===========================#
@@ -195,15 +188,7 @@ set(CMAKE_PREFIX_PATH ${EXTERN})
 # Location of patches for building external libraries
 set(EXTERN_PATCH_DIR ${CMAKE_SOURCE_DIR}/extern-patches)
 
-# List of include directories for all external libraries
-list(APPEND ALL_EXTERN_INC_DIRS ${EXTERN_INC_DIR})
-
-# External library targets
-# The following cmake files will search for and/or download and build
-# all external dependencies. They set all LIB_* variables and add all
-# needed include directories to the ALL_EXTERN_INC_DIRS variable.
-
-# All downloaded external dependencies are stored in ./extern-src
+# All downloaded external dependencies are stored in ./extern-pkg
 set(DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/extern-pkg")
 
 # Assume we have all dependencies. If a dependency is not found below,

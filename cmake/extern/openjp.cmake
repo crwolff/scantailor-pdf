@@ -4,8 +4,6 @@
 if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(OpenJPEG REQUIRED)		# This only finds shared libs
-	# include_directories(${OPENJPEG_INCLUDE_DIRS})
-	# list(APPEND ALL_EXTERN_INC_DIRS ${OPENOPENJP_INCLUDE_DIR})
 	
 else() # Local build
 

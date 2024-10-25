@@ -4,7 +4,6 @@
 if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(TIFF REQUIRED)		# This only finds shared libs
-	# list(APPEND ALL_EXTERN_INC_DIRS ${TIFF_INCLUDE_DIRS})
 	
 else() # Local build
 

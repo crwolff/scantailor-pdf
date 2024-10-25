@@ -5,7 +5,6 @@
 if(NOT WIN32 AND BUILD_SHARED_LIBS)
 
 	find_package(OpenSSL REQUIRED)
-	# list(APPEND ALL_EXTERN_INC_DIRS ${OPENSSL_INCLUDE_DIRS})
 	
 else() # Local build, only static
 	
