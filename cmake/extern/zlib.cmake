@@ -10,13 +10,13 @@ else() # Local build
 
 	# This should set the search options for zlib globally
 	set(ZLIB_USE_STATIC_LIBS ON CACHE BOOL "Make find_package find the correct build type of zlib." FORCE)
-	set(ZLIB_ROOT ${EXTERN} CACHE FILEPATH "Use locally build zlib")
+	set(ZLIB_ROOT ${EXTERN} CACHE FILEPATH "Use locally built zlib")
 	if(BUILD_SHARED_LIBS)
 		set(ZLIB_USE_STATIC_LIBS OFF CACHE BOOL "Make find_package find the correct build type of zlib." FORCE)
 	endif()
 
 	# Zlib has no cmake target files so we need to use basic find_package mode
-	find_package(ZLIB	QUIET GLOBAL)
+	find_package(ZLIB	QUIET)
 
 	if(ZLIB_FOUND)
 
@@ -45,23 +45,5 @@ else() # Local build
 			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 		)
 		
-		# zlib installs both shared and static libs. If building static,
-		# we need to remove the shared lib, so they don't get picked up by other packages
-		# if(NOT BUILD_SHARED_LIBS)
-		# 	ExternalProject_Add_Step(
-		# 		zlib-extern remove-shared
-		# 		DEPENDEES install
-		# 		COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_BIN_DIR}/${ST_ZLIB_SHARED}
-		# 		COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
-		# 	)
-		# 	if(MSVC)
-		# 		# hardlink the static lib to the shared lib name so it gets picked up by qt5 for msvc
-		# 		ExternalProject_Add_Step(
-		# 			zlib-extern qt5-compat-install
-		# 			DEPENDEES remove-shared
-		# 			COMMAND ${CMAKE_COMMAND} -E create_hardlink ${EXTERN_LIB_DIR}/${ST_ZLIB_STATIC} ${EXTERN_LIB_DIR}/${ST_ZLIB_IMPLIB}
-		# 		)
-		# 	endif()
-		# endif()
 	endif()
 endif()
