@@ -13,7 +13,6 @@ target_link_libraries(
 	acceleration page_layout output
 	fix_orientation page_split deskew select_content stcore
 	dewarping zones interaction imageproc math foundation
-	${EXTRA_LIBS}
 )
 
 # We want the executable located where we copy all the DLLs.

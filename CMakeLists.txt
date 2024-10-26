@@ -237,14 +237,6 @@ elseif(WIN32 AND MSVC)
 endif(UNIX)
 
 
-# Other includes and options
-# set(EXTRA_LIBS "")
-
-# if(MINGW AND NOT BUILD_SHARED_LIBS)
-# 	list(APPEND EXTRA_LIBS winmm imm32 ws2_32 ole32 oleaut32 uuid gdi32 comdlg32 winspool)
-# endif()
-
-
 #==================================================================#
 #========================== Scantailor ============================#
 #==================================================================#
