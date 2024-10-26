@@ -154,6 +154,19 @@ else() # Local build
 			)
 		endif()
 
+		# When building with openGL on Windows, the imported QT5::Gui target sets some superfluous implibs
+		# in IMPORTED_LINK_DEPENDENT_LIBRARIES_<CONFIG>, which results in them being copied to the staging
+		# dir because they show up in TARGET_RUNTIME_DLLS.
+		# Remove and create an empty module file to exclude these.
+		if(WIN32 AND BUILD_SHARED_LIBS)
+			ExternalProject_Add_Step(
+				qt5-base-extern post-install
+				DEPENDEES install
+				COMMAND ${CMAKE_COMMAND} -E rm ${EXTERN_LIB_DIR}/cmake/Qt5Gui/Qt5GuiConfigExtras.cmake
+				COMMAND ${CMAKE_COMMAND} -E touch ${EXTERN_LIB_DIR}/cmake/Qt5Gui/Qt5GuiConfigExtras.cmake
+			)
+		endif()
+
 		ExternalProject_Add(
 			qt-tools
 			PREFIX ${EXTERN}
