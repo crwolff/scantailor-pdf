@@ -49,6 +49,10 @@ else() # Local build
 			set(DISABLE_FIND_PACKAGE -DCMAKE_DISABLE_FIND_PACKAGE_Libidn=TRUE)
 		endif()
 
+		if(NOT BUILD_SHARED_LIBS)
+			set(STATIC_XML LIBXML_STATIC)
+		endif()
+
 		ExternalProject_Add(
 			podofo-extern
 			PREFIX ${EXTERN}
@@ -59,16 +63,15 @@ else() # Local build
 			CMAKE_ARGS
 				-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 				-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
-				-DCMAKE_BUILD_TYPE=Release
 				-DPODOFO_BUILD_LIB_ONLY=ON
 				-DPODOFO_BUILD_STATIC=${STATIC_BOOL}
+				-DCOMPILE_DEFINITIONS=${STATIC_XML}
 				${DISABLE_FIND_PACKAGE}
-				-DCOMPILE_DEFINITIONS=LIBXML_STATIC
 				-DZLIB_USE_STATIC_LIBS=${ZLIB_USE_STATIC_LIBS}
 			BUILD_COMMAND
-				${CMAKE_COMMAND} --build <BINARY_DIR> --config Release
+				${CMAKE_COMMAND} --build <BINARY_DIR> --config RelWithDebInfo
 			INSTALL_COMMAND
-				${CMAKE_COMMAND} --install <BINARY_DIR> --config Release
+				${CMAKE_COMMAND} --install <BINARY_DIR> --config RelWithDebInfo
 			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 			DEPENDS zlib-extern png-extern tiff-extern freetype-extern xml2-extern lzma-extern openssl-extern
 		)
