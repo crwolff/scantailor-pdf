@@ -33,13 +33,13 @@ ImageMetadataLoader::registerLoader(
 
 ImageMetadataLoader::Status
 ImageMetadataLoader::loadImpl(
-	QIODevice& io_device,
+	QFile& file,
 	VirtualFunction1<void, ImageMetadata const&>& out)
 {
 	LoaderList::iterator it(m_sLoaders.begin());
 	LoaderList::iterator const end(m_sLoaders.end());
 	for (; it != end; ++it) {
-		Status const status = (*it)->loadMetadata(io_device, out);
+		Status const status = (*it)->loadMetadata(file, out);
 		if (status != FORMAT_NOT_RECOGNIZED) {
 			return status;
 		}

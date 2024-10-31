@@ -28,7 +28,7 @@
 
 using namespace PoDoFo;
 
-class QIODevice;
+class QFile;
 class QImage;
 class ImageMetadata;
 
@@ -48,7 +48,7 @@ public:
 	*        opened for reading and must be seekable.
 	* \return LOADED, if an image larger than 1000 x 1000 px was found.
 	*/
-	static ImageMetadataLoader::Status readMetadata(QIODevice& dev,
+	static ImageMetadataLoader::Status readMetadata(QFile& file,
 		VirtualFunction1<void, ImageMetadata const&>& out);
 	
 	/**
@@ -58,7 +58,7 @@ public:
 	*        opened for reading and must be seekable.
 	* \return true, if file seems like a valid pdf file, false otherwise.
 	*/
-	static bool seemsLikePdf(QIODevice& device);
+	static bool seemsLikePdf(QFile& file);
 
 	/**
 	* \brief Reads the image from io device to QImage.
@@ -69,7 +69,7 @@ public:
 	*        Pdf file.
 	* \return The resulting image, or a null image in case of failure.
 	*/
-	static QImage readImage(QIODevice& dev, int page_num = 0);
+	static QImage readImage(QFile& file, int page_num = 0);
 };
 
 #endif

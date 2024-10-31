@@ -19,6 +19,7 @@
 #include "JpegMetadataLoader.h"
 #include "ImageMetadata.h"
 #include "NonCopyable.h"
+#include <QFile>
 #include <QIODevice>
 #include <QSize>
 #include <QDebug>
@@ -218,10 +219,10 @@ JpegMetadataLoader::registerMyself()
 
 ImageMetadataLoader::Status
 JpegMetadataLoader::loadMetadata(
-	QIODevice& io_device,
+	QFile& file,
 	VirtualFunction1<void, ImageMetadata const&>& out)
 {
-	if (!io_device.isReadable()) {
+	if (!file.isReadable()) {
 		return GENERIC_ERROR;
 	}
 
@@ -229,7 +230,7 @@ JpegMetadataLoader::loadMetadata(
 	static int const sig_size = sizeof(jpeg_signature);
 
 	unsigned char signature[sig_size];
-	if (io_device.peek((char*)signature, sig_size) != sig_size) {
+	if (file.peek((char*)signature, sig_size) != sig_size) {
 		return FORMAT_NOT_RECOGNIZED;
 	}
 	if (memcmp(jpeg_signature, signature, sig_size) != 0) {
@@ -242,7 +243,7 @@ JpegMetadataLoader::loadMetadata(
 		return GENERIC_ERROR;
 	}
 	
-	JpegSourceManager src_mgr(io_device);
+	JpegSourceManager src_mgr(file);
 	JpegDecompressHandle cinfo(&err_mgr, &src_mgr);
 	
 	int const header_status = jpeg_read_header(cinfo.ptr(), 0);

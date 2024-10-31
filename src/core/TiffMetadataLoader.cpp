@@ -33,8 +33,8 @@ TiffMetadataLoader::registerMyself()
 
 ImageMetadataLoader::Status
 TiffMetadataLoader::loadMetadata(
-	QIODevice& io_device,
+	QFile& file,
 	VirtualFunction1<void, ImageMetadata const&>& out)
 {
-	return TiffReader::readMetadata(io_device, out);
+	return TiffReader::readMetadata(file, out);
 }

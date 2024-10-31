@@ -18,17 +18,18 @@
 
 #include "JP2Reader.h"
 #include "ImageMetadata.h"
+#include <QFile>
 #include <QIODevice>
 #include <QImage>
 #include <openjpeg.h>
 
-bool JP2Reader::peekMagic(QIODevice& device)
+bool JP2Reader::peekMagic(QFile& file)
 {
 	char buf[12];
 	const char magic4[] = "\x0d\x0a\x87\x0a";
 	const char magic12[] = "\x00\x00\x00\x0c\x6a\x50\x20\x20\x0d\x0a\x87\x0a";
 
-	qint64 seen = device.peek(buf, 12);
+	qint64 seen = file.peek(buf, 12);
 	return	(seen >=  4 && memcmp(buf, magic4,   4) == 0) ||
 		(seen == 12 && memcmp(buf, magic12, 12) == 0);
 }
@@ -129,10 +130,10 @@ static opj_image_t *jp2decode(QIODevice& device, bool full)
 	return jp2;
 }
 
-bool JP2Reader::readMetadata(QIODevice& device,
+bool JP2Reader::readMetadata(QFile& file,
 	VirtualFunction1<void, ImageMetadata const&>& out)
 {
-	opj_image_t *jp2 = jp2decode(device, false);
+	opj_image_t *jp2 = jp2decode(file, false);
 	if (!jp2)
 		return false;
 

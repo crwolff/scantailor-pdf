@@ -19,6 +19,7 @@
 #include "PngMetadataLoader.h"
 #include "ImageMetadata.h"
 #include "NonCopyable.h"
+#include <QFile>
 #include <QIODevice>
 #include <QSize>
 #include <new> // for std::bad_alloc
@@ -90,15 +91,15 @@ PngMetadataLoader::registerMyself()
 
 ImageMetadataLoader::Status
 PngMetadataLoader::loadMetadata(
-	QIODevice& io_device,
+	QFile& file,
 	VirtualFunction1<void, ImageMetadata const&>& out)
 {
-	if (!io_device.isReadable()) {
+	if (!file.isReadable()) {
 		return GENERIC_ERROR;
 	}
 
 	png_byte signature[8];
-	if (io_device.peek((char*)signature, 8) != 8) {
+	if (file.peek((char*)signature, 8) != 8) {
 		return FORMAT_NOT_RECOGNIZED;
 	}
 	
@@ -112,7 +113,7 @@ PngMetadataLoader::loadMetadata(
 		return GENERIC_ERROR;
 	}
 	
-	png_set_read_fn(png.handle(), &io_device, &readFn);
+	png_set_read_fn(png.handle(), &file, &readFn);
 	png_read_info(png.handle(), png.info());
 	
 	QSize size;

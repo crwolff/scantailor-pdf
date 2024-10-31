@@ -21,32 +21,44 @@
 #include "../ImageLoader.h"
 #include <QIODevice>
 #include <QImage>
+#include <QImageReader>
 #include <QFile>
 #include <QByteArray>
 
 ImageMetadataLoader::Status
-PdfReader::readMetadata(QIODevice& device,
+PdfReader::readMetadata(QFile& file,
 	VirtualFunction1<void, ImageMetadata const&>& out)
 {
 	PdfMemDocument pdfDoc;
-	pdfDoc.LoadFromBuffer(device.readAll());
+	pdfDoc.Load(file.fileName().toStdString());
 
 	QSize dimensions(0, 0);
 	qint64 width = 0;
 	qint64 height = 0;
+	
+	auto& pPage = pdfDoc.GetPages().GetPageAt(0);
 
-	for (auto obj : pdfDoc.GetObjects())
+	auto* pResources = pPage.GetResources();
+	if (!pResources) {
+		return ImageMetadataLoader::NO_IMAGES;
+	}
+
+	PdfDictionary& resourceDict = pResources->GetDictionary();
+	auto xObjectIterator = pResources->GetResourceIterator(PdfResourceType::XObject);
+
+	for (auto it = xObjectIterator.begin(); it != xObjectIterator.end(); ++it)
 	{
-		if (obj->IsDictionary())
+		PdfObject obj = *(it->second);
+		if (&obj && obj.IsDictionary())
 		{
-			PdfObject* pObjType = obj->GetDictionary().GetKey("Type");
-			PdfObject* pObjSubType = obj->GetDictionary().GetKey("Subtype");
+			PdfObject* pObjType = obj.GetDictionary().GetKey("Type");
+			PdfObject* pObjSubType = obj.GetDictionary().GetKey("Subtype");
 
 			if ((pObjType && pObjType->IsName() && (pObjType->GetName() == "XObject")) ||
 				(pObjSubType && pObjSubType->IsName() && (pObjSubType->GetName() == "Image")))
 			{
-				width = obj->GetDictionary().FindKey("Width")->GetNumber();
-				height = obj->GetDictionary().FindKey("Height")->GetNumber();
+				width = obj.GetDictionary().FindKey("Width")->GetNumber();
+				height = obj.GetDictionary().FindKey("Height")->GetNumber();
 
 				if (dimensions.width() < width && dimensions.height() < height) {
 					dimensions.setWidth(width);
@@ -68,21 +80,21 @@ PdfReader::readMetadata(QIODevice& device,
 	return ImageMetadataLoader::GENERIC_ERROR;
 }
 
-bool PdfReader::seemsLikePdf(QIODevice & device)
+bool PdfReader::seemsLikePdf(QFile & file)
 {
 	// first few bytes of a pdf file: "%PDF-1."
 	const char start_header[] = "\x25\x50\x44\x46\x2D\x31\x2E";
 	char buffer[8];
 
-	qint64 seen = device.peek(buffer, 8);
+	qint64 seen = file.peek(buffer, 8);
 	return	(seen >= 7 && memcmp(buffer, start_header, 7) == 0);
 }
 
 QImage
-PdfReader::readImage(QIODevice& device, int const page_num)
+PdfReader::readImage(QFile& file, int const page_num)
 {
 	PdfMemDocument pdfDoc;
-	pdfDoc.LoadFromBuffer(device.readAll());
+	pdfDoc.Load(file.fileName().toStdString());
 	// get page
 	auto& pPage = pdfDoc.GetPages().GetPageAt(page_num);
 
@@ -93,25 +105,32 @@ PdfReader::readImage(QIODevice& device, int const page_num)
 	qint64 height = 0;
 	
 	// go through all resources on the page and extract dimensions of each image
-	for (auto pXObjects : pPage.GetResources()->GetResourceIterator("XObject"))
+	auto pResources = pPage.GetResources();
+	if (!pResources) {
+		return QImage();
+	}
+
+	auto xObjectIterator = pResources->GetResourceIterator(PdfResourceType::XObject);
+
+	for (auto it = xObjectIterator.begin(); it != xObjectIterator.end(); ++it)
 	{
-		PdfObject * obj = pXObjects.second;
-		if (obj->IsDictionary()) {
-			PdfObject* pObjType = obj->GetDictionary().GetKey("Type");
-			PdfObject* pObjSubType = obj->GetDictionary().GetKey("Subtype");
+		PdfObject obj = *(it->second);
+		if (&obj && obj.IsDictionary()) {
+			PdfObject* pObjType = obj.GetDictionary().GetKey("Type");
+			PdfObject* pObjSubType = obj.GetDictionary().GetKey("Subtype");
 
 			if ((pObjType && pObjType->IsName() && (pObjType->GetName() == "XObject")) ||
 				(pObjSubType && pObjSubType->IsName() && (pObjSubType->GetName() == "Image")))
 			{
 
-				width = obj->GetDictionary().FindKey("Width")->GetNumber();
-				height = obj->GetDictionary().FindKey("Height")->GetNumber();
+				width = obj.GetDictionary().FindKey("Width")->GetNumber();
+				height = obj.GetDictionary().FindKey("Height")->GetNumber();
 
 				// Save/replce image, if it bigger than previous image
 				if (dimensions.width() < width && dimensions.height() < height) {
 					dimensions.setWidth(width);
 					dimensions.setHeight(height);
-					pdfImage = obj;
+					pdfImage = &obj;
 				}
 			}
 		}
@@ -126,8 +145,8 @@ PdfReader::readImage(QIODevice& device, int const page_num)
 		QByteArray imageBuffer(pStream.data(), pStream.size());
 		QDataStream newImage(imageBuffer);
 
-		return ImageLoader::load(*newImage.device(), 0);
-
+		QImageReader(newImage.device()).read(&image);
+		return image;
 	} else {
 		// image is too small or no images found on page
 		return QImage();

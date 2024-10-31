@@ -24,6 +24,7 @@
 #include "IntrusivePtr.h"
 #include <vector>
 
+class QFile;
 class QString;
 class QIODevice;
 class ImageMetadata;
@@ -48,7 +49,7 @@ public:
 	static void registerLoader(IntrusivePtr<ImageMetadataLoader> const& loader);
 	
 	template<typename OutFunc>
-	static Status load(QIODevice& io_device, OutFunc out);
+	static Status load(QFile& file, OutFunc out);
 	
 	template<typename OutFunc>
 	static Status load(QString const& file_path, OutFunc out);
@@ -61,19 +62,19 @@ protected:
 	 * This function must be reentrant, as it may be called from multiple
 	 * threads at the same time.
 	 *
-	 * \param io_device The I/O device to read from.  Usually a QFile.
+	 * \param file The QFile device to read from.
 	 *        In case FORMAT_NO_RECOGNIZED is returned, the implementation
-	 *        must leave \p io_device in its original state.
+	 *        must leave \p file in its original state.
 	 * \param out A callback functional object that will be called to handle
 	 *        the image metadata.  If there are multiple images (pages) in
 	 *        the file, this object will be called multiple times.
 	 */
 	virtual Status loadMetadata(
-		QIODevice& io_device,
+		QFile& file,
 		VirtualFunction1<void, ImageMetadata const&>& out) = 0;
 private:
 	static Status loadImpl(
-		QIODevice& io_device,
+		QFile& file,
 		VirtualFunction1<void, ImageMetadata const&>& out);
 	
 	static Status loadImpl(
@@ -87,10 +88,10 @@ private:
 
 template<typename OutFunc>
 ImageMetadataLoader::Status
-ImageMetadataLoader::load(QIODevice& io_device, OutFunc out)
+ImageMetadataLoader::load(QFile& file, OutFunc out)
 {
 	ProxyFunction1<OutFunc, void, ImageMetadata const&> proxy(out);
-	return loadImpl(io_device, proxy);
+	return loadImpl(file, proxy);
 }
 
 template<typename OutFunc>

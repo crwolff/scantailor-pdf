@@ -23,6 +23,7 @@
 #include "VirtualFunction.h"
 #include <vector>
 
+class QFile;
 class QIODevice;
 class ImageMetadata;
 
@@ -38,7 +39,7 @@ public:
 	static void registerMyself();
 protected:
 	virtual Status loadMetadata(
-		QIODevice& io_device,
+		QFile& file,
 		VirtualFunction1<void, ImageMetadata const&>& out);
 };
 

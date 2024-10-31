@@ -34,10 +34,10 @@ PdfMetadataLoader::registerMyself()
 
 ImageMetadataLoader::Status
 PdfMetadataLoader::loadMetadata(
-	QIODevice& io_device,
+	QFile& file,
 	VirtualFunction1<void, ImageMetadata const&>& out)
 {
-	if (!PdfReader::seemsLikePdf(io_device))
+	if (!PdfReader::seemsLikePdf(file))
 		return ImageMetadataLoader::FORMAT_NOT_RECOGNIZED;
-	return PdfReader::readMetadata(io_device, out);
+	return PdfReader::readMetadata(file, out);
 }

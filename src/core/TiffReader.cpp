@@ -21,6 +21,7 @@
 #include "NonCopyable.h"
 #include <QtGlobal>
 #include <QSysInfo>
+#include <QFile>
 #include <QIODevice>
 #include <QImage>
 #include <QColor>
@@ -230,24 +231,24 @@ TiffReader::canRead(QIODevice& device)
 
 ImageMetadataLoader::Status
 TiffReader::readMetadata(
-	QIODevice& device,
+	QFile& file,
 	VirtualFunction1<void, ImageMetadata const&>& out)
 {
-	if (!device.isReadable()) {
+	if (!file.isReadable()) {
 		return ImageMetadataLoader::GENERIC_ERROR;
 	}
-	if (device.isSequential()) {
+	if (file.isSequential()) {
 		// libtiff needs to be able to seek.
 		return ImageMetadataLoader::GENERIC_ERROR;
 	}
 	
-	if (!checkHeader(TiffHeader(readHeader(device)))) {
+	if (!checkHeader(TiffHeader(readHeader(file)))) {
 		return ImageMetadataLoader::FORMAT_NOT_RECOGNIZED;
 	}
 	
 	TiffHandle tif(
 		TIFFClientOpen(
-			"file", "rBm", &device, &deviceRead, &deviceWrite,
+			"file", "rBm", &file, &deviceRead, &deviceWrite,
 			&deviceSeek, &deviceClose, &deviceSize,
 			&deviceMap, &deviceUnmap
 		)

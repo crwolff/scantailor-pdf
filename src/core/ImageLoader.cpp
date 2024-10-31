@@ -45,21 +45,21 @@ ImageLoader::load(QString const& file_path, int const page_num)
 }
 
 QImage
-ImageLoader::load(QIODevice& io_dev, int const page_num)
+ImageLoader::load(QFile& file, int const page_num)
 {
-	if (TiffReader::canRead(io_dev)) {
-		return TiffReader::readImage(io_dev, page_num);
+	if (TiffReader::canRead(file)) {
+		return TiffReader::readImage(file, page_num);
 	}
 
-	if (JP2Reader::peekMagic(io_dev)) {
-		return JP2Reader::readImage(io_dev);
+	if (JP2Reader::peekMagic(file)) {
+		return JP2Reader::readImage(file);
 	}
 
-	if (PdfReader::seemsLikePdf(io_dev)) {
-		return PdfReader::readImage(io_dev, page_num);
+	if (PdfReader::seemsLikePdf(file)) {
+		return PdfReader::readImage(file, page_num);
 	}
 
 	QImage image;
-	QImageReader(&io_dev).read(&image);
+	QImageReader(&file).read(&image);
 	return image;
 }

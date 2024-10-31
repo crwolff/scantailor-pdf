@@ -21,6 +21,7 @@
 
 #include "VirtualFunction.h"
 
+class QFile;
 class QIODevice;
 class QImage;
 class ImageMetadata;
@@ -28,9 +29,9 @@ class ImageMetadata;
 class JP2Reader
 {
 public:
-	static bool peekMagic(QIODevice& dev);
+	static bool peekMagic(QFile& file);
 	
-	static bool readMetadata(QIODevice& dev,
+	static bool readMetadata(QFile& file,
 		VirtualFunction1<void, ImageMetadata const&>& out);
 	
 	static QImage readImage(QIODevice& dev);

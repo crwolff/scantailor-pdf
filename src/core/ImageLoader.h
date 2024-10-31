@@ -22,6 +22,7 @@
 class ImageId;
 class QImage;
 class QString;
+class QFile;
 class QIODevice;
 
 class ImageLoader
@@ -31,7 +32,7 @@ public:
 
 	static QImage load(ImageId const& image_id);
 	
-	static QImage load(QIODevice& io_dev, int page_num);
+	static QImage load(QFile& file, int page_num);
 };
 
 #endif

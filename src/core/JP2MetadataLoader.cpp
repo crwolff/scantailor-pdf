@@ -33,12 +33,12 @@ JP2MetadataLoader::registerMyself()
 
 ImageMetadataLoader::Status
 JP2MetadataLoader::loadMetadata(
-	QIODevice& io_device,
+	QFile& file,
 	VirtualFunction1<void, ImageMetadata const&>& out)
 {
-	if (!JP2Reader::peekMagic(io_device))
+	if (!JP2Reader::peekMagic(file))
 		return ImageMetadataLoader::FORMAT_NOT_RECOGNIZED;
-	if (!JP2Reader::readMetadata(io_device, out))
+	if (!JP2Reader::readMetadata(file, out))
 		return ImageMetadataLoader::GENERIC_ERROR;
 	return ImageMetadataLoader::LOADED;
 }

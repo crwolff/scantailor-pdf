@@ -32,13 +32,13 @@ public:
 	static bool canRead(QIODevice& device);
 	
 	static ImageMetadataLoader::Status readMetadata(
-		QIODevice& device,
+		QFile& file,
 		VirtualFunction1<void, ImageMetadata const&>& out);
 	
 	/**
-	 * \brief Reads the image from io device to QImage.
+	 * \brief Reads the image from file to QImage.
 	 *
-	 * \param device The device to read from.  This device must be
+	 * \param file The file to read from.  This file must be
 	 *        opened for reading and must be seekable.
 	 * \param page_num A zero-based page number within a multi-page
 	 *        TIFF file.
