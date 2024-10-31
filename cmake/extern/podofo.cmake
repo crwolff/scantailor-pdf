@@ -56,8 +56,11 @@ else() # Local build
 		ExternalProject_Add(
 			podofo-extern
 			PREFIX ${EXTERN}
-			URL https://github.com/podofo/podofo/archive/refs/tags/0.10.4.tar.gz
-			URL_HASH SHA256=6b1b13cdfb2ba5e8bbc549df507023dd4873bc946211bc6942183b8496986904
+			# URL https://github.com/podofo/podofo/archive/refs/tags/0.10.4.tar.gz
+			# URL_HASH SHA256=6b1b13cdfb2ba5e8bbc549df507023dd4873bc946211bc6942183b8496986904
+			GIT_REPOSITORY https://github.com/podofo/podofo.git
+			GIT_TAG 1.0.0-beta
+			GIT_SHALLOW TRUE
 			DOWNLOAD_DIR ${DOWNLOAD_DIR}
 			PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${EXTERN_PATCH_DIR}/podofo/CMakeLists.txt <SOURCE_DIR>
 			CMAKE_ARGS
