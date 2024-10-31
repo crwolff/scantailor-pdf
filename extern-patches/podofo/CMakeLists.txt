@@ -18,9 +18,9 @@ else()
     message(WARNING "You are using an unsupported compiler!")
 endif()
 
-set(PODOFO_VERSION_MAJOR "0" CACHE STRING "Major part of podofo version number")
-set(PODOFO_VERSION_MINOR "10" CACHE STRING "Minor part of podofo version number")
-set(PODOFO_VERSION_PATCH "4" CACHE STRING "Patchlevel part of podofo version number")
+set(PODOFO_VERSION_MAJOR "1" CACHE STRING "Major part of podofo version number")
+set(PODOFO_VERSION_MINOR "0" CACHE STRING "Minor part of podofo version number")
+set(PODOFO_VERSION_PATCH "0" CACHE STRING "Patchlevel part of podofo version number")
 set(PODOFO_VERSION "${PODOFO_VERSION_MAJOR}.${PODOFO_VERSION_MINOR}.${PODOFO_VERSION_PATCH}")
 set(PODOFO_SOVERSION "2")
 
@@ -107,7 +107,7 @@ if (MSVC)
     # /w34389: 'operator': signed/unsigned mismatch
     # /we4287: unsigned/negative constant mismatch
     # /w34100: unreferenced formal parameter
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive- /we4287 /W4 /Zc:__cplusplus")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive- /utf-8 /we4287 /W4 /Zc:__cplusplus")
 
     # Microsoft deprecate certain POSIX functions that we use.
     # for now, turn off these warnings.
@@ -131,6 +131,12 @@ else()
     # declaration on the whole class.
     if(NOT WIN32)
         add_definitions(-W)
+    endif()
+	 
+	 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        # Silence warnings on use of typeid(*ptr)
+        # See https://stackoverflow.com/questions/46494928/clang-warning-on-expression-side-effects
+        add_compile_options(-Wno-potentially-evaluated-expression)
     endif()
 endif()
 
