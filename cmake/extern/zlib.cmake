@@ -45,5 +45,15 @@ else() # Local build
 			UPDATE_COMMAND ""  # Don't rebuild on main project recompilation
 		)
 		
+		# zlib installs both shared and static libs. If building static,
+		# we need to remove the shared lib, so they don't get picked up by other packages
+		if(NOT BUILD_SHARED_LIBS AND MSVC)
+			ExternalProject_Add_Step(
+				zlib-extern remove-shared
+				DEPENDEES install
+				COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_BIN_DIR}/zlib.dll
+				COMMAND ${CMAKE_COMMAND} -E rm -f ${EXTERN_LIB_DIR}/zlib.lib
+			)
+		endif()
 	endif()
 endif()

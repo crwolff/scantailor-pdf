@@ -166,7 +166,7 @@
             },
             "headers": "zlib.h",
             "sources": [
-                { "libs": "-lzlibstatic", "condition": "!config.msvc" },
+                { "libs": "-lzlibstatic", "condition": "config.win32" },
                 { "libs": "-lzdll", "condition": "config.msvc" },
                 { "libs": "-lzlib", "condition": "config.msvc" },
                 { "libs": "-lz", "condition": "!config.msvc" },
